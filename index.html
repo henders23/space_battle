@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valkyrie</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <section id="start-screen" class="screen screen-active">
+      <div class="hero">
+        <p class="eyebrow">Tactical starship command prototype</p>
+        <h1>Valkyrie</h1>
+        <p class="subtitle">Take command of a heavy warship, find the enemy flagship, and bring it down before it escapes.</p>
+        <div class="button-row">
+          <button id="begin-mission" class="primary">Begin Mission</button>
+          <button id="start-refit">Starbase Refit</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="starbase-screen" class="screen">
+      <div class="panel wide">
+        <div class="section-heading">
+          <p class="eyebrow">Orbital Command</p>
+          <h2>Starbase Refit</h2>
+        </div>
+
+        <div class="base-grid">
+          <div class="status-block">
+            <h3>Career</h3>
+            <dl>
+              <div><dt>Credits</dt><dd id="base-credits">0</dd></div>
+              <div><dt>Reputation</dt><dd id="base-reputation">Unproven</dd></div>
+              <div><dt>Hull</dt><dd id="base-hull">100%</dd></div>
+              <div><dt>Repair Estimate</dt><dd id="base-repair-cost">0</dd></div>
+            </dl>
+            <button id="repair-ship">Repair Ship</button>
+          </div>
+
+          <div class="loadout-block">
+            <h3>Loadout</h3>
+            <label>
+              Forward Weapon
+              <select id="forward-select"></select>
+            </label>
+            <label>
+              Port Broadside
+              <select id="port-select"></select>
+            </label>
+            <label>
+              Starboard Broadside
+              <select id="starboard-select"></select>
+            </label>
+            <label>
+              Utility
+              <select id="utility-select"></select>
+            </label>
+          </div>
+
+          <div class="orders-block">
+            <h3>Mission Order</h3>
+            <p id="mission-preview">Assassinate a hostile flagship in a contested sector. Expect escorts, asteroids, and a narrow intercept window.</p>
+            <button id="launch-mission" class="primary">Launch Mission</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="combat-screen" class="screen">
+      <div class="combat-layout">
+        <canvas id="game-canvas" width="1120" height="700"></canvas>
+        <aside class="hud">
+          <div class="hud-card">
+            <h3>Objective</h3>
+            <p id="hud-objective">Destroy the flagship.</p>
+            <p id="hud-timer">00:00</p>
+          </div>
+          <div class="hud-card">
+            <h3>Ship Status</h3>
+            <div class="meter"><span>Hull</span><div><i id="hull-bar"></i></div><b id="hull-value">100%</b></div>
+            <div class="meter"><span>Shields</span><div><i id="shield-bar"></i></div><b id="shield-value">100%</b></div>
+            <ul id="system-list" class="system-list"></ul>
+          </div>
+          <div class="hud-card">
+            <h3>Weapons</h3>
+            <ul id="weapon-list" class="weapon-list"></ul>
+          </div>
+          <div class="hud-card">
+            <h3>Target</h3>
+            <p id="target-info">No contact.</p>
+          </div>
+          <div class="hud-card log-card">
+            <h3>Message Log</h3>
+            <ol id="message-log"></ol>
+          </div>
+        </aside>
+      </div>
+      <div id="pause-banner" class="pause-banner hidden">Paused</div>
+    </section>
+
+    <section id="evaluation-screen" class="screen">
+      <div class="panel wide">
+        <div class="section-heading">
+          <p class="eyebrow">After Action Review</p>
+          <h2>Mission Evaluation</h2>
+        </div>
+        <div class="evaluation-grid">
+          <div class="grade-card">
+            <span id="mission-grade">F</span>
+            <p id="mission-result">Mission failed.</p>
+          </div>
+          <div class="report-card">
+            <h3>Captain's Report</h3>
+            <p id="captain-report"></p>
+          </div>
+          <div class="economy-card">
+            <h3>Career Impact</h3>
+            <dl>
+              <div><dt>Reward</dt><dd id="eval-reward">0</dd></div>
+              <div><dt>Repair Cost</dt><dd id="eval-repair">0</dd></div>
+              <div><dt>Net Outcome</dt><dd id="eval-net">0</dd></div>
+              <div><dt>Reputation</dt><dd id="eval-reputation">Unproven</dd></div>
+            </dl>
+          </div>
+          <div class="stats-card">
+            <h3>Statistics</h3>
+            <dl id="eval-stats"></dl>
+          </div>
+        </div>
+        <button id="continue-starbase" class="primary">Continue to Starbase</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
