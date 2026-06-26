@@ -98,7 +98,9 @@ fight. Combat rewards positioning and timing over twitch reflexes.
   career impact, statistics, and a running service record.
 - Career persistence via localStorage (credits, reputation, hull, loadout, owned items,
   record and history).
-- Title/menu music with volume + mute, persisted between sessions.
+- **Layered audio**: distinct music beds that crossfade between the menu, the mission
+  briefing (a low drone) and combat (a red-alert theme), plus an engine loop that rises
+  and falls with the ship's speed. Volume + mute persist between sessions.
 
 ## Project structure
 

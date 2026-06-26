@@ -5,6 +5,8 @@ import { registerScreens, showScreen } from "./router.js";
 import {
   initAudio,
   startMusic,
+  setMusic,
+  setEngine,
   setVolume,
   getVolume,
   toggleMute,
@@ -231,6 +233,15 @@ function loop(timestamp) {
     }
   }
 
+  // Engine loop rises with the ship's speed; silent when stopped or out of combat.
+  if (state.screen === "combat" && state.player && state.player.alive) {
+    const p = state.player;
+    const maxSpeed = (p.throttleSpeeds && p.throttleSpeeds[3]) || 130;
+    setEngine(Math.hypot(p.vx, p.vy) / maxSpeed);
+  } else {
+    setEngine(0);
+  }
+
   draw();
   updateHud();
   requestAnimationFrame(loop);
@@ -263,9 +274,13 @@ function init() {
   window.addEventListener("keyup", handleKeyUp);
   bindMouse();
   window.addEventListener("screen:enter", (e) => {
-    if (e.detail.name === "starbase") updateStarbase();
-    if (e.detail.name === "warmap") renderWarMap();
-    if (e.detail.name === "briefing") renderBriefing();
+    const name = e.detail.name;
+    if (name === "starbase") updateStarbase();
+    if (name === "warmap") renderWarMap();
+    if (name === "briefing") renderBriefing();
+    // Music bed per screen: drone over the briefing, red alert in combat, the
+    // theme everywhere else (so the menu song fades out the moment you deploy).
+    setMusic(name === "briefing" ? "briefing" : name === "combat" ? "combat" : "menu");
   });
 
   showScreen("title");

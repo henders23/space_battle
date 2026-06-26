@@ -1,9 +1,12 @@
 "use strict";
 
 import { state } from "../state.js";
-import { pick, formatTime, formatCredits } from "../utils.js";
+import { formatTime, formatCredits } from "../utils.js";
 import { MISSION_TYPES } from "../data/missionTypes.js";
 import { ADMIRALS } from "../data/admirals.js";
+
+// The same senior officer delivers every briefing.
+const BRIEFING_OFFICER = ADMIRALS[0];
 
 // Pre-mission briefing: shows the operation, objective and a senior officer
 // (drawn from the admiral portraits) delivering it on behalf of the Admiralty.
@@ -35,7 +38,7 @@ export function renderBriefing() {
   const m = state.mission;
   if (!m) return;
   const info = MISSION_TYPES[m.type];
-  const officer = pick(ADMIRALS);
+  const officer = BRIEFING_OFFICER;
 
   dom.portrait.src = officer.portrait;
   dom.portrait.alt = `${officer.rank} ${officer.name}`;
