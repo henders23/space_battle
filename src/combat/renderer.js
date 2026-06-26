@@ -17,9 +17,43 @@ let canvas = null;
 let ctx = null;
 let rot = 0; // current world rotation applied for the ship-up frame
 
+let playerSprite = null; // offscreen canvas of the player ship art, white keyed out
+
 export function initRenderer(canvasEl) {
   canvas = canvasEl;
   ctx = canvas.getContext("2d");
+  loadPlayerSprite();
+}
+
+// Load the player ship artwork (a side-on render on a white background) and key
+// the white out to transparency so only the hull shows. Falls back silently to
+// the vector ship if the asset is missing.
+function loadPlayerSprite() {
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const off = document.createElement("canvas");
+      off.width = img.naturalWidth;
+      off.height = img.naturalHeight;
+      const octx = off.getContext("2d");
+      octx.drawImage(img, 0, 0);
+      const id = octx.getImageData(0, 0, off.width, off.height);
+      const d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const m = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (m > 234) d[i + 3] = 0;
+        else if (m > 205) d[i + 3] = Math.round(((234 - m) / 29) * 255); // feather edges
+      }
+      octx.putImageData(id, 0, 0);
+      playerSprite = off;
+    } catch (err) {
+      playerSprite = null; // e.g. tainted canvas — keep the vector ship
+    }
+  };
+  img.onerror = () => {
+    playerSprite = null;
+  };
+  img.src = "assets/ship-player.png";
 }
 
 function resizeCanvasToDisplay() {
@@ -310,6 +344,20 @@ function drawShipBody(ship) {
     : 0.85 + Math.random() * 0.15;
   drawEngines(spec, L, W, flare);
 
+  // Player ship uses the photographic sprite when available; the bow in the art
+  // points right (+x), matching the ship's local heading, so no extra rotation.
+  if (isPlayer && playerSprite) {
+    const drawW = L * 1.7;
+    const drawH = drawW * (playerSprite.height / playerSprite.width);
+    ctx.shadowColor = spec.glow;
+    ctx.shadowBlur = 18;
+    ctx.drawImage(playerSprite, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.shadowBlur = 0;
+    drawShieldEnvelope(ship, L, W, isPlayer);
+    ctx.restore();
+    return;
+  }
+
   // hull with a top-lit gradient for volume
   ctx.shadowColor = spec.glow;
   ctx.shadowBlur = isEscort ? 8 : 24;
@@ -390,7 +438,12 @@ function drawShipBody(ship) {
     ctx.fillRect(x, W * 0.5 - 1, 2, 2);
   }
 
-  // per-side shield envelope sized to the hull (+y starboard, −y port)
+  drawShieldEnvelope(ship, L, W, isPlayer);
+  ctx.restore();
+}
+
+// Per-side shield envelope sized to the hull (+y starboard, −y port).
+function drawShieldEnvelope(ship, L, W, isPlayer) {
   const rx = L * 0.58;
   const ry = W * 0.85;
   for (const [side, a0, a1] of [["starboard", 0, Math.PI], ["port", Math.PI, Math.PI * 2]]) {
@@ -404,7 +457,6 @@ function drawShipBody(ship) {
     ctx.ellipse(0, 0, rx, ry, 0, a0, a1);
     ctx.stroke();
   }
-  ctx.restore();
 }
 
 function drawProjectiles() {
