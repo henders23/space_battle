@@ -15,8 +15,8 @@ import { CONTROLS, CONTROL_GROUPS } from "./data/controls.js";
 import { setupMissionWorld } from "./combat/mission.js";
 import { addMessage } from "./combat/effects.js";
 import { update, retreatToStarbase } from "./combat/simulation.js";
-import { attemptPlayerFire } from "./combat/weapons.js";
-import { initRenderer, draw } from "./combat/renderer.js";
+import { firePlayerWeapon, slotForPrimaryAim, aimInTorpedoArc } from "./combat/weapons.js";
+import { initRenderer, draw, eventToScreen, aimFromScreen } from "./combat/renderer.js";
 import { initHud, updateHud } from "./ui/hud.js";
 import { initStarbase, updateStarbase } from "./screens/starbase.js";
 import { initEvaluation } from "./screens/evaluation.js";
@@ -24,6 +24,32 @@ import { initEvaluation } from "./screens/evaluation.js";
 const SCREEN_NAMES = ["title", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
 
 let pauseBanner = null;
+let canvas = null;
+const mouse = { left: false, right: false };
+
+// Left mouse: fire whichever battery's arc the cursor falls within, toward the
+// cursor. `explicit` is the discrete click (allowed to warn when nothing bears);
+// the held-button auto-repeat stays silent and just gates on weapon cooldown.
+function firePrimary(aimAngle, explicit) {
+  const slot = slotForPrimaryAim(state.player, aimAngle);
+  if (!slot) {
+    if (explicit) addMessage("Weapons: no battery bears on that bearing.");
+    return;
+  }
+  firePlayerWeapon(slot, aimAngle);
+}
+
+function fireTorpedo(aimAngle, explicit) {
+  if (!aimInTorpedoArc(state.player, aimAngle)) {
+    if (explicit) addMessage("Weapons: torpedo needs a forward firing solution.");
+    return;
+  }
+  firePlayerWeapon("torpedo", aimAngle);
+}
+
+function combatReady() {
+  return state.screen === "combat" && !state.paused && state.player && state.player.alive;
+}
 
 function startMission() {
   const mission = setupMissionWorld();
@@ -139,10 +165,6 @@ function handleKeyDown(event) {
     return;
   }
   if (state.screen !== "combat") return;
-  if (event.code === "Space") attemptPlayerFire("forward");
-  if (event.code === "KeyQ") attemptPlayerFire("port");
-  if (event.code === "KeyE") attemptPlayerFire("starboard");
-  if (event.code === "KeyF") attemptPlayerFire("torpedo");
   if (event.code === "KeyR") retreatToStarbase();
 }
 
@@ -150,17 +172,52 @@ function handleKeyUp(event) {
   state.keys[event.code] = false;
 }
 
+function bindMouse() {
+  canvas.addEventListener("mousemove", (e) => {
+    state.mouseScreen = eventToScreen(e);
+  });
+  canvas.addEventListener("mousedown", (e) => {
+    if (!combatReady()) return;
+    state.mouseScreen = eventToScreen(e);
+    const aim = aimFromScreen(state.mouseScreen.x, state.mouseScreen.y);
+    if (!aim) return;
+    if (e.button === 0) {
+      mouse.left = true;
+      firePrimary(aim.angle, true);
+    } else if (e.button === 2) {
+      mouse.right = true;
+      fireTorpedo(aim.angle, true);
+    }
+  });
+  window.addEventListener("mouseup", (e) => {
+    if (e.button === 0) mouse.left = false;
+    if (e.button === 2) mouse.right = false;
+  });
+  // Right-click is the torpedo; suppress the context menu over the battlefield.
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+}
+
 function loop(timestamp) {
   const dt = Math.min(0.04, (timestamp - state.lastTime) / 1000 || 0);
   state.lastTime = timestamp;
   update(dt);
+
+  // Held mouse buttons auto-repeat each weapon as its cooldown clears.
+  if ((mouse.left || mouse.right) && combatReady() && state.mouseScreen) {
+    const aim = aimFromScreen(state.mouseScreen.x, state.mouseScreen.y);
+    if (aim) {
+      if (mouse.left) firePrimary(aim.angle, false);
+      if (mouse.right) fireTorpedo(aim.angle, false);
+    }
+  }
+
   draw();
   updateHud();
   requestAnimationFrame(loop);
 }
 
 function init() {
-  const canvas = document.getElementById("game-canvas");
+  canvas = document.getElementById("game-canvas");
   pauseBanner = document.getElementById("pause-banner");
 
   initAudio();
@@ -182,6 +239,7 @@ function init() {
 
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
+  bindMouse();
   window.addEventListener("screen:enter", (e) => {
     if (e.detail.name === "starbase") updateStarbase();
   });

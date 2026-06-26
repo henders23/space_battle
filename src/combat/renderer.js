@@ -3,7 +3,7 @@
 import { state, WORLD } from "../state.js";
 import { clamp, degToRad, distance } from "../utils.js";
 import { PALETTE, ARC_COLORS } from "../data/theme.js";
-import { getSlotAngle, playerWeaponDefinitions } from "./weapons.js";
+import { getSlotAngle, playerWeaponDefinitions, slotForPrimaryAim } from "./weapons.js";
 import { getSensorRange } from "./systems.js";
 import { hullRatio, sideRatioShield } from "./shipStats.js";
 
@@ -44,11 +44,36 @@ function worldToScreen(p) {
   };
 }
 
+// Convert a mouse event to canvas pixel coordinates (accounting for CSS scaling).
+export function eventToScreen(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+// Invert the ship-up camera: a canvas pixel maps to a world point and the world
+// bearing from the player toward it. Because the ship is always drawn pointing
+// up, a fixed cursor keeps the same bearing relative to the ship as it turns.
+export function aimFromScreen(sx, sy) {
+  const player = state.player;
+  if (!player) return null;
+  const dx = sx - canvas.width / 2;
+  const dy = sy - canvas.height / 2;
+  const wx = player.x + Math.cos(rot) * dx + Math.sin(rot) * dy;
+  const wy = player.y - Math.sin(rot) * dx + Math.cos(rot) * dy;
+  return { x: wx, y: wy, angle: Math.atan2(wy - player.y, wx - player.x) };
+}
+
 export function draw() {
   if (state.screen !== "combat" || !state.player) return;
   resizeCanvasToDisplay();
   const player = state.player;
   rot = -player.angle - Math.PI / 2; // align heading to screen-up
+
+  const aim = state.mouseScreen ? aimFromScreen(state.mouseScreen.x, state.mouseScreen.y) : null;
+  const aimSlot = aim ? slotForPrimaryAim(player, aim.angle) : null;
 
   ctx.fillStyle = PALETTE.spaceDeep;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -61,7 +86,7 @@ export function draw() {
   drawSpace();
   drawMapBounds();
   drawAsteroids();
-  drawWeaponArcs(player);
+  drawWeaponArcs(player, aimSlot);
   for (const enemy of state.enemies) {
     if (enemy.alive) drawShipBody(enemy);
   }
@@ -77,6 +102,7 @@ export function draw() {
   }
   drawPlayerLabel();
   drawOffscreenTarget();
+  drawAimReticle(aimSlot);
 }
 
 function drawSpace() {
@@ -143,7 +169,13 @@ function drawAsteroids() {
   }
 }
 
-function drawWeaponArcs(ship) {
+const ARC_HIGHLIGHT = {
+  forward: "rgba(240, 169, 61, 0.30)",
+  port: "rgba(69, 224, 240, 0.30)",
+  starboard: "rgba(69, 224, 240, 0.30)"
+};
+
+function drawWeaponArcs(ship, aimSlot) {
   const weapons = playerWeaponDefinitions();
   const arcs = [
     ["forward", weapons.forward, ARC_COLORS.forward],
@@ -154,7 +186,8 @@ function drawWeaponArcs(ship) {
   for (const [slot, weapon, color] of arcs) {
     const center = getSlotAngle(ship.angle, slot);
     const width = degToRad(weapon.arc);
-    ctx.fillStyle = color;
+    // The aim-selected battery glows so the player can see which weapon bears.
+    ctx.fillStyle = slot === aimSlot ? ARC_HIGHLIGHT[slot] : color;
     ctx.beginPath();
     ctx.moveTo(ship.x, ship.y);
     ctx.arc(ship.x, ship.y, weapon.range, center - width / 2, center + width / 2);
@@ -317,5 +350,43 @@ function drawOffscreenTarget() {
   ctx.lineTo(-10, 8);
   ctx.closePath();
   ctx.fill();
+  ctx.restore();
+}
+
+function drawAimReticle(aimSlot) {
+  if (!state.mouseScreen) return;
+  const { x, y } = state.mouseScreen;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const color = aimSlot === "forward" ? PALETTE.amber : aimSlot ? PALETTE.accent : PALETTE.muted;
+
+  // faint firing line from the ship toward the cursor
+  ctx.save();
+  ctx.strokeStyle = aimSlot ? "rgba(69, 224, 240, 0.18)" : "rgba(127, 179, 192, 0.12)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 8]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.restore();
+
+  // reticle
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, 11, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 16, y);
+  ctx.lineTo(x - 5, y);
+  ctx.moveTo(x + 5, y);
+  ctx.lineTo(x + 16, y);
+  ctx.moveTo(x, y - 16);
+  ctx.lineTo(x, y - 5);
+  ctx.moveTo(x, y + 5);
+  ctx.lineTo(x, y + 16);
+  ctx.stroke();
   ctx.restore();
 }

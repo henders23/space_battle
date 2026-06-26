@@ -53,6 +53,7 @@ export function defaultCareer() {
 export const state = {
   screen: "title",
   keys: {},
+  mouseScreen: null, // last cursor position in canvas pixel coords
   paused: false,
   lastTime: 0,
   hasSave: false,
