@@ -1,6 +1,6 @@
 "use strict";
 
-import { state, WORLD, SYSTEM_NAMES, SYSTEM_STATES } from "../state.js";
+import { state, SYSTEM_NAMES, SYSTEM_STATES } from "../state.js";
 import {
   angleTo,
   angleWrap,
@@ -33,7 +33,7 @@ const THROTTLE_SPEEDS = [0, 30, 70, 130];
 function updatePlayer(dt) {
   const ship = state.player;
   const engineMult = getSystemMultiplier(ship, "engines") + ship.engineBonus;
-  const turn = 0.55 * engineMult;
+  const turn = 0.40 * engineMult;
   const forwardX = Math.cos(ship.angle);
   const forwardY = Math.sin(ship.angle);
 
@@ -59,7 +59,6 @@ function updatePlayer(dt) {
   ship.vy = along * forwardY + latY;
   ship.x += ship.vx * dt;
   ship.y += ship.vy * dt;
-  enforceBoundary(ship);
   handleAsteroidImpacts(ship, dt);
   updateShipRecovery(ship, dt);
   updateCooldowns(ship.cooldowns, dt);
@@ -73,31 +72,6 @@ function updatePlayer(dt) {
       }
     }
   }
-}
-
-function enforceBoundary(ship) {
-  let warned = false;
-  if (ship.x < ship.radius) {
-    ship.x = ship.radius;
-    ship.vx = Math.max(0, ship.vx) * 0.35;
-    warned = ship.type === "player";
-  }
-  if (ship.x > WORLD.width - ship.radius) {
-    ship.x = WORLD.width - ship.radius;
-    ship.vx = Math.min(0, ship.vx) * 0.35;
-    warned = ship.type === "player";
-  }
-  if (ship.y < ship.radius) {
-    ship.y = ship.radius;
-    ship.vy = Math.max(0, ship.vy) * 0.35;
-    warned = ship.type === "player";
-  }
-  if (ship.y > WORLD.height - ship.radius) {
-    ship.y = WORLD.height - ship.radius;
-    ship.vy = Math.min(0, ship.vy) * 0.35;
-    warned = ship.type === "player";
-  }
-  if (warned && Math.random() < 0.03) addMessage("Helm: nearing sector boundary.");
 }
 
 function handleAsteroidImpacts(ship, dt) {
@@ -150,7 +124,6 @@ function updateEnemies(dt) {
     if (enemy.type === "escort") updateEscort(enemy, dt);
     updateShipRecovery(enemy, dt);
     updateCooldowns(enemy.cooldowns, dt);
-    enforceBoundary(enemy);
   }
 }
 
@@ -270,11 +243,6 @@ function updateProjectiles(dt) {
     projectile.x += projectile.vx * dt;
     projectile.y += projectile.vy * dt;
     projectile.life -= dt;
-
-    if (projectile.x < 0 || projectile.x > WORLD.width || projectile.y < 0 || projectile.y > WORLD.height) {
-      projectile.life = 0;
-      continue;
-    }
 
     for (const asteroid of state.asteroids) {
       if (distance(projectile, asteroid) < asteroid.radius) {

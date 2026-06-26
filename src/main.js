@@ -24,7 +24,7 @@ import { initStarbase, updateStarbase } from "./screens/starbase.js";
 import { initEvaluation } from "./screens/evaluation.js";
 import { initWarMap, renderWarMap } from "./screens/warMap.js";
 
-const SCREEN_NAMES = ["title", "warmap", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
+const SCREEN_NAMES = ["title", "intro", "warmap", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
 
 let pauseBanner = null;
 let canvas = null;
@@ -125,7 +125,7 @@ function bindMenu() {
   const actions = {
     "menu-new": () => {
       newCampaign();
-      showScreen("warmap");
+      showScreen("intro");
     },
     "menu-continue": () => {
       loadCareer();
@@ -156,6 +156,9 @@ function bindMenu() {
   document.querySelectorAll("[data-starbase]").forEach((btn) =>
     btn.addEventListener("click", () => showScreen("starbase"))
   );
+
+  const introBegin = document.getElementById("intro-begin");
+  if (introBegin) introBegin.addEventListener("click", () => showScreen("warmap"));
 }
 
 function handleKeyDown(event) {

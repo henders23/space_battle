@@ -1,6 +1,6 @@
 "use strict";
 
-import { state, WORLD } from "../state.js";
+import { state } from "../state.js";
 import { clamp, degToRad, distance } from "../utils.js";
 import { PALETTE } from "../data/theme.js";
 import { getSlotAngle, playerWeaponDefinitions, slotForPrimaryAim } from "./weapons.js";
@@ -163,8 +163,7 @@ export function draw() {
   ctx.rotate(rot);
   ctx.translate(-player.x, -player.y);
 
-  drawSpace();
-  drawMapBounds();
+  drawSpace(player);
   drawAsteroids();
   drawWeaponArcs(player, aimSlot);
   for (const enemy of state.enemies) {
@@ -187,68 +186,85 @@ export function draw() {
   drawAimReticle(aimSlot);
 }
 
+// Star layers live in a repeating tile so the field is endless: each star is
+// drawn at the tile copy nearest the camera, so there is never an edge or void.
+const STAR_TILE = 2600;
+let nearStars = [];
 let farStars = [];
 
-function ensureFarStars() {
-  if (farStars.length) return;
-  for (let i = 0; i < 160; i += 1) {
+function ensureStars() {
+  if (nearStars.length) return;
+  for (let i = 0; i < 240; i += 1) {
+    nearStars.push({
+      x: Math.random() * STAR_TILE,
+      y: Math.random() * STAR_TILE,
+      r: 0.8 + Math.random() * 1.4,
+      a: 0.3 + Math.random() * 0.65
+    });
+  }
+  for (let i = 0; i < 200; i += 1) {
     farStars.push({
-      x: Math.random() * WORLD.width,
-      y: Math.random() * WORLD.height,
-      r: 0.4 + Math.random() * 0.9,
-      a: 0.18 + Math.random() * 0.32
+      x: Math.random() * STAR_TILE,
+      y: Math.random() * STAR_TILE,
+      r: 0.4 + Math.random() * 0.8,
+      a: 0.16 + Math.random() * 0.34
     });
   }
 }
 
+function wrapNear(coord, ref) {
+  const d = coord - ref;
+  return ref + (d - STAR_TILE * Math.round(d / STAR_TILE));
+}
+
+function drawStarLayer(stars, refX, refY) {
+  ctx.fillStyle = PALETTE.star;
+  for (const star of stars) {
+    const sx = wrapNear(star.x, refX);
+    const sy = wrapNear(star.y, refY);
+    ctx.globalAlpha = star.a;
+    ctx.beginPath();
+    ctx.arc(sx, sy, star.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 // Parallax background drawn in its own transform at a reduced translation factor.
 function drawFarStars(player) {
-  ensureFarStars();
+  ensureStars();
   const p = 0.4;
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate(rot);
   ctx.translate(-player.x * p, -player.y * p);
-  ctx.fillStyle = PALETTE.star;
-  for (const star of farStars) {
-    ctx.globalAlpha = star.a;
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+  drawStarLayer(farStars, player.x * p, player.y * p);
   ctx.restore();
 }
 
-function drawSpace() {
-  for (const star of state.stars) {
-    ctx.globalAlpha = star.a;
-    ctx.fillStyle = PALETTE.star;
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+function drawSpace(player) {
+  ensureStars();
+  drawStarLayer(nearStars, player.x, player.y);
+
+  // Endless tactical grid: only the lines around the camera are drawn.
+  const R = Math.hypot(canvas.width, canvas.height);
+  const step = 320;
+  const x0 = Math.floor((player.x - R) / step) * step;
+  const y0 = Math.floor((player.y - R) / step) * step;
   ctx.strokeStyle = PALETTE.grid;
   ctx.lineWidth = 1;
-  for (let x = 0; x <= WORLD.width; x += 320) {
+  for (let x = x0; x <= player.x + R; x += step) {
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, WORLD.height);
+    ctx.moveTo(x, player.y - R);
+    ctx.lineTo(x, player.y + R);
     ctx.stroke();
   }
-  for (let y = 0; y <= WORLD.height; y += 320) {
+  for (let y = y0; y <= player.y + R; y += step) {
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(WORLD.width, y);
+    ctx.moveTo(player.x - R, y);
+    ctx.lineTo(player.x + R, y);
     ctx.stroke();
   }
-}
-
-function drawMapBounds() {
-  ctx.strokeStyle = PALETTE.bound;
-  ctx.lineWidth = 6;
-  ctx.strokeRect(0, 0, WORLD.width, WORLD.height);
 }
 
 function randomAsteroidPoint(index, radius) {
