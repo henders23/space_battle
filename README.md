@@ -1,0 +1,108 @@
+# Valkyrie — Broadside Command
+
+A browser-based, real-time **tactical starship command game** set during the Helion War.
+You are not a fighter pilot — you are the captain of a single heavy warship on the line.
+Manoeuvre for broadsides, manage shields and system damage, complete your orders, and
+answer to the Admiralty after every action.
+
+> You commanded a ship in a war — not just won a level.
+
+## How to run locally
+
+The game uses ES modules, so it must be served over HTTP (opening `index.html` from
+`file://` will not load the modules). Any static server works:
+
+```bash
+# from the repository root
+python3 -m http.server 8000
+# then open http://localhost:8000/
+```
+
+or `npx serve`, or any static host (Vercel, GitHub Pages, etc.).
+
+The Valkyrie theme music starts on your first interaction (browser autoplay policy);
+toggle it from the title screen or **Settings**.
+
+## Controls
+
+| Key | Action |
+|---|---|
+| `W` | Thrust forward |
+| `S` | Reverse / braking thrust |
+| `A` / `D` | Rotate left / right |
+| `Space` | Fire forward guns |
+| `Q` | Fire port broadside |
+| `E` | Fire starboard broadside |
+| `F` | Fire torpedo / special weapon |
+| `R` | Retreat (forfeits the mission) |
+| `Esc` | Pause |
+
+A full reference is on the in-game **Controls** screen.
+
+## Combat model
+
+Your ship is fixed at the **centre of the screen, pointing up**; the world — enemies,
+asteroids, projectiles, range rings — rotates around it. Your **forward gun cone faces
+up, the port broadside arc is always to the left, and the starboard arc to the right**,
+so you read your firing envelopes at a glance and fight by *turning* the ship to bring a
+broadside to bear. Ships are heavy: slow to accelerate, wide to turn. Combat rewards
+positioning and timing over twitch reflexes.
+
+## Current features (Milestone 0)
+
+- **Valkyrie** identity throughout, built to the design mockup: command-terminal UI,
+  Saira / Saira Condensed / JetBrains Mono type, cyan/amber/red palette, scanlines and
+  tactical chrome. Fonts are bundled locally — no network required.
+- Title screen with a numbered menu (New Campaign / Continue / **Controls** / Settings /
+  Credits) and live war-status footer.
+- Ship-centred broadside combat with screen-fixed weapon arcs, range rings, tactical
+  HUD (ship status, system damage, weapon charge, locked target, command log) and an
+  off-screen target indicator.
+- Flagship-assassination missions with escorts, asteroid fields and an escape timer.
+- Starbase refit: repair economy, weapon/utility loadout selection, mission order.
+- Procedural after-action evaluation: grade, captain's report, career impact, statistics.
+- Career persistence via localStorage (credits, reputation, hull, loadout).
+- Title/menu music with volume + mute, persisted between sessions.
+
+## Project structure
+
+```
+index.html · style.css · assets/ (music + fonts)
+src/
+  main.js          bootstrap, screen router wiring, input, game loop
+  state.js         shared state + constants
+  router.js        screen transitions
+  career.js        economy + localStorage save/load
+  audio.js         music controller
+  data/            loadouts, theme palette, control scheme
+  combat/          mission, simulation, weapons, systems, effects, renderer
+  screens/         starbase, evaluation
+  ui/              hud
+  utils.js         math + formatting helpers
+```
+
+## Roadmap
+
+See [`PLAN.md`](PLAN.md) for the full execution plan. Upcoming milestones:
+
+1. **M1** — Stabilise + deeper career persistence.
+2. **M2** — Starbase & progression (shop, unlocks, mission history).
+3. **M3** — Galactic war map with sectors and dynamic war consequences.
+4. **M4** — Mission variety (convoy escort, starbase defence, patrol, rescue).
+5. **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types.
+6. **M6** — Campaign polish: ranks, commendations, war news, settings, audio/SFX.
+7. **M7** — Procedural story layer: recurring named enemy ships, operation chains,
+   officer voice-lines, battle scars.
+
+## Known issues / notes
+
+- Must be served over HTTP (ES modules); `file://` will not work.
+- Audio waits for a user gesture before playing (browser autoplay policy).
+- One mission type so far (flagship assassination); variety arrives in M4.
+- The save system is intentionally light in M0 and expands in later milestones.
+
+## Design pillars
+
+Broadside-first combat · heavy ships, not fighters · procedural war with authored
+flavour · the player is evaluated as a captain · campaign consequences · browser-first,
+no backend.

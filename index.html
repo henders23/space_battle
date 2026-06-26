@@ -4,32 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Valkyrie</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304080b'/%3E%3Crect x='8' y='8' width='16' height='16' transform='rotate(45 16 16)' fill='none' stroke='%2345e0f0' stroke-width='3'/%3E%3Crect x='13' y='13' width='6' height='6' transform='rotate(45 16 16)' fill='%2345e0f0'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main id="app">
-    <section id="start-screen" class="screen screen-active">
-      <div class="hero">
-        <p class="eyebrow">Tactical starship command prototype</p>
-        <h1>Valkyrie</h1>
-        <p class="subtitle">Take command of a heavy warship, find the enemy flagship, and bring it down before it escapes.</p>
-        <div class="button-row">
-          <button id="begin-mission" class="primary">Begin Mission</button>
-          <button id="start-refit">Starbase Refit</button>
+
+    <!-- ============ TITLE ============ -->
+    <section id="title-screen" class="screen">
+      <div class="vk-bg vk-bg--title"></div>
+      <div class="scanlines"></div>
+      <div class="title-layout">
+        <div class="fleet-tag">
+          <span class="sigil"></span>
+          <span class="mono">COMMONWEALTH NAVY <span class="dim">//</span> FLEET COMMAND TERMINAL</span>
+        </div>
+
+        <div class="title-block">
+          <p class="mono classified">CLASSIFIED // OPERATIONAL</p>
+          <h1 class="game-title">VALKYRIE</h1>
+          <div class="title-sub">
+            <span class="rule"></span>
+            <span>BROADSIDE COMMAND</span>
+          </div>
+          <p class="tagline">You are not a pilot. You are the captain of a warship on the line — and the Helion War will judge every decision you make.</p>
+        </div>
+
+        <nav class="menu">
+          <button class="menu-item" id="menu-new"><span class="num">01</span><span class="label">New Campaign</span><span class="mono sub">BEGIN SERVICE</span></button>
+          <button class="menu-item" id="menu-continue"><span class="num">02</span><span class="label">Continue</span><span class="mono sub">RESUME COMMAND</span></button>
+          <button class="menu-item" id="menu-controls"><span class="num">03</span><span class="label">Controls</span><span class="mono sub">BRIDGE STATIONS</span></button>
+          <button class="menu-item" id="menu-settings"><span class="num">04</span><span class="label">Settings</span><span class="mono sub">TERMINAL CONFIG</span></button>
+          <button class="menu-item" id="menu-credits"><span class="num">05</span><span class="label">Credits</span><span class="mono sub">SERVICE RECORD</span></button>
+        </nav>
+
+        <div class="status-bar mono">
+          <span>BUILD 1.0.0 // TERMINAL VK-CMD</span>
+          <span class="dim">HELION WAR — CYCLE 47 <span class="amber">●</span> WAR STATUS: CONTESTED</span>
+          <button class="audio-toggle" data-mute-toggle>♪ Music: On</button>
         </div>
       </div>
     </section>
 
+    <!-- ============ STARBASE ============ -->
     <section id="starbase-screen" class="screen">
+      <div class="vk-bg"></div>
       <div class="panel wide">
         <div class="section-heading">
-          <p class="eyebrow">Orbital Command</p>
-          <h2>Starbase Refit</h2>
+          <p class="mono eyebrow">ORBITAL COMMAND // REFIT BAY</p>
+          <h2>Starbase</h2>
         </div>
 
         <div class="base-grid">
-          <div class="status-block">
-            <h3>Career</h3>
+          <div class="card status-block">
+            <h3 class="mono">▣ CAREER</h3>
             <dl>
               <div><dt>Credits</dt><dd id="base-credits">0</dd></div>
               <div><dt>Reputation</dt><dd id="base-reputation">Unproven</dd></div>
@@ -39,84 +67,78 @@
             <button id="repair-ship">Repair Ship</button>
           </div>
 
-          <div class="loadout-block">
-            <h3>Loadout</h3>
-            <label>
-              Forward Weapon
-              <select id="forward-select"></select>
-            </label>
-            <label>
-              Port Broadside
-              <select id="port-select"></select>
-            </label>
-            <label>
-              Starboard Broadside
-              <select id="starboard-select"></select>
-            </label>
-            <label>
-              Utility
-              <select id="utility-select"></select>
-            </label>
+          <div class="card loadout-block">
+            <h3 class="mono">⚉ LOADOUT</h3>
+            <label>Forward Weapon<select id="forward-select"></select></label>
+            <label>Port Broadside<select id="port-select"></select></label>
+            <label>Starboard Broadside<select id="starboard-select"></select></label>
+            <label>Utility<select id="utility-select"></select></label>
           </div>
 
-          <div class="orders-block">
-            <h3>Mission Order</h3>
-            <p id="mission-preview">Assassinate a hostile flagship in a contested sector. Expect escorts, asteroids, and a narrow intercept window.</p>
+          <div class="card orders-block">
+            <h3 class="mono">▤ MISSION ORDER</h3>
+            <p id="mission-preview">Assassinate a hostile flagship in a contested sector.</p>
+            <div class="spacer"></div>
             <button id="launch-mission" class="primary">Launch Mission</button>
+            <button data-back-title class="ghost">Back to Title</button>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- ============ COMBAT ============ -->
     <section id="combat-screen" class="screen">
+      <div class="combat-topbar mono">
+        <div class="alert"><span class="dot"></span> COMBAT ENGAGED</div>
+        <div class="op"><span class="cap">OPERATION</span><b id="hud-operation">—</b></div>
+        <div class="obj"><span class="cap">PRIMARY OBJECTIVE</span><span id="hud-objective">—</span></div>
+        <div class="clock"><span class="cap">MISSION CLOCK</span><b id="hud-timer">00:00</b></div>
+      </div>
       <div class="combat-layout">
         <canvas id="game-canvas" width="1120" height="700"></canvas>
         <aside class="hud">
           <div class="hud-card">
-            <h3>Objective</h3>
-            <p id="hud-objective">Destroy the flagship.</p>
-            <p id="hud-timer">00:00</p>
-          </div>
-          <div class="hud-card">
-            <h3>Ship Status</h3>
-            <div class="meter"><span>Hull</span><div><i id="hull-bar"></i></div><b id="hull-value">100%</b></div>
-            <div class="meter"><span>Shields</span><div><i id="shield-bar"></i></div><b id="shield-value">100%</b></div>
+            <h3 class="mono">▣ SHIP STATUS</h3>
+            <div class="meter"><span>SHIELDS</span><div class="track"><i id="shield-bar"></i></div><b id="shield-value">100%</b></div>
+            <div class="meter"><span>HULL</span><div class="track"><i id="hull-bar"></i></div><b id="hull-value">100%</b></div>
             <ul id="system-list" class="system-list"></ul>
           </div>
           <div class="hud-card">
-            <h3>Weapons</h3>
+            <h3 class="mono">⚉ WEAPON SYSTEMS</h3>
             <ul id="weapon-list" class="weapon-list"></ul>
           </div>
           <div class="hud-card">
-            <h3>Target</h3>
+            <h3 class="mono danger">◎ LOCKED TARGET</h3>
             <p id="target-info">No contact.</p>
           </div>
           <div class="hud-card log-card">
-            <h3>Message Log</h3>
+            <h3 class="mono">▤ COMMAND LOG</h3>
             <ol id="message-log"></ol>
           </div>
         </aside>
       </div>
-      <div id="pause-banner" class="pause-banner hidden">Paused</div>
+      <div id="pause-banner" class="pause-banner hidden">PAUSED</div>
     </section>
 
+    <!-- ============ EVALUATION ============ -->
     <section id="evaluation-screen" class="screen">
+      <div class="vk-bg"></div>
       <div class="panel wide">
         <div class="section-heading">
-          <p class="eyebrow">After Action Review</p>
+          <p class="mono eyebrow">AFTER ACTION REVIEW // ADMIRALTY ASSESSMENT</p>
           <h2>Mission Evaluation</h2>
         </div>
         <div class="evaluation-grid">
-          <div class="grade-card">
-            <span id="mission-grade">F</span>
+          <div class="card grade-card">
+            <span id="mission-grade" data-grade="F">F</span>
             <p id="mission-result">Mission failed.</p>
           </div>
-          <div class="report-card">
-            <h3>Captain's Report</h3>
+          <div class="card report-card">
+            <h3 class="mono">CAPTAIN'S REPORT</h3>
             <p id="captain-report"></p>
           </div>
-          <div class="economy-card">
-            <h3>Career Impact</h3>
+          <div class="card economy-card">
+            <h3 class="mono">CAREER IMPACT</h3>
             <dl>
               <div><dt>Reward</dt><dd id="eval-reward">0</dd></div>
               <div><dt>Repair Cost</dt><dd id="eval-repair">0</dd></div>
@@ -124,16 +146,70 @@
               <div><dt>Reputation</dt><dd id="eval-reputation">Unproven</dd></div>
             </dl>
           </div>
-          <div class="stats-card">
-            <h3>Statistics</h3>
+          <div class="card stats-card">
+            <h3 class="mono">STATISTICS</h3>
             <dl id="eval-stats"></dl>
           </div>
         </div>
         <button id="continue-starbase" class="primary">Continue to Starbase</button>
       </div>
     </section>
+
+    <!-- ============ CONTROLS ============ -->
+    <section id="controls-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="panel wide">
+        <div class="section-heading">
+          <p class="mono eyebrow">BRIDGE STATIONS // COMMAND REFERENCE</p>
+          <h2>Controls</h2>
+        </div>
+        <div id="controls-grid" class="controls-grid"></div>
+        <p class="note mono">Combat is deliberate — your ship is heavy. Turn early, expose a broadside, then protect the damaged side.</p>
+        <button data-back-title class="primary">Back to Title</button>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="settings-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="panel">
+        <div class="section-heading">
+          <p class="mono eyebrow">TERMINAL CONFIG</p>
+          <h2>Settings</h2>
+        </div>
+        <div class="card settings-card">
+          <label class="setting-row">Music Volume
+            <input type="range" id="music-volume" min="0" max="100" value="60">
+          </label>
+          <div class="setting-row">
+            <span>Music</span>
+            <button class="audio-toggle" data-mute-toggle>♪ Music: On</button>
+          </div>
+          <p class="note mono">More options (sound effects, screen shake, difficulty, accessibility) arrive in a later milestone.</p>
+        </div>
+        <button data-back-title class="primary">Back to Title</button>
+      </div>
+    </section>
+
+    <!-- ============ CREDITS ============ -->
+    <section id="credits-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="panel">
+        <div class="section-heading">
+          <p class="mono eyebrow">SERVICE RECORD</p>
+          <h2>Credits</h2>
+        </div>
+        <div class="card credits-card">
+          <p><b>Valkyrie — Broadside Command</b></p>
+          <p class="muted">A tactical starship command game. You command a single heavy warship through the Helion War: manoeuvre for broadsides, manage shields and system damage, and answer to the Admiralty after every action.</p>
+          <p class="muted">Music: “Silent Armada”.</p>
+        </div>
+        <button data-back-title class="primary">Back to Title</button>
+      </div>
+    </section>
+
   </main>
 
-  <script src="game.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
