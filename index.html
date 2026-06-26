@@ -65,6 +65,7 @@
               <div><dt>Repair Estimate</dt><dd id="base-repair-cost">0</dd></div>
               <div><dt>Missions</dt><dd id="base-missions">0</dd></div>
               <div><dt>Best Grade</dt><dd id="base-best">—</dd></div>
+              <div><dt>Tonnage Destroyed</dt><dd id="base-tonnage">0 t</dd></div>
             </dl>
             <button id="repair-ship">Repair Ship</button>
           </div>
@@ -83,6 +84,18 @@
             <div class="spacer"></div>
             <button id="launch-mission" class="primary">Launch Mission</button>
             <button data-back-title class="ghost">Back to Title</button>
+          </div>
+        </div>
+
+        <div class="base-grid-2">
+          <div class="card armory-block">
+            <h3 class="mono">⚙ ARMORY</h3>
+            <p class="card-sub mono">Purchase weapons and modules, then equip them in your loadout.</p>
+            <div id="armory-list" class="armory-list"></div>
+          </div>
+          <div class="card history-block">
+            <h3 class="mono">▤ MISSION HISTORY</h3>
+            <div id="history-list" class="history-list"></div>
           </div>
         </div>
       </div>

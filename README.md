@@ -51,20 +51,28 @@ so you read your firing envelopes at a glance and fight by *turning* the ship to
 broadside to bear. Ships are heavy: slow to accelerate, wide to turn. Combat rewards
 positioning and timing over twitch reflexes.
 
-## Current features (Milestone 0)
+## Current features
 
 - **Valkyrie** identity throughout, built to the design mockup: command-terminal UI,
   Saira / Saira Condensed / JetBrains Mono type, cyan/amber/red palette, scanlines and
   tactical chrome. Fonts are bundled locally — no network required.
 - Title screen with a numbered menu (New Campaign / Continue / **Controls** / Settings /
   Credits) and live war-status footer.
-- Ship-centred broadside combat with screen-fixed weapon arcs, range rings, tactical
-  HUD (ship status, system damage, weapon charge, locked target, command log) and an
+- **Ship-centred broadside combat**: your ship is fixed at screen centre and the world
+  rotates around it, with screen-fixed weapon arcs, range rings, a tactical HUD and an
   off-screen target indicator.
+- **Mouse-aimed firing**: shots travel toward the cursor; the battery whose arc contains
+  the cursor fires (left click = the bearing battery, right click = torpedo), and the
+  active arc highlights.
+- **Per-side defences**: independent port/starboard shields and hull on every ship —
+  protect a damaged side and force the enemy to expose theirs.
 - Flagship-assassination missions with escorts, asteroid fields and an escape timer.
-- Starbase refit: repair economy, weapon/utility loadout selection, mission order.
-- Procedural after-action evaluation: grade, captain's report, career impact, statistics.
-- Career persistence via localStorage (credits, reputation, hull, loadout).
+- **Starbase loop**: repair economy, an **armory** to purchase weapons/modules with
+  credits, owned-only loadout selection, career stats, and **mission history**.
+- Procedural after-action evaluation: grade, captain's report, commendations/reprimands,
+  career impact, statistics, and a running service record.
+- Career persistence via localStorage (credits, reputation, hull, loadout, owned items,
+  record and history).
 - Title/menu music with volume + mute, persisted between sessions.
 
 ## Project structure
@@ -86,16 +94,17 @@ src/
 
 ## Roadmap
 
-See [`PLAN.md`](PLAN.md) for the full execution plan. Upcoming milestones:
+See [`PLAN.md`](PLAN.md) for the full execution plan.
 
-1. **M1** — Stabilise + deeper career persistence.
-2. **M2** — Starbase & progression (shop, unlocks, mission history).
-3. **M3** — Galactic war map with sectors and dynamic war consequences.
-4. **M4** — Mission variety (convoy escort, starbase defence, patrol, rescue).
-5. **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types.
-6. **M6** — Campaign polish: ranks, commendations, war news, settings, audio/SFX.
-7. **M7** — Procedural story layer: recurring named enemy ships, operation chains,
-   officer voice-lines, battle scars.
+- **M0** — Rebrand, modular architecture, ship-centred combat, audio + controls. ✅
+- **M1** — Stabilise + persistent career record. ✅
+- **M2** — Starbase & progression (armory, unlocks, mission history). ✅
+- **M3** — Galactic war map with sectors and dynamic war consequences.
+- **M4** — Mission variety (convoy escort, starbase defence, patrol, rescue).
+- **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types.
+- **M6** — Campaign polish: ranks, war news, settings, audio/SFX.
+- **M7** — Procedural story layer: recurring named enemy ships, operation chains,
+  officer voice-lines, battle scars.
 
 ## Known issues / notes
 

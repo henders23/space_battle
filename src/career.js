@@ -1,6 +1,6 @@
 "use strict";
 
-import { state, defaultCareer, defaultRecord, createSystems } from "./state.js";
+import { state, defaultCareer, defaultRecord, defaultOwned, createSystems } from "./state.js";
 
 const GRADE_ORDER = ["—", "F", "D", "C", "B", "A", "S"];
 
@@ -29,6 +29,28 @@ export function calculateRepairCost() {
     0
   );
   return Math.max(0, hullCost + systemCost);
+}
+
+export function isOwned(category, key) {
+  const list = state.career.owned[category];
+  return Boolean(list && list.includes(key));
+}
+
+// Purchase an armory item. Cost is supplied by the caller (from the item data)
+// so this module doesn't need to import the loadout tables.
+export function buyItem(category, key, cost) {
+  if (isOwned(category, key) || state.career.credits < cost) return false;
+  state.career.credits -= cost;
+  if (!state.career.owned[category]) state.career.owned[category] = [];
+  state.career.owned[category].push(key);
+  saveCareer();
+  return true;
+}
+
+export function recordMission(entry) {
+  const history = state.career.record.history;
+  history.unshift(entry);
+  state.career.record.history = history.slice(0, 12);
 }
 
 export function repairShip() {
@@ -62,6 +84,13 @@ export function loadCareer() {
     const rec = defaultRecord();
     state.career.record = { ...rec, ...(parsed.record || {}) };
     state.career.record.grades = { ...rec.grades, ...((parsed.record && parsed.record.grades) || {}) };
+    state.career.record.history = (parsed.record && parsed.record.history) || [];
+    const owned = defaultOwned();
+    const savedOwned = parsed.owned || {};
+    for (const cat of Object.keys(owned)) {
+      // Union of starter items and anything purchased, de-duplicated.
+      state.career.owned[cat] = Array.from(new Set([...owned[cat], ...(savedOwned[cat] || [])]));
+    }
     state.hasSave = true;
     return true;
   } catch (err) {

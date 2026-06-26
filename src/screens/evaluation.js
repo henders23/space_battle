@@ -3,7 +3,7 @@
 import { state } from "../state.js";
 import { clamp, formatCredits, formatTime } from "../utils.js";
 import { showScreen } from "../router.js";
-import { calculateRepairCost, currentReputation, saveCareer, betterGrade } from "../career.js";
+import { calculateRepairCost, currentReputation, saveCareer, betterGrade, recordMission } from "../career.js";
 import { hullRatio, shieldRatio } from "../combat/shipStats.js";
 
 // After-action review: grade, captain's report, economy, statistics.
@@ -49,6 +49,14 @@ export function finishMission(result, reason) {
   if (state.stats.targetDestroyed) record.flagshipsDestroyed += 1;
   record.enemyTonnage += Math.round(state.stats.tonnage);
   if (state.stats.hullCritical) record.timesHullCritical += 1;
+
+  recordMission({
+    grade,
+    result,
+    op: state.mission.operationName,
+    sector: state.mission.sectorName,
+    target: state.mission.flagshipName
+  });
 
   const commendation = pickCommendation(result, grade);
   saveCareer();

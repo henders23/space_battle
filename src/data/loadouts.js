@@ -5,6 +5,7 @@
 export const forwardLoadouts = {
   lightForward: {
     name: "Light Forward Guns",
+    cost: 0,
     description: "Fast cooldown, lower damage.",
     damage: 14,
     cooldown: 0.46,
@@ -18,6 +19,7 @@ export const forwardLoadouts = {
   },
   heavyForward: {
     name: "Heavy Forward Guns",
+    cost: 600,
     description: "Slower cooldown, higher damage.",
     damage: 32,
     cooldown: 0.95,
@@ -31,6 +33,7 @@ export const forwardLoadouts = {
   },
   torpedoForward: {
     name: "Torpedo Launcher",
+    cost: 900,
     description: "Powerful, narrow, and slow to reload.",
     damage: 74,
     cooldown: 2.4,
@@ -48,6 +51,7 @@ export const forwardLoadouts = {
 export const broadsideLoadouts = {
   standard: {
     name: "Standard Broadside",
+    cost: 0,
     description: "Balanced battery.",
     damage: 19,
     cooldown: 1.15,
@@ -61,6 +65,7 @@ export const broadsideLoadouts = {
   },
   heavy: {
     name: "Heavy Broadside",
+    cost: 700,
     description: "High damage, slow cooldown.",
     damage: 31,
     cooldown: 1.85,
@@ -74,6 +79,7 @@ export const broadsideLoadouts = {
   },
   flak: {
     name: "Flak Broadside",
+    cost: 500,
     description: "Lower damage, wider arc, fast cooldown.",
     damage: 12,
     cooldown: 0.72,
@@ -90,18 +96,22 @@ export const broadsideLoadouts = {
 export const utilityLoadouts = {
   reinforcedShields: {
     name: "Reinforced Shields",
+    cost: 0,
     description: "Increases maximum shields and shield recovery."
   },
   engineBoost: {
     name: "Engine Boost",
+    cost: 450,
     description: "Improves thrust and turning slightly."
   },
   improvedSensors: {
     name: "Improved Sensors",
+    cost: 450,
     description: "Extends target detection range."
   },
   repairDrones: {
     name: "Repair Drones",
+    cost: 800,
     description: "Slowly patches hull during combat."
   }
 };

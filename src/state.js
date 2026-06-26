@@ -30,7 +30,17 @@ export function defaultRecord() {
     escortsDestroyed: 0,
     enemyTonnage: 0,
     timesHullCritical: 0,
-    bestGrade: "—"
+    bestGrade: "—",
+    history: []
+  };
+}
+
+// Items the captain starts with; everything else must be bought at the armory.
+export function defaultOwned() {
+  return {
+    forward: ["lightForward"],
+    broadside: ["standard"],
+    utility: ["reinforcedShields"]
   };
 }
 
@@ -46,6 +56,7 @@ export function defaultCareer() {
       starboard: "standard",
       utility: "reinforcedShields"
     },
+    owned: defaultOwned(),
     record: defaultRecord()
   };
 }
