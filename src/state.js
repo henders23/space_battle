@@ -21,6 +21,19 @@ export function createSystems() {
   return { engines: 0, weapons: 0, sensors: 0, shields: 0 };
 }
 
+export function defaultRecord() {
+  return {
+    missionsCompleted: 0,
+    missionsFailed: 0,
+    grades: { S: 0, A: 0, B: 0, C: 0, D: 0, F: 0 },
+    flagshipsDestroyed: 0,
+    escortsDestroyed: 0,
+    enemyTonnage: 0,
+    timesHullCritical: 0,
+    bestGrade: "—"
+  };
+}
+
 export function defaultCareer() {
   return {
     credits: 1250,
@@ -32,7 +45,8 @@ export function defaultCareer() {
       port: "standard",
       starboard: "standard",
       utility: "reinforcedShields"
-    }
+    },
+    record: defaultRecord()
   };
 }
 

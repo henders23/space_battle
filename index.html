@@ -63,6 +63,8 @@
               <div><dt>Reputation</dt><dd id="base-reputation">Unproven</dd></div>
               <div><dt>Hull</dt><dd id="base-hull">100%</dd></div>
               <div><dt>Repair Estimate</dt><dd id="base-repair-cost">0</dd></div>
+              <div><dt>Missions</dt><dd id="base-missions">0</dd></div>
+              <div><dt>Best Grade</dt><dd id="base-best">—</dd></div>
             </dl>
             <button id="repair-ship">Repair Ship</button>
           </div>
@@ -99,8 +101,23 @@
         <aside class="hud">
           <div class="hud-card">
             <h3 class="mono">▣ SHIP STATUS</h3>
-            <div class="meter"><span>SHIELDS</span><div class="track"><i id="shield-bar"></i></div><b id="shield-value">100%</b></div>
-            <div class="meter"><span>HULL</span><div class="track"><i id="hull-bar"></i></div><b id="hull-value">100%</b></div>
+            <div class="sided">
+              <div class="sided-row">
+                <span class="sided-label">SHIELDS</span>
+                <b id="shield-port-val">100%</b>
+                <div class="track port"><i id="shield-port-bar"></i></div>
+                <div class="track"><i id="shield-stbd-bar"></i></div>
+                <b id="shield-stbd-val">100%</b>
+              </div>
+              <div class="sided-row">
+                <span class="sided-label">HULL</span>
+                <b id="hull-port-val">100%</b>
+                <div class="track port"><i id="hull-port-bar"></i></div>
+                <div class="track"><i id="hull-stbd-bar"></i></div>
+                <b id="hull-stbd-val">100%</b>
+              </div>
+              <div class="sided-caption mono"><span>◄ PORT</span><span>STARBOARD ►</span></div>
+            </div>
             <ul id="system-list" class="system-list"></ul>
           </div>
           <div class="hud-card">
@@ -132,6 +149,7 @@
           <div class="card grade-card">
             <span id="mission-grade" data-grade="F">F</span>
             <p id="mission-result">Mission failed.</p>
+            <p id="eval-commendation" class="commendation hidden"></p>
           </div>
           <div class="card report-card">
             <h3 class="mono">CAPTAIN'S REPORT</h3>
@@ -151,6 +169,7 @@
             <dl id="eval-stats"></dl>
           </div>
         </div>
+        <p id="eval-career" class="mono career-line"></p>
         <button id="continue-starbase" class="primary">Continue to Starbase</button>
       </div>
     </section>

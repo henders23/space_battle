@@ -5,6 +5,7 @@ import { clamp, degToRad, distance } from "../utils.js";
 import { PALETTE, ARC_COLORS } from "../data/theme.js";
 import { getSlotAngle, playerWeaponDefinitions } from "./weapons.js";
 import { getSensorRange } from "./systems.js";
+import { hullRatio, sideRatioShield } from "./shipStats.js";
 
 // Ship-centred tactical renderer. The player ship is fixed at the centre of the
 // canvas, pointing "up"; the world (stars, enemies, asteroids, projectiles) is
@@ -168,8 +169,8 @@ function drawShipBody(ship) {
   ctx.rotate(ship.angle);
   const isPlayer = ship.type === "player";
   const isFlagship = ship.type === "flagship";
-  const length = isFlagship ? 92 : isPlayer ? 64 : 44;
-  const width = isFlagship ? 34 : isPlayer ? 26 : 16;
+  const length = isFlagship ? 128 : isPlayer ? 90 : 60;
+  const width = isFlagship ? 46 : isPlayer ? 36 : 22;
 
   ctx.shadowColor = isPlayer ? "rgba(69,224,240,0.6)" : "rgba(255,83,71,0.45)";
   ctx.shadowBlur = isPlayer ? 22 : 14;
@@ -194,14 +195,23 @@ function drawShipBody(ship) {
   ctx.fillRect(-length * 0.08, -width * 0.42, length * 0.24, 3);
   ctx.fillRect(-length * 0.08, width * 0.35, length * 0.24, 3);
 
-  if (ship.shields > 1) {
-    const shieldRatio = ship.shields / ship.shieldsMax;
+  // Per-side shield arcs: in the ship's local frame +y is starboard, -y is
+  // port. Each half-ellipse brightens with that facing's remaining shield.
+  const rx = ship.radius * 1.18;
+  const ry = ship.radius * 0.86;
+  const sides = [
+    ["starboard", 0, Math.PI],
+    ["port", Math.PI, Math.PI * 2]
+  ];
+  for (const [side, a0, a1] of sides) {
+    const ratio = sideRatioShield(ship, side);
+    if (ratio <= 0.02) continue;
     ctx.strokeStyle = isPlayer
-      ? `rgba(69, 224, 240, ${0.18 + shieldRatio * 0.3})`
-      : `rgba(255, 122, 112, ${0.16 + shieldRatio * 0.22})`;
+      ? `rgba(69, 224, 240, ${0.14 + ratio * 0.36})`
+      : `rgba(255, 122, 112, ${0.12 + ratio * 0.28})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(0, 0, ship.radius * 1.18, ship.radius * 0.82, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, rx, ry, 0, a0, a1);
     ctx.stroke();
   }
   ctx.restore();
@@ -264,8 +274,8 @@ function drawShipLabel(ship) {
   const pos = worldToScreen(ship);
   const margin = 60;
   if (pos.x < -margin || pos.x > canvas.width + margin || pos.y < -margin || pos.y > canvas.height + margin) return;
-  const hull = clamp(ship.hull / ship.hullMax, 0, 1);
-  const barWidth = ship.type === "flagship" ? 92 : 54;
+  const hull = hullRatio(ship);
+  const barWidth = ship.type === "flagship" ? 110 : 64;
   const y = pos.y - ship.radius - 18;
   ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
   ctx.fillRect(pos.x - barWidth / 2, y, barWidth, 5);

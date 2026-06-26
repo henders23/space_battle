@@ -35,6 +35,8 @@ export function initStarbase() {
   dom.baseReputation = document.getElementById("base-reputation");
   dom.baseHull = document.getElementById("base-hull");
   dom.baseRepairCost = document.getElementById("base-repair-cost");
+  dom.baseMissions = document.getElementById("base-missions");
+  dom.baseBest = document.getElementById("base-best");
   dom.missionPreview = document.getElementById("mission-preview");
   dom.repairShip = document.getElementById("repair-ship");
 
@@ -75,6 +77,9 @@ export function updateStarbase() {
   dom.baseReputation.textContent = currentReputation();
   dom.baseHull.textContent = `${Math.round(state.career.hull * 100)}%`;
   dom.baseRepairCost.textContent = formatCredits(repairCost);
+  const record = state.career.record;
+  dom.baseMissions.textContent = `${record.missionsCompleted} / ${record.missionsCompleted + record.missionsFailed}`;
+  dom.baseBest.textContent = record.bestGrade;
   dom.repairShip.disabled = repairCost === 0 || state.career.credits < repairCost;
 
   const loadout = state.career.loadout;

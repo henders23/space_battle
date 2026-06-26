@@ -1,9 +1,10 @@
 "use strict";
 
 import { state, SYSTEM_NAMES, SYSTEM_STATES } from "../state.js";
-import { clamp, distance, formatTime } from "../utils.js";
+import { distance, formatTime } from "../utils.js";
 import { playerWeaponDefinitions } from "../combat/weapons.js";
 import { getSensorRange } from "../combat/systems.js";
+import { sideRatioShield, sideRatioHull } from "../combat/shipStats.js";
 
 const dom = {};
 
@@ -11,14 +12,32 @@ export function initHud() {
   dom.operation = document.getElementById("hud-operation");
   dom.objective = document.getElementById("hud-objective");
   dom.timer = document.getElementById("hud-timer");
-  dom.hullBar = document.getElementById("hull-bar");
-  dom.hullValue = document.getElementById("hull-value");
-  dom.shieldBar = document.getElementById("shield-bar");
-  dom.shieldValue = document.getElementById("shield-value");
+  dom.bars = {
+    shieldPort: document.getElementById("shield-port-bar"),
+    shieldStbd: document.getElementById("shield-stbd-bar"),
+    hullPort: document.getElementById("hull-port-bar"),
+    hullStbd: document.getElementById("hull-stbd-bar")
+  };
+  dom.vals = {
+    shieldPort: document.getElementById("shield-port-val"),
+    shieldStbd: document.getElementById("shield-stbd-val"),
+    hullPort: document.getElementById("hull-port-val"),
+    hullStbd: document.getElementById("hull-stbd-val")
+  };
   dom.systemList = document.getElementById("system-list");
   dom.weaponList = document.getElementById("weapon-list");
   dom.targetInfo = document.getElementById("target-info");
   dom.messageLog = document.getElementById("message-log");
+}
+
+function hullColor(ratio) {
+  return ratio > 0.45 ? "#5fd17a" : ratio > 0.22 ? "#f0a93d" : "#ff5347";
+}
+
+function setBar(bar, val, ratio, color) {
+  bar.style.width = `${ratio * 100}%`;
+  bar.style.background = color;
+  val.textContent = `${Math.round(ratio * 100)}%`;
 }
 
 function nearestVisibleTarget() {
@@ -45,13 +64,12 @@ export function updateHud() {
   dom.objective.textContent = `Destroy ${mission.flagshipName} in ${mission.sectorName}.`;
   dom.timer.textContent = formatTime(mission.timer);
 
-  const hullPercent = clamp(player.hull / player.hullMax, 0, 1);
-  const shieldPercent = clamp(player.shields / player.shieldsMax, 0, 1);
-  dom.hullBar.style.width = `${hullPercent * 100}%`;
-  dom.hullBar.style.background = hullPercent > 0.45 ? "#5fd17a" : hullPercent > 0.22 ? "#f0a93d" : "#ff5347";
-  dom.hullValue.textContent = `${Math.round(hullPercent * 100)}%`;
-  dom.shieldBar.style.width = `${shieldPercent * 100}%`;
-  dom.shieldValue.textContent = `${Math.round(shieldPercent * 100)}%`;
+  setBar(dom.bars.shieldPort, dom.vals.shieldPort, sideRatioShield(player, "port"), "#45e0f0");
+  setBar(dom.bars.shieldStbd, dom.vals.shieldStbd, sideRatioShield(player, "starboard"), "#45e0f0");
+  const hp = sideRatioHull(player, "port");
+  const hs = sideRatioHull(player, "starboard");
+  setBar(dom.bars.hullPort, dom.vals.hullPort, hp, hullColor(hp));
+  setBar(dom.bars.hullStbd, dom.vals.hullStbd, hs, hullColor(hs));
 
   dom.systemList.innerHTML = "";
   for (const [key, level] of Object.entries(player.systems)) {
@@ -74,9 +92,14 @@ export function updateHud() {
 
   const target = nearestVisibleTarget();
   if (target) {
-    const hull = Math.round((target.hull / target.hullMax) * 100);
-    const shields = Math.round((target.shields / target.shieldsMax) * 100);
-    dom.targetInfo.textContent = `${target.name}: ${Math.round(distance(player, target))}m, hull ${hull}%, shields ${shields}%.`;
+    const hPort = Math.round(sideRatioHull(target, "port") * 100);
+    const hStbd = Math.round(sideRatioHull(target, "starboard") * 100);
+    const sPort = Math.round(sideRatioShield(target, "port") * 100);
+    const sStbd = Math.round(sideRatioShield(target, "starboard") * 100);
+    dom.targetInfo.innerHTML =
+      `<b>${target.name}</b> — ${Math.round(distance(player, target))}m<br>` +
+      `<span class="sd">SHLD</span> P ${sPort}% · S ${sStbd}%<br>` +
+      `<span class="sd">HULL</span> P ${hPort}% · S ${hStbd}%`;
   } else {
     dom.targetInfo.textContent = "No contact inside sensor range.";
   }

@@ -12,6 +12,7 @@ import {
 import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
 import { addMessage, addEffect } from "./effects.js";
+import { hullTotal, hullMaxTotal, impactSide } from "./shipStats.js";
 import { finishMission } from "../screens/evaluation.js";
 
 // Per-frame world simulation: movement, enemy AI, projectiles, damage, timer.
@@ -31,7 +32,7 @@ function updatePlayer(dt) {
   const engineMult = getSystemMultiplier(ship, "engines") + ship.engineBonus;
   const accel = 112 * engineMult;
   const reverse = 58 * engineMult;
-  const turn = 1.38 * engineMult;
+  const turn = 0.82 * engineMult;
   const forwardX = Math.cos(ship.angle);
   const forwardY = Math.sin(ship.angle);
 
@@ -66,9 +67,11 @@ function updatePlayer(dt) {
 
   if (state.career.loadout.utility === "repairDrones") {
     ship.repairPulse += dt;
-    if (ship.repairPulse >= 1.5 && ship.hull > 0 && ship.hull < ship.hullMax * 0.72) {
+    if (ship.repairPulse >= 1.5 && hullTotal(ship) > 0) {
       ship.repairPulse = 0;
-      ship.hull = Math.min(ship.hullMax * 0.72, ship.hull + 4);
+      for (const side of ["port", "starboard"]) {
+        ship.hull[side] = Math.min(ship.hullMax[side] * 0.72, ship.hull[side] + 2);
+      }
     }
   }
 }
@@ -112,21 +115,26 @@ function handleAsteroidImpacts(ship, dt) {
       ship.vx *= 0.88;
       ship.vy *= 0.88;
       if (ship.type === "player" && Math.hypot(ship.vx, ship.vy) > 55 && Math.random() < 0.05) {
-        applyDamage(ship, 8, "asteroid");
+        applyDamage(ship, 8, "asteroid", impactSide(ship, asteroid));
         addMessage("Asteroid impact across the hull.");
+        if (hullTotal(ship) <= 0) {
+          ship.alive = false;
+          state.stats.survived = false;
+          finishMission("failed", "CWS Resolute was lost to a collision.");
+        }
       }
     }
   }
 }
 
 function updateShipRecovery(ship, dt) {
-  if (ship.shieldDelay > 0) {
-    ship.shieldDelay -= dt;
-  } else if (ship.shields < ship.shieldsMax) {
-    ship.shields = Math.min(
-      ship.shieldsMax,
-      ship.shields + ship.shieldRegen * getSystemMultiplier(ship, "shields") * dt
-    );
+  const regen = ship.shieldRegen * getSystemMultiplier(ship, "shields");
+  for (const side of ["port", "starboard"]) {
+    if (ship.shieldDelay[side] > 0) {
+      ship.shieldDelay[side] -= dt;
+    } else if (ship.shields[side] < ship.shieldsMax[side]) {
+      ship.shields[side] = Math.min(ship.shieldsMax[side], ship.shields[side] + regen * dt);
+    }
   }
 }
 
@@ -174,7 +182,7 @@ function updateFlagship(ship, dt) {
     if (d < 390) thrust = -36;
   }
 
-  ship.angle = turnToward(ship.angle, desiredAngle, 0.78 * dt);
+  ship.angle = turnToward(ship.angle, desiredAngle, 0.44 * dt);
   ship.vx += Math.cos(ship.angle) * thrust * dt;
   ship.vy += Math.sin(ship.angle) * thrust * dt;
   limitVelocity(ship, 125);
@@ -186,7 +194,7 @@ function updateFlagship(ship, dt) {
   const broadside = {
     damage: 23,
     cooldown: 1.35,
-    range: 720,
+    range: 500,
     arc: 70,
     speed: 520,
     spread: 12,
@@ -200,7 +208,7 @@ function updateFlagship(ship, dt) {
     name: "Flagship Bow Guns",
     damage: 16,
     cooldown: 1.1,
-    range: 620,
+    range: 440,
     arc: 28,
     speed: 590,
     spread: 4,
@@ -230,7 +238,7 @@ function updateEscort(ship, dt) {
     thrust = playerDistance > 310 ? 138 : playerDistance < 185 ? -70 : 34;
   }
 
-  ship.angle = turnToward(ship.angle, desired, 1.9 * dt);
+  ship.angle = turnToward(ship.angle, desired, 1.15 * dt);
   ship.vx += Math.cos(ship.angle) * thrust * dt;
   ship.vy += Math.sin(ship.angle) * thrust * dt;
   limitVelocity(ship, 255);
@@ -242,7 +250,7 @@ function updateEscort(ship, dt) {
     name: "Escort Guns",
     damage: 11,
     cooldown: 0.78,
-    range: 560,
+    range: 400,
     arc: 34,
     speed: 610,
     spread: 5,
@@ -279,11 +287,11 @@ function updateProjectiles(dt) {
         if (!enemy.alive) continue;
         if (distance(projectile, enemy) <= projectile.radius + enemy.radius) {
           projectile.life = 0;
-          const dealt = applyDamage(enemy, projectile.damage, "player");
+          const dealt = applyDamage(enemy, projectile.damage, "player", impactSide(enemy, projectile));
           state.stats.damageDealt += dealt;
           state.stats.shotsHit += 1;
           addEffect(projectile.x, projectile.y, projectile.color, 0.28);
-          if (enemy.hull <= 0) destroyEnemy(enemy);
+          if (hullTotal(enemy) <= 0) destroyEnemy(enemy);
           break;
         }
       }
@@ -292,10 +300,11 @@ function updateProjectiles(dt) {
       distance(projectile, state.player) <= projectile.radius + state.player.radius
     ) {
       projectile.life = 0;
-      const taken = applyDamage(state.player, projectile.damage, "enemy");
+      const taken = applyDamage(state.player, projectile.damage, "enemy", impactSide(state.player, projectile));
       state.stats.damageTaken += taken;
       addEffect(projectile.x, projectile.y, projectile.color, 0.28);
-      if (state.player.hull <= 0) {
+      if (hullTotal(state.player) < hullMaxTotal(state.player) * 0.25) state.stats.hullCritical = true;
+      if (hullTotal(state.player) <= 0) {
         state.player.alive = false;
         state.stats.survived = false;
         finishMission("failed", "CWS Resolute was destroyed in action.");
@@ -305,20 +314,20 @@ function updateProjectiles(dt) {
   state.projectiles = state.projectiles.filter((projectile) => projectile.life > 0);
 }
 
-function applyDamage(ship, amount, source) {
+function applyDamage(ship, amount, source, side) {
   let remaining = amount;
   let hullDamage = 0;
-  if (ship.shields > 0) {
-    const shieldHit = Math.min(ship.shields, remaining);
-    ship.shields -= shieldHit;
+  if (ship.shields[side] > 0) {
+    const shieldHit = Math.min(ship.shields[side], remaining);
+    ship.shields[side] -= shieldHit;
     remaining -= shieldHit;
   }
   if (remaining > 0) {
-    ship.hull = Math.max(0, ship.hull - remaining);
+    ship.hull[side] = Math.max(0, ship.hull[side] - remaining);
     hullDamage = remaining;
     maybeDamageSystem(ship, remaining, source);
   }
-  ship.shieldDelay = 3.2;
+  ship.shieldDelay[side] = 3.2;
   return hullDamage;
 }
 
@@ -338,6 +347,7 @@ function maybeDamageSystem(ship, hullDamage, source) {
 
 function destroyEnemy(enemy) {
   enemy.alive = false;
+  state.stats.tonnage += hullMaxTotal(enemy);
   addEffect(enemy.x, enemy.y, enemy.type === "flagship" ? "#ffcc66" : "#ff917d", 0.65);
   if (enemy.type === "flagship") {
     state.stats.targetDestroyed = true;
