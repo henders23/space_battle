@@ -2,6 +2,7 @@
 
 import { state } from "../state.js";
 import { SECTORS, EDGES } from "../data/sectors.js";
+import { MISSION_TYPES, SECTOR_MISSION_POOL } from "../data/missionTypes.js";
 import {
   ensureWar,
   sectorState,
@@ -113,13 +114,28 @@ function renderPanel() {
     `<div class="wm-meta mono">STARBASE: ${sbLabels[sec.starbaseLevel] || "None"}</div>` +
     (mission
       ? `<div class="wm-order"><p class="mono eyebrow">AVAILABLE OPERATION</p>` +
-        `<p class="wm-brief">Intercept and destroy the enemy command vessel holding ${def.name}. ` +
-        `Expect resistance scaled to a fleet strength of ${Math.round(sec.enemyFleet)}.</p>` +
+        `<p class="wm-optype">${operationType(id)}</p>` +
+        `<p class="wm-brief">${operationBrief(id)} Expect resistance scaled to a fleet strength of ${Math.round(sec.enemyFleet)}.</p>` +
         `<button id="warmap-deploy" class="primary">Deploy to Sector</button></div>`
       : `<p class="wm-secured mono">SECTOR SECURED — no active operation.</p>`);
 
   const deploy = document.getElementById("warmap-deploy");
   if (deploy) deploy.addEventListener("click", () => deployHandler && deployHandler(id));
+}
+
+// The captain's first command is always the damaged-flagship assassination.
+function sectorMissionType(id) {
+  if (state.career.record.missionsCompleted === 0) return "assassinate_flagship";
+  return sectorState(id).missionType || SECTOR_MISSION_POOL[0];
+}
+
+function operationType(id) {
+  return MISSION_TYPES[sectorMissionType(id)].name;
+}
+
+function operationBrief(id) {
+  const def = SECTORS.find((s) => s.id === id);
+  return MISSION_TYPES[sectorMissionType(id)].brief.replace("{sector}", def.name);
 }
 
 function renderNews() {

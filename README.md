@@ -79,7 +79,12 @@ fight. Combat rewards positioning and timing over twitch reflexes.
   deploy to contested sectors from the map; missions scale to the sector's fleet
   strength, and each outcome advances the war — shifting control, threat and stability,
   with war-update bulletins.
-- Flagship-assassination missions with escorts, asteroid fields and an escape timer.
+- **Five mission types**, each mechanically distinct: **Assassinate Flagship** (kill the
+  named command ship), **Patrol Sweep** (clear all hostiles), **Convoy Escort** (shepherd
+  transports to the jump point), **Starbase Defence** (hold a fixed station through enemy
+  waves), and **Rescue Operation** (defend a crippled ship until it withdraws). Allied
+  ships can be damaged and lost, and the after-action grade and report comment on each
+  type's objective.
 - **Starbase loop**: repair economy, an **armory** to purchase weapons/modules with
   credits, owned-only loadout selection, career stats, and **mission history**.
 - Procedural after-action evaluation: grade, captain's report, commendations/reprimands,
@@ -114,7 +119,7 @@ See [`PLAN.md`](PLAN.md) for the full execution plan.
 - **M1** — Stabilise + persistent career record. ✅
 - **M2** — Starbase & progression (armory, unlocks, mission history). ✅
 - **M3** — Galactic war map with sectors and dynamic war consequences. ✅
-- **M4** — Mission variety (convoy escort, starbase defence, patrol, rescue).
+- **M4** — Mission variety (patrol, convoy escort, starbase defence, rescue). ✅
 - **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types.
 - **M6** — Campaign polish: ranks, war news, settings, audio/SFX.
 - **M7** — Procedural story layer: recurring named enemy ships, operation chains,

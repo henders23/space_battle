@@ -13,18 +13,61 @@ import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
 import { addMessage, addEffect, addShake } from "./effects.js";
 import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
+import { updateObjective } from "./objectives.js";
 import { finishMission } from "../screens/evaluation.js";
 
-// Per-frame world simulation: movement, enemy AI, projectiles, damage, timer.
+// Per-frame world simulation: movement, enemy AI, projectiles, damage, objectives.
 
 export function update(dt) {
   if (state.screen !== "combat" || state.paused || !state.player) return;
   updatePlayer(dt);
   updateEnemies(dt);
+  updateAllies(dt);
   updateProjectiles(dt);
   updateAsteroids(dt);
   updateEffects(dt);
-  updateMissionTimer(dt);
+  const resolution = updateObjective(dt);
+  if (resolution) finishMission(resolution.result, resolution.reason);
+}
+
+// Nearest live thing an enemy will engage — the player or any allied asset.
+function nearestEnemyTarget(ship) {
+  let best = state.player && state.player.alive ? state.player : null;
+  let bestD = best ? distance(ship, best) : Infinity;
+  for (const ally of state.allies) {
+    if (!ally.alive) continue;
+    const d = distance(ship, ally);
+    if (d < bestD) {
+      bestD = d;
+      best = ally;
+    }
+  }
+  return best;
+}
+
+function updateAllies(dt) {
+  const o = state.objective || {};
+  for (const ally of state.allies) {
+    if (!ally.alive) continue;
+    updateShipRecovery(ally, dt);
+    if (ally.type === "transport" && ally.exit) {
+      const ang = angleTo(ally, ally.exit);
+      ally.angle = turnToward(ally.angle, ang, 1.6 * dt);
+      ally.vx += Math.cos(ally.angle) * 70 * dt;
+      ally.vy += Math.sin(ally.angle) * 70 * dt;
+      limitVelocity(ally, 78);
+      ally.vx *= Math.pow(0.99, dt * 60);
+      ally.vy *= Math.pow(0.99, dt * 60);
+      ally.x += ally.vx * dt;
+      ally.y += ally.vy * dt;
+      if (distance(ally, ally.exit) < 140) {
+        ally.alive = false;
+        ally.saved = true;
+        o.saved = (o.saved || 0) + 1;
+        addMessage(`${ally.name} reached the jump point.`);
+      }
+    }
+  }
 }
 
 // Throttle notches: stop, very slow, slow, moderate (engine bonus scales them).
@@ -139,14 +182,13 @@ function updateFlagship(ship, dt) {
   const player = state.player;
   const toPlayer = angleTo(ship, player);
   const d = distance(ship, player);
-  const badlyDamaged = ship.hull < ship.hullMax * 0.28;
-  ship.escaping = badlyDamaged || state.mission.timer < 28;
+  const hullFrac = hullTotal(ship) / hullMaxTotal(ship);
+  ship.escaping = hullFrac < 0.28 || state.mission.timer < 28;
 
   let desiredAngle;
   let thrust = 0;
   if (ship.escaping) {
-    // Run directly away from the player rather than toward a fixed heading, so a
-    // damaged flagship doesn't end up pinned against the boundary.
+    // Run directly away from the player rather than toward a fixed heading.
     desiredAngle = angleTo(player, ship);
     thrust = 68;
   } else {
@@ -195,13 +237,15 @@ function updateFlagship(ship, dt) {
 }
 
 function updateEscort(ship, dt) {
-  const player = state.player;
+  const target = nearestEnemyTarget(ship);
+  if (!target) return;
   const flagship = state.enemies.find((enemy) => enemy.type === "flagship" && enemy.alive);
-  const playerDistance = distance(ship, player);
-  let desired = angleTo(ship, player);
+  const targetDistance = distance(ship, target);
+  let desired = angleTo(ship, target);
   let thrust = 34;
 
-  if (flagship && playerDistance > 1120) {
+  // In an assassination, idle escorts guard the flagship until the player closes.
+  if (flagship && target === state.player && targetDistance > 1120) {
     const orbit = (performance.now() / 1000) * 0.32 + ship.escortIndex * 2.35;
     const guardPoint = {
       x: flagship.x + Math.cos(orbit) * 245,
@@ -211,7 +255,7 @@ function updateEscort(ship, dt) {
     desired = angleTo(ship, guardPoint);
     thrust = guardDistance > 110 ? 116 : 18;
   } else {
-    thrust = playerDistance > 310 ? 138 : playerDistance < 185 ? -70 : 34;
+    thrust = targetDistance > 310 ? 138 : targetDistance < 185 ? -70 : 34;
   }
 
   ship.angle = turnToward(ship.angle, desired, 1.15 * dt);
@@ -222,7 +266,7 @@ function updateEscort(ship, dt) {
   ship.vy *= Math.pow(0.989, dt * 60);
   ship.x += ship.vx * dt;
   ship.y += ship.vy * dt;
-  enemyTryFire(ship, "forward", player, {
+  enemyTryFire(ship, "forward", target, {
     name: "Escort Guns",
     damage: 11,
     cooldown: 0.78,
@@ -281,6 +325,23 @@ function updateProjectiles(dt) {
         state.stats.survived = false;
         finishMission("failed", "CWS Resolute was destroyed in action.");
       }
+    } else {
+      // Enemy fire can also strike the allied assets the player is protecting.
+      for (const ally of state.allies) {
+        if (!ally.alive) continue;
+        if (distance(projectile, ally) <= projectile.radius + ally.radius) {
+          projectile.life = 0;
+          applyDamage(ally, projectile.damage, "enemy", impactSide(ally, projectile));
+          addEffect(projectile.x, projectile.y, projectile.color, 0.28);
+          if (isDestroyed(ally)) {
+            ally.alive = false;
+            addEffect(ally.x, ally.y, "#ffb0a8", 0.6);
+            addShake(9);
+            addMessage(`${ally.name} has been destroyed.`);
+          }
+          break;
+        }
+      }
     }
   }
   state.projectiles = state.projectiles.filter((projectile) => projectile.life > 0);
@@ -325,7 +386,6 @@ function destroyEnemy(enemy) {
   if (enemy.type === "flagship") {
     state.stats.targetDestroyed = true;
     addMessage(`${enemy.name} destroyed. Objective complete.`);
-    finishMission("success", "Enemy flagship destroyed.");
   } else {
     state.stats.escortsDestroyed += 1;
     addMessage(`${enemy.name} destroyed.`);
@@ -345,15 +405,8 @@ function updateEffects(dt) {
   state.effects = state.effects.filter((effect) => effect.life > 0);
 }
 
-function updateMissionTimer(dt) {
-  state.mission.timer = Math.max(0, state.mission.timer - dt);
-  if (state.mission.timer <= 0 && !state.stats.targetDestroyed) {
-    finishMission("failed", `${state.mission.flagshipName} escaped the intercept window.`);
-  }
-}
-
 export function retreatToStarbase() {
   if (state.screen !== "combat" || state.paused) return;
   state.stats.retreated = true;
-  finishMission("failed", "CWS Resolute retreated before destroying the flagship.");
+  finishMission("failed", "CWS Resolute withdrew before completing the operation.");
 }

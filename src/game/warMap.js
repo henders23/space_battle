@@ -2,7 +2,8 @@
 
 import { state } from "../state.js";
 import { SECTORS, CONTROL_BASE, CONTROL_INFO } from "../data/sectors.js";
-import { clamp, randomInt } from "../utils.js";
+import { SECTOR_MISSION_POOL } from "../data/missionTypes.js";
+import { clamp, pick, randomInt } from "../utils.js";
 import { saveCareer } from "../career.js";
 
 // War-state model and simulation. The static sector layout lives in data; here
@@ -13,7 +14,12 @@ export function ensureWar() {
   if (state.career.war && state.career.war.sectors) return;
   const sectors = {};
   for (const s of SECTORS) {
-    sectors[s.id] = { control: s.control, starbaseLevel: s.starbaseLevel || 0, ...CONTROL_BASE[s.control] };
+    sectors[s.id] = {
+      control: s.control,
+      starbaseLevel: s.starbaseLevel || 0,
+      missionType: s.control !== "commonwealth" ? pick(SECTOR_MISSION_POOL) : null,
+      ...CONTROL_BASE[s.control]
+    };
   }
   state.career.war = { cycle: 1, sectors, news: [] };
   saveCareer();
@@ -70,6 +76,9 @@ export function applyMissionOutcome(id, result, grade, mission) {
       shift = "lost";
     }
   }
+
+  // Roll a fresh operation for the sector (or clear it if now secured).
+  sec.missionType = sec.control !== "commonwealth" ? pick(SECTOR_MISSION_POOL) : null;
 
   driftOtherSectors(id);
   state.career.war.cycle += 1;

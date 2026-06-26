@@ -6,6 +6,7 @@ import { playerWeaponDefinitions } from "../combat/weapons.js";
 import { getSensorRange } from "../combat/systems.js";
 import { sideRatioShield, sideRatioHull } from "../combat/shipStats.js";
 import { OFFICERS, SYSTEM_ORDER } from "../data/officers.js";
+import { objectiveHudText } from "../combat/objectives.js";
 
 const dom = {};
 const officerRows = {};
@@ -105,7 +106,7 @@ export function updateHud() {
   const mission = state.mission;
 
   if (dom.operation) dom.operation.textContent = mission.operationName.toUpperCase();
-  dom.objective.textContent = `Destroy ${mission.flagshipName} in ${mission.sectorName}.`;
+  dom.objective.textContent = objectiveHudText();
   dom.timer.textContent = formatTime(mission.timer);
 
   const throttleLabels = ["STOP", "SLOW", "MODERATE", "FULL"];

@@ -1,15 +1,12 @@
 "use strict";
 
 import { state, WORLD, createSystems } from "../state.js";
-import {
-  clamp,
-  degToRad,
-  pick,
-  randomInt,
-  randomRange
-} from "../utils.js";
+import { clamp, degToRad, pick, randomInt, randomRange } from "../utils.js";
+import { MISSION_TYPES, SECTOR_MISSION_POOL } from "../data/missionTypes.js";
 
 // Mission generation, world setup, and ship/asteroid factories.
+
+const CENTER = { x: WORLD.width / 2, y: WORLD.height / 2 };
 
 export function createStars(count) {
   const stars = [];
@@ -28,37 +25,34 @@ export function generateMission(sector) {
   const sectorPrefixes = ["Kestrel", "Rime", "Acheron", "Helios", "Vesper", "Orison", "Cinder", "Icarus"];
   const sectorSuffixes = ["Reach", "Drift", "Basin", "Exclusion", "Corridor", "Wake", "Field", "Crown"];
   const flagshipTitles = ["Dreadnought", "Executor", "Praetor", "Iron Regent", "Black Lance", "Vigilant", "Red Monarch"];
-  const operationNames = ["Black Lance", "Iron Tide", "Cold Vigil", "Severance", "Hollow Star", "Grey Dawn"];
+  const operationNames = ["Black Lance", "Iron Tide", "Cold Vigil", "Severance", "Hollow Star", "Grey Dawn", "Long Watch", "Ash Harbour"];
   const hazards = [
     "Sensor ghosts from charged dust will complicate target acquisition.",
     "A broken asteroid belt limits maneuver room for heavy vessels.",
-    "Command expects hostile escorts to screen the target aggressively.",
+    "Command expects hostile escorts to screen aggressively.",
     "Solar interference will punish slow pursuit vectors.",
-    "A debris field from an old convoy action is drifting across the intercept lane."
+    "A debris field from an old convoy action is drifting across the lane."
   ];
-  // The captain's very first command (before any completed mission) is a gentler
-  // engagement: a battle-damaged flagship limping home, with failing shields and
-  // no escort screen — a winnable introduction.
-  const firstCommand = state.career.record.missionsCompleted === 0;
 
-  // Difficulty scales with the sector's enemy fleet strength and threat.
+  // The captain's very first command is a gentler engagement: a battle-damaged
+  // flagship limping home — a winnable introduction.
+  const firstCommand = state.career.record.missionsCompleted === 0;
+  const type = firstCommand ? "assassinate_flagship" : (sector && sector.missionType) || pick(SECTOR_MISSION_POOL);
+
   const enemyFleet = sector ? sector.enemyFleet : 60;
   const threat = sector ? sector.threat : 60;
   const sectorName = sector ? sector.name : `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
   const flagshipName = `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
-  const duration = firstCommand ? randomInt(320, 380) : randomInt(280, 380);
   const reward = firstCommand
     ? Math.round(750 * randomRange(0.9, 1.1))
-    : Math.round((850 + threat * 6) * randomRange(0.9, 1.1));
-  const escortCount = firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3);
-  const flagshipHull = firstCommand
-    ? Math.round(520 * randomRange(0.9, 1.1))
-    : Math.round((820 + enemyFleet * 4) * randomRange(0.9, 1.1));
-  const hazard = firstCommand
-    ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields are failing and its escorts have scattered. A clean opportunity for a first command."
-    : pick(hazards);
-  return {
-    type: "assassinate_flagship",
+    : Math.round((780 + threat * 6) * randomRange(0.9, 1.1));
+
+  const force = clamp(Math.round(enemyFleet / 26), 1, 5); // generic hostile count
+  const duration = firstCommand ? randomInt(320, 380) : randomInt(240, 340);
+
+  const mission = {
+    type,
+    typeName: MISSION_TYPES[type].name,
     operationName: firstCommand ? "First Blood" : pick(operationNames),
     sectorId: sector ? sector.id : null,
     sectorName,
@@ -66,12 +60,23 @@ export function generateMission(sector) {
     duration,
     timer: duration,
     reward,
-    escortCount,
-    flagshipHull,
     damaged: firstCommand,
-    hazard,
+    hazard: firstCommand
+      ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields failing, escorts scattered. A clean opportunity for a first command."
+      : pick(hazards),
+    // type-specific sizing
+    escortCount: firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3),
+    flagshipHull: firstCommand
+      ? Math.round(520 * randomRange(0.9, 1.1))
+      : Math.round((820 + enemyFleet * 4) * randomRange(0.9, 1.1)),
+    enemyCount: force,
+    transportCount: randomInt(2, 4),
+    waveCount: clamp(Math.round(enemyFleet / 30) + 1, 2, 4),
+    waveSize: 2,
+    rescueTime: randomInt(70, 105),
     startedAt: performance.now()
   };
+  return mission;
 }
 
 export function createPlayerShip() {
@@ -83,9 +88,10 @@ export function createPlayerShip() {
   return {
     id: "player",
     type: "player",
+    team: "player",
     name: "CWS Resolute",
-    x: 360,
-    y: WORLD.height / 2,
+    x: CENTER.x - 1100,
+    y: CENTER.y,
     vx: 0,
     vy: 0,
     angle: 0,
@@ -107,14 +113,12 @@ export function createPlayerShip() {
 
 export function createEnemyShip(type, x, y, mission, index) {
   if (type === "flagship") {
-    // A damaged flagship has weaker shields and already-degraded subsystems.
     const sideShield = mission.damaged ? 90 : 200;
-    const systems = mission.damaged
-      ? { engines: 2, weapons: 1, sensors: 1, shields: 1 }
-      : createSystems();
+    const systems = mission.damaged ? { engines: 2, weapons: 1, sensors: 1, shields: 1 } : createSystems();
     return {
       id: "flagship",
       type,
+      team: "enemy",
       name: mission.flagshipName,
       x,
       y,
@@ -129,20 +133,18 @@ export function createEnemyShip(type, x, y, mission, index) {
       shieldDelay: { port: 0, starboard: 0 },
       shieldRegen: mission.damaged ? 3 : 6,
       systems,
-      cooldowns: {
-        port: randomRange(0.2, 1.2),
-        starboard: randomRange(0.5, 1.4),
-        forward: randomRange(0.8, 1.8)
-      },
+      cooldowns: { port: randomRange(0.2, 1.2), starboard: randomRange(0.5, 1.4), forward: randomRange(0.8, 1.8) },
       escaping: false,
+      spawned: true,
       alive: true
     };
   }
 
   return {
     id: `escort-${index}`,
-    type,
-    name: `Escort ${index}`,
+    type: "escort",
+    team: "enemy",
+    name: `Dominion Escort ${index}`,
     x,
     y,
     vx: randomRange(-20, 20),
@@ -158,6 +160,32 @@ export function createEnemyShip(type, x, y, mission, index) {
     systems: createSystems(),
     cooldowns: { forward: randomRange(0.2, 1.2) },
     escortIndex: index,
+    spawned: true,
+    alive: true
+  };
+}
+
+function makeAlly(subtype, name, x, y, sideHull, sideShield, radius, regen) {
+  return {
+    id: `${subtype}-${Math.round(x)}-${Math.round(y)}`,
+    type: subtype,
+    team: "ally",
+    name,
+    x,
+    y,
+    vx: 0,
+    vy: 0,
+    angle: 0,
+    radius,
+    hullMax: { port: sideHull, starboard: sideHull },
+    hull: { port: sideHull, starboard: sideHull },
+    shieldsMax: { port: sideShield, starboard: sideShield },
+    shields: { port: sideShield, starboard: sideShield },
+    shieldDelay: { port: 0, starboard: 0 },
+    shieldRegen: regen,
+    systems: createSystems(),
+    cooldowns: {},
+    saved: false,
     alive: true
   };
 }
@@ -166,14 +194,11 @@ export function createAsteroids() {
   const count = randomInt(3, 8);
   const asteroids = [];
   for (let i = 0; i < count; i += 1) {
-    let x = randomRange(620, WORLD.width - 250);
-    let y = randomRange(180, WORLD.height - 180);
-    if (Math.abs(x - 360) < 360 && Math.abs(y - WORLD.height / 2) < 300) {
-      x += 520;
-    }
+    const a = randomRange(0, Math.PI * 2);
+    const r = randomRange(500, 1600);
     asteroids.push({
-      x,
-      y,
+      x: CENTER.x + Math.cos(a) * r,
+      y: CENTER.y + Math.sin(a) * r,
       radius: randomRange(26, 72),
       spin: randomRange(-0.4, 0.4),
       angle: randomRange(0, Math.PI * 2),
@@ -201,11 +226,19 @@ export function createStats() {
   };
 }
 
+function ring(cx, cy, radius, jitter = 0) {
+  const a = randomRange(0, Math.PI * 2);
+  const r = radius + randomRange(-jitter, jitter);
+  return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+}
+
 export function setupMissionWorld(sector) {
   const mission = generateMission(sector);
   state.mission = mission;
   state.player = createPlayerShip();
   state.enemies = [];
+  state.allies = [];
+  state.objective = {};
   state.projectiles = [];
   state.asteroids = createAsteroids();
   state.effects = [];
@@ -215,24 +248,76 @@ export function setupMissionWorld(sector) {
   state.stats = createStats();
   state.stars = createStars(220);
 
-  // Spawn the flagship out in open space (not hugging a boundary) so the duel
-  // has room to manoeuvre.
-  const flagshipX = randomRange(WORLD.width * 0.45, WORLD.width * 0.72);
-  const flagshipY = randomRange(WORLD.height * 0.3, WORLD.height * 0.7);
-  state.enemies.push(createEnemyShip("flagship", flagshipX, flagshipY, mission, 0));
+  let escortIndex = 1;
+  const spawnEscort = (x, y, extra = {}) => {
+    const e = createEnemyShip("escort", x, y, mission, escortIndex);
+    escortIndex += 1;
+    Object.assign(e, extra);
+    state.enemies.push(e);
+    return e;
+  };
 
-  for (let i = 1; i <= mission.escortCount; i += 1) {
-    const offset = degToRad((360 / mission.escortCount) * i + randomRange(-25, 25));
-    const range = randomRange(150, 280);
-    state.enemies.push(
-      createEnemyShip(
-        "escort",
-        clamp(flagshipX + Math.cos(offset) * range, 180, WORLD.width - 180),
-        clamp(flagshipY + Math.sin(offset) * range, 180, WORLD.height - 180),
-        mission,
-        i
-      )
-    );
+  if (mission.type === "assassinate_flagship") {
+    state.player.x = CENTER.x - 1100;
+    state.player.y = CENTER.y + randomRange(-200, 200);
+    const fx = CENTER.x + randomRange(400, 950);
+    const fy = CENTER.y + randomRange(-500, 500);
+    state.enemies.push(createEnemyShip("flagship", fx, fy, mission, 0));
+    for (let i = 1; i <= mission.escortCount; i += 1) {
+      const p = ring(fx, fy, 230, 80);
+      spawnEscort(p.x, p.y);
+    }
+  } else if (mission.type === "patrol") {
+    state.player.x = CENTER.x;
+    state.player.y = CENTER.y;
+    for (let i = 0; i < mission.enemyCount; i += 1) {
+      const p = ring(CENTER.x, CENTER.y, randomRange(700, 1500));
+      spawnEscort(p.x, p.y);
+    }
+  } else if (mission.type === "convoy_escort") {
+    const a = randomRange(0, Math.PI * 2);
+    const exit = { x: CENTER.x + Math.cos(a) * 2400, y: CENTER.y + Math.sin(a) * 2400 };
+    state.player.x = CENTER.x - Math.cos(a) * 220;
+    state.player.y = CENTER.y - Math.sin(a) * 220;
+    for (let i = 0; i < mission.transportCount; i += 1) {
+      const t = makeAlly("transport", `CT Hestia-${i + 1}`, CENTER.x + randomRange(-160, 160), CENTER.y + randomRange(-160, 160), 140, 70, 36, 4);
+      t.exit = exit;
+      state.allies.push(t);
+    }
+    for (let i = 0; i < mission.enemyCount; i += 1) {
+      const p = ring(CENTER.x, CENTER.y, randomRange(700, 1200));
+      spawnEscort(p.x, p.y);
+    }
+    state.objective = { exit, total: mission.transportCount, saved: 0 };
+  } else if (mission.type === "starbase_defence") {
+    const station = makeAlly("station", "Caldus Anchorage", CENTER.x, CENTER.y, 620, 220, 92, 7);
+    state.allies.push(station);
+    state.player.x = CENTER.x - 360;
+    state.player.y = CENTER.y;
+    // Spawn all waves; only the first is active, the rest lie dormant until summoned.
+    for (let w = 0; w < mission.waveCount; w += 1) {
+      for (let i = 0; i < mission.waveSize; i += 1) {
+        const p = ring(CENTER.x, CENTER.y, 1350, 200);
+        const e = spawnEscort(p.x, p.y, { waveIndex: w });
+        if (w > 0) {
+          e.spawned = false;
+          e.alive = false;
+        }
+      }
+    }
+    state.objective = { station, waveCount: mission.waveCount, currentWave: 0 };
+  } else if (mission.type === "rescue_disabled") {
+    const dx = CENTER.x + randomRange(-200, 200);
+    const dy = CENTER.y + randomRange(-200, 200);
+    const disabled = makeAlly("disabled", "CNV Meridian", dx, dy, 130, 0, 46, 0);
+    state.allies.push(disabled);
+    state.player.x = CENTER.x - 1000;
+    state.player.y = CENTER.y + randomRange(-200, 200);
+    for (let i = 0; i < mission.enemyCount; i += 1) {
+      const p = ring(dx, dy, randomRange(500, 1000));
+      spawnEscort(p.x, p.y);
+    }
+    state.objective = { disabled, rescueTime: mission.rescueTime, rescueLeft: mission.rescueTime };
   }
 
   return mission;

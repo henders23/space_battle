@@ -1,10 +1,11 @@
 "use strict";
 
 import { state } from "../state.js";
-import { clamp, formatCredits, formatTime } from "../utils.js";
+import { formatCredits, formatTime } from "../utils.js";
 import { showScreen } from "../router.js";
 import { calculateRepairCost, currentReputation, saveCareer, betterGrade, recordMission } from "../career.js";
-import { hullRatio, shieldRatio } from "../combat/shipStats.js";
+import { hullRatio } from "../combat/shipStats.js";
+import { gradeMission, reportText } from "../combat/objectives.js";
 import { applyMissionOutcome } from "../game/warMap.js";
 
 // After-action review: grade, captain's report, economy, statistics.
@@ -101,24 +102,7 @@ function pickCommendation(result, grade) {
 }
 
 function calculateMissionGrade(result) {
-  if (result !== "success" || !state.stats.targetDestroyed) return "F";
-  const hull = hullRatio(state.player);
-  const shield = shieldRatio(state.player);
-  const timeRatio = state.stats.timeTaken / state.mission.duration;
-  const accuracy = state.stats.shotsFired > 0 ? state.stats.shotsHit / state.stats.shotsFired : 0;
-  let score = 55;
-  score += hull * 18;
-  score += shield * 7;
-  score += clamp(1 - timeRatio, 0, 1) * 10;
-  score += state.stats.escortsDestroyed * 4;
-  score += accuracy * 10;
-  score -= state.stats.systemsDamaged * 4;
-  if (score >= 92) return "S";
-  if (score >= 82) return "A";
-  if (score >= 70) return "B";
-  if (score >= 58) return "C";
-  if (score >= 45) return "D";
-  return "F";
+  return gradeMission(result);
 }
 
 function reputationDelta(grade, result) {
@@ -127,21 +111,7 @@ function reputationDelta(grade, result) {
 }
 
 function buildCaptainReport(result, reason, grade) {
-  const mission = state.mission;
-  const stats = state.stats;
-  const time = formatTime(stats.timeTaken);
-  if (result === "success") {
-    return [
-      `CWS Resolute intercepted ${mission.flagshipName} in ${mission.sectorName} and completed the assassination order in ${time}.`,
-      `${stats.escortsDestroyed} escort vessel${stats.escortsDestroyed === 1 ? "" : "s"} were destroyed during the action.`,
-      `Final grade ${grade} reflects remaining hull integrity, time on target, weapon accuracy, and system damage. ${mission.hazard}`
-    ].join(" ");
-  }
-  return [
-    `CWS Resolute failed to complete the assassination order against ${mission.flagshipName} in ${mission.sectorName}.`,
-    `${reason} Command assigns grade ${grade}; the main objective was not achieved.`,
-    `Damage control recorded ${stats.systemsDamaged} system incident${stats.systemsDamaged === 1 ? "" : "s"} before withdrawal or loss of combat capability.`
-  ].join(" ");
+  return reportText(result, reason, grade);
 }
 
 function updateEvaluation() {

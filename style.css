@@ -471,7 +471,8 @@ kbd {
 .wm-bar-val { font-size: 0.66rem; color: var(--text); text-align: right; }
 .wm-meta { margin: 12px 0; font-size: 0.68rem; color: var(--muted-2); letter-spacing: 1px; }
 .wm-order { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
-.wm-brief { color: var(--muted); font-size: 0.86rem; line-height: 1.5; margin: 6px 0 14px; }
+.wm-optype { margin: 6px 0 4px; font-family: var(--display); font-weight: 700; font-size: 1.15rem; letter-spacing: 1px; color: var(--amber); }
+.wm-brief { color: var(--muted); font-size: 0.86rem; line-height: 1.5; margin: 4px 0 14px; }
 .wm-order button { width: 100%; }
 .wm-secured { margin-top: 16px; color: var(--success); font-size: 0.78rem; letter-spacing: 1px; }
 

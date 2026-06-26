@@ -74,6 +74,8 @@ export const state = {
   mission: null,
   player: null,
   enemies: [],
+  allies: [],
+  objective: null,
   projectiles: [],
   asteroids: [],
   effects: [],

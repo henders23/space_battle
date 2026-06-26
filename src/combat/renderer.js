@@ -6,6 +6,7 @@ import { PALETTE } from "../data/theme.js";
 import { getSlotAngle, playerWeaponDefinitions, slotForPrimaryAim } from "./weapons.js";
 import { getSensorRange } from "./systems.js";
 import { hullRatio, sideRatioShield } from "./shipStats.js";
+import { focusPoint } from "./objectives.js";
 
 // Ship-centred tactical renderer. The player ship is fixed at the centre of the
 // canvas, pointing "up"; the world (stars, enemies, asteroids, projectiles) is
@@ -166,8 +167,11 @@ export function draw() {
   drawSpace(player);
   drawAsteroids();
   drawWeaponArcs(player, aimSlot);
+  for (const ally of state.allies) {
+    if (ally.alive) drawShipBody(ally);
+  }
   for (const enemy of state.enemies) {
-    if (enemy.alive) drawShipBody(enemy);
+    if (enemy.spawned && enemy.alive) drawShipBody(enemy);
   }
   drawShipBody(player);
   drawProjectiles();
@@ -178,8 +182,11 @@ export function draw() {
 
   // Screen-fixed overlays
   drawRangeRings();
+  for (const ally of state.allies) {
+    if (ally.alive) drawShipLabel(ally);
+  }
   for (const enemy of state.enemies) {
-    if (enemy.alive) drawShipLabel(enemy);
+    if (enemy.spawned && enemy.alive) drawShipLabel(enemy);
   }
   drawPlayerLabel();
   drawOffscreenTarget();
@@ -354,6 +361,18 @@ const SHIP_SPECS = {
   escort: {
     length: 58, width: 24, hull: "#e89088", hull2: "#6e3330",
     light: "#ffd9d2", deck: "#3a1c1c", glow: "rgba(255,83,71,0.4)", engine: "#ff9b6b", turrets: 0
+  },
+  transport: {
+    length: 96, width: 44, hull: "#8fd6a8", hull2: "#3e6e52",
+    light: "#d7fbe6", deck: "#16402c", glow: "rgba(95,209,122,0.4)", engine: "#9ff0b8", turrets: 0
+  },
+  station: {
+    length: 170, width: 132, hull: "#9ec8c0", hull2: "#3c5b56",
+    light: "#e6fbf5", deck: "#163c38", glow: "rgba(69,224,240,0.4)", engine: "#8ff0ff", turrets: 3
+  },
+  disabled: {
+    length: 104, width: 46, hull: "#8a9e94", hull2: "#3a4842",
+    light: "#cfe2da", deck: "#22302a", glow: "rgba(120,140,130,0.3)", engine: "#5a6a62", turrets: 0
   }
 };
 
@@ -382,6 +401,7 @@ function drawShipBody(ship) {
   const W = spec.width;
   const isPlayer = ship.type === "player";
   const isEscort = ship.type === "escort";
+  const friendly = ship.team === "player" || ship.team === "ally";
 
   ctx.save();
   ctx.translate(ship.x, ship.y);
@@ -402,7 +422,7 @@ function drawShipBody(ship) {
     ctx.shadowBlur = 16;
     ctx.drawImage(playerSprite, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.shadowBlur = 0;
-    drawShieldEnvelope(ship, L, W, isPlayer);
+    drawShieldEnvelope(ship, L, W, friendly);
     ctx.restore();
     return;
   }
@@ -489,18 +509,18 @@ function drawShipBody(ship) {
     ctx.fillRect(x, W * 0.5 - 1, 2, 2);
   }
 
-  drawShieldEnvelope(ship, L, W, isPlayer);
+  drawShieldEnvelope(ship, L, W, friendly);
   ctx.restore();
 }
 
 // Per-side shield envelope sized to the hull (+y starboard, −y port).
-function drawShieldEnvelope(ship, L, W, isPlayer) {
+function drawShieldEnvelope(ship, L, W, friendly) {
   const rx = L * 0.58;
   const ry = W * 0.85;
   for (const [side, a0, a1] of [["starboard", 0, Math.PI], ["port", Math.PI, Math.PI * 2]]) {
     const ratio = sideRatioShield(ship, side);
     if (ratio <= 0.02) continue;
-    ctx.strokeStyle = isPlayer
+    ctx.strokeStyle = friendly
       ? `rgba(69, 224, 240, ${0.12 + ratio * 0.34})`
       : `rgba(255, 122, 112, ${0.1 + ratio * 0.26})`;
     ctx.lineWidth = 2;
@@ -568,13 +588,14 @@ function drawShipLabel(ship) {
   const margin = 60;
   if (pos.x < -margin || pos.x > canvas.width + margin || pos.y < -margin || pos.y > canvas.height + margin) return;
   const hull = hullRatio(ship);
-  const barWidth = ship.type === "flagship" ? 110 : 64;
+  const friendly = ship.team === "ally";
+  const barWidth = ship.type === "flagship" || ship.type === "station" ? 110 : 64;
   const y = pos.y - ship.radius - 18;
   ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
   ctx.fillRect(pos.x - barWidth / 2, y, barWidth, 5);
   ctx.fillStyle = hull > 0.45 ? PALETTE.success : hull > 0.22 ? PALETTE.amber : PALETTE.danger;
   ctx.fillRect(pos.x - barWidth / 2, y, barWidth * hull, 5);
-  ctx.fillStyle = ship.type === "flagship" ? PALETTE.dangerSoft : "#d99";
+  ctx.fillStyle = friendly ? PALETTE.accent : ship.type === "flagship" ? PALETTE.dangerSoft : "#d99";
   ctx.font = "11px 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
   ctx.fillText(ship.name.toUpperCase(), pos.x, y - 6);
@@ -590,7 +611,7 @@ function drawPlayerLabel() {
 }
 
 function drawOffscreenTarget() {
-  const target = state.enemies.find((enemy) => enemy.type === "flagship" && enemy.alive);
+  const target = focusPoint();
   if (!target) return;
   const pos = worldToScreen(target);
   if (pos.x > 0 && pos.x < canvas.width && pos.y > 0 && pos.y < canvas.height) return;
