@@ -47,6 +47,27 @@ export function buyItem(category, key, cost) {
   return true;
 }
 
+export function ownsShip(key) {
+  return state.career.ownedShips && state.career.ownedShips.includes(key);
+}
+
+export function buyShip(key, cost) {
+  if (ownsShip(key) || state.career.credits < cost) return false;
+  state.career.credits -= cost;
+  state.career.ownedShips.push(key);
+  state.career.ship = key;
+  state.career.hull = 1; // a fresh hull arrives at full integrity
+  saveCareer();
+  return true;
+}
+
+export function equipShip(key) {
+  if (!ownsShip(key)) return false;
+  state.career.ship = key;
+  saveCareer();
+  return true;
+}
+
 export function recordMission(entry) {
   const history = state.career.record.history;
   history.unshift(entry);
@@ -91,6 +112,8 @@ export function loadCareer() {
       // Union of starter items and anything purchased, de-duplicated.
       state.career.owned[cat] = Array.from(new Set([...owned[cat], ...(savedOwned[cat] || [])]));
     }
+    state.career.ship = parsed.ship || "frigate";
+    state.career.ownedShips = Array.from(new Set(["frigate", ...(parsed.ownedShips || [])]));
     state.hasSave = true;
     return true;
   } catch (err) {

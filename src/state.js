@@ -56,6 +56,8 @@ export function defaultCareer() {
       starboard: "standard",
       utility: "reinforcedShields"
     },
+    ship: "frigate",
+    ownedShips: ["frigate"],
     owned: defaultOwned(),
     record: defaultRecord()
   };

@@ -1,8 +1,12 @@
 "use strict";
 
 import { state, WORLD, createSystems } from "../state.js";
-import { clamp, degToRad, pick, randomInt, randomRange } from "../utils.js";
+import { clamp, pick, randomInt, randomRange } from "../utils.js";
 import { MISSION_TYPES, SECTOR_MISSION_POOL } from "../data/missionTypes.js";
+import { HULLS } from "../data/ships.js";
+import { ENEMY_TYPES, ENEMY_POOLS } from "../data/enemies.js";
+
+const PLAYER_NAMES = { frigate: "CWS Resolute", cruiser: "CWS Vanguard", battleship: "CWS Asterion" };
 
 // Mission generation, world setup, and ship/asteroid factories.
 
@@ -82,32 +86,39 @@ export function generateMission(sector) {
 }
 
 export function createPlayerShip() {
+  const hull = HULLS[state.career.ship] || HULLS.cruiser;
   const utility = state.career.loadout.utility;
   const shieldBonus = utility === "reinforcedShields" ? 85 : 0;
   const engineBonus = utility === "engineBoost" ? 0.16 : 0;
-  const sideShield = (360 + shieldBonus) / 2;
-  const sideHull = 340 * state.career.hull;
+  const sideShield = hull.shieldSide + shieldBonus / 2;
+  const sideHull = hull.hullSide * state.career.hull;
   return {
     id: "player",
     type: "player",
     team: "player",
-    name: "CWS Resolute",
+    name: PLAYER_NAMES[state.career.ship] || "CWS Vanguard",
+    hullClass: hull.name,
     x: CENTER.x - 1100,
     y: CENTER.y,
     vx: 0,
     vy: 0,
     angle: 0,
-    radius: 56,
-    hullMax: { port: 340, starboard: 340 },
+    radius: hull.radius,
+    hullMax: { port: hull.hullSide, starboard: hull.hullSide },
     hull: { port: sideHull, starboard: sideHull },
     shieldsMax: { port: sideShield, starboard: sideShield },
     shields: { port: sideShield, starboard: sideShield },
     shieldDelay: { port: 0, starboard: 0 },
-    shieldRegen: 9 + (utility === "reinforcedShields" ? 4 : 0),
+    shieldRegen: hull.shieldRegen + (utility === "reinforcedShields" ? 4 : 0),
     systems: { ...state.career.systems },
     cooldowns: { forward: 0, port: 0, starboard: 0, torpedo: 0 },
     engineBonus,
     throttle: 0,
+    turnRate: hull.turn,
+    throttleSpeeds: hull.speeds,
+    spriteScale: hull.spriteScale,
+    weaponDamage: hull.weaponDamage,
+    weaponCooldown: hull.weaponCooldown,
     repairPulse: 0,
     alive: true
   };
@@ -137,30 +148,42 @@ export function createEnemyShip(type, x, y, mission, index) {
       systems,
       cooldowns: { port: randomRange(0.2, 1.2), starboard: randomRange(0.5, 1.4), forward: randomRange(0.8, 1.8) },
       escaping: false,
+      behavior: "flagship",
       spawned: true,
       alive: true
     };
   }
 
+  const t = ENEMY_TYPES[type] || ENEMY_TYPES.escort;
+  const cooldowns =
+    t.behavior === "broadside"
+      ? { port: randomRange(0.2, 1.2), starboard: randomRange(0.5, 1.4), forward: randomRange(0.8, 1.6) }
+      : { forward: randomRange(0.2, 1.2) };
   return {
-    id: `escort-${index}`,
-    type: "escort",
+    id: `${type}-${index}`,
+    type,
     team: "enemy",
-    name: `Dominion Escort ${index}`,
+    name: `Dominion ${t.name} ${index}`,
     x,
     y,
     vx: randomRange(-20, 20),
     vy: randomRange(-20, 20),
     angle: Math.PI,
-    radius: 22,
-    hullMax: { port: 120, starboard: 120 },
-    hull: { port: 120, starboard: 120 },
-    shieldsMax: { port: 78, starboard: 78 },
-    shields: { port: 78, starboard: 78 },
+    radius: t.radius,
+    hullMax: { port: t.hullSide, starboard: t.hullSide },
+    hull: { port: t.hullSide, starboard: t.hullSide },
+    shieldsMax: { port: t.shieldSide, starboard: t.shieldSide },
+    shields: { port: t.shieldSide, starboard: t.shieldSide },
     shieldDelay: { port: 0, starboard: 0 },
-    shieldRegen: 5,
+    shieldRegen: t.regen,
     systems: createSystems(),
-    cooldowns: { forward: randomRange(0.2, 1.2) },
+    cooldowns,
+    behavior: t.behavior,
+    maxSpeed: t.maxSpeed,
+    turnRate: t.turn,
+    weapon: t.weapon,
+    broadside: t.broadside,
+    bow: t.bow,
     escortIndex: index,
     spawned: true,
     alive: true
@@ -251,8 +274,8 @@ export function setupMissionWorld(sector) {
   state.stars = createStars(220);
 
   let escortIndex = 1;
-  const spawnEscort = (x, y, extra = {}) => {
-    const e = createEnemyShip("escort", x, y, mission, escortIndex);
+  const spawnHostile = (typeKey, x, y, extra = {}) => {
+    const e = createEnemyShip(typeKey, x, y, mission, escortIndex);
     escortIndex += 1;
     Object.assign(e, extra);
     state.enemies.push(e);
@@ -267,14 +290,14 @@ export function setupMissionWorld(sector) {
     state.enemies.push(createEnemyShip("flagship", fx, fy, mission, 0));
     for (let i = 1; i <= mission.escortCount; i += 1) {
       const p = ring(fx, fy, 230, 80);
-      spawnEscort(p.x, p.y);
+      spawnHostile(pick(ENEMY_POOLS.assassinate_flagship), p.x, p.y);
     }
   } else if (mission.type === "patrol") {
     state.player.x = CENTER.x;
     state.player.y = CENTER.y;
     for (let i = 0; i < mission.enemyCount; i += 1) {
       const p = ring(CENTER.x, CENTER.y, randomRange(700, 1500));
-      spawnEscort(p.x, p.y);
+      spawnHostile(pick(ENEMY_POOLS.patrol), p.x, p.y);
     }
   } else if (mission.type === "convoy_escort") {
     const a = randomRange(0, Math.PI * 2);
@@ -288,7 +311,7 @@ export function setupMissionWorld(sector) {
     }
     for (let i = 0; i < mission.enemyCount; i += 1) {
       const p = ring(CENTER.x, CENTER.y, randomRange(700, 1200));
-      spawnEscort(p.x, p.y);
+      spawnHostile(pick(ENEMY_POOLS.convoy_escort), p.x, p.y);
     }
     state.objective = { exit, total: mission.transportCount, saved: 0 };
   } else if (mission.type === "starbase_defence") {
@@ -296,11 +319,13 @@ export function setupMissionWorld(sector) {
     state.allies.push(station);
     state.player.x = CENTER.x - 360;
     state.player.y = CENTER.y;
-    // Spawn all waves; only the first is active, the rest lie dormant until summoned.
+    const pool = ENEMY_POOLS.starbase_defence;
+    // Each wave escalates in class; only the first is active, the rest lie dormant.
     for (let w = 0; w < mission.waveCount; w += 1) {
+      const typeKey = pool[Math.min(w, pool.length - 1)];
       for (let i = 0; i < mission.waveSize; i += 1) {
         const p = ring(CENTER.x, CENTER.y, 1350, 200);
-        const e = spawnEscort(p.x, p.y, { waveIndex: w });
+        const e = spawnHostile(typeKey, p.x, p.y, { waveIndex: w });
         if (w > 0) {
           e.spawned = false;
           e.alive = false;
@@ -317,7 +342,7 @@ export function setupMissionWorld(sector) {
     state.player.y = CENTER.y + randomRange(-200, 200);
     for (let i = 0; i < mission.enemyCount; i += 1) {
       const p = ring(dx, dy, randomRange(500, 1000));
-      spawnEscort(p.x, p.y);
+      spawnHostile(pick(ENEMY_POOLS.rescue_disabled), p.x, p.y);
     }
     state.objective = { disabled, rescueTime: mission.rescueTime, rescueLeft: mission.rescueTime };
   }

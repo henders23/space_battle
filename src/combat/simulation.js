@@ -70,13 +70,10 @@ function updateAllies(dt) {
   }
 }
 
-// Throttle notches: stop, very slow, slow, moderate (engine bonus scales them).
-const THROTTLE_SPEEDS = [0, 30, 70, 130];
-
 function updatePlayer(dt) {
   const ship = state.player;
   const engineMult = getSystemMultiplier(ship, "engines") + ship.engineBonus;
-  const turn = 0.40 * engineMult;
+  const turn = (ship.turnRate || 0.4) * engineMult;
   const forwardX = Math.cos(ship.angle);
   const forwardY = Math.sin(ship.angle);
 
@@ -86,7 +83,8 @@ function updatePlayer(dt) {
   // The engines drive the ship toward the selected throttle speed along its
   // heading. Forward speed eases toward the target; any sideways momentum from
   // turning bleeds off via strong inertia damping, so the ship tracks its nose.
-  const targetSpeed = THROTTLE_SPEEDS[ship.throttle || 0] * engineMult;
+  const speeds = ship.throttleSpeeds || [0, 30, 70, 130];
+  const targetSpeed = speeds[ship.throttle || 0] * engineMult;
   let along = ship.vx * forwardX + ship.vy * forwardY;
   let latX = ship.vx - along * forwardX;
   let latY = ship.vy - along * forwardY;
@@ -162,12 +160,38 @@ function updateCooldowns(cooldowns, dt) {
 
 function updateEnemies(dt) {
   for (const enemy of state.enemies) {
-    if (!enemy.alive) continue;
-    if (enemy.type === "flagship") updateFlagship(enemy, dt);
-    if (enemy.type === "escort") updateEscort(enemy, dt);
+    if (!enemy.spawned || !enemy.alive) continue;
+    switch (enemy.behavior) {
+      case "flagship":
+        updateFlagship(enemy, dt);
+        break;
+      case "broadside":
+        updateBroadsideShip(enemy, dt);
+        break;
+      case "aggressive":
+        updateAggressive(enemy, dt);
+        break;
+      case "kite":
+        updateKite(enemy, dt);
+        break;
+      default:
+        updateCharger(enemy, dt);
+        break;
+    }
     updateShipRecovery(enemy, dt);
     updateCooldowns(enemy.cooldowns, dt);
   }
+}
+
+function moveShip(ship, desired, turnRate, thrust, maxSpeed, damp, dt) {
+  ship.angle = turnToward(ship.angle, desired, turnRate * dt);
+  ship.vx += Math.cos(ship.angle) * thrust * dt;
+  ship.vy += Math.sin(ship.angle) * thrust * dt;
+  limitVelocity(ship, maxSpeed);
+  ship.vx *= Math.pow(damp, dt * 60);
+  ship.vy *= Math.pow(damp, dt * 60);
+  ship.x += ship.vx * dt;
+  ship.y += ship.vy * dt;
 }
 
 function limitVelocity(ship, maxSpeed) {
@@ -236,48 +260,63 @@ function updateFlagship(ship, dt) {
   });
 }
 
-function updateEscort(ship, dt) {
+// Escorts and frigates: close in and fight with forward guns. In an
+// assassination, idle escorts guard the flagship until the player closes.
+function updateCharger(ship, dt) {
   const target = nearestEnemyTarget(ship);
   if (!target) return;
   const flagship = state.enemies.find((enemy) => enemy.type === "flagship" && enemy.alive);
-  const targetDistance = distance(ship, target);
+  const td = distance(ship, target);
   let desired = angleTo(ship, target);
-  let thrust = 34;
+  let thrust;
 
-  // In an assassination, idle escorts guard the flagship until the player closes.
-  if (flagship && target === state.player && targetDistance > 1120) {
+  if (flagship && target === state.player && td > 1120) {
     const orbit = (performance.now() / 1000) * 0.32 + ship.escortIndex * 2.35;
-    const guardPoint = {
-      x: flagship.x + Math.cos(orbit) * 245,
-      y: flagship.y + Math.sin(orbit) * 245
-    };
-    const guardDistance = distance(ship, guardPoint);
+    const guardPoint = { x: flagship.x + Math.cos(orbit) * 245, y: flagship.y + Math.sin(orbit) * 245 };
     desired = angleTo(ship, guardPoint);
-    thrust = guardDistance > 110 ? 116 : 18;
+    thrust = distance(ship, guardPoint) > 110 ? 116 : 18;
   } else {
-    thrust = targetDistance > 310 ? 138 : targetDistance < 185 ? -70 : 34;
+    thrust = td > 310 ? 138 : td < 185 ? -70 : 34;
   }
+  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.989, dt);
+  enemyTryFire(ship, "forward", target, ship.weapon);
+}
 
-  ship.angle = turnToward(ship.angle, desired, 1.15 * dt);
-  ship.vx += Math.cos(ship.angle) * thrust * dt;
-  ship.vy += Math.sin(ship.angle) * thrust * dt;
-  limitVelocity(ship, 255);
-  ship.vx *= Math.pow(0.989, dt * 60);
-  ship.vy *= Math.pow(0.989, dt * 60);
-  ship.x += ship.vx * dt;
-  ship.y += ship.vy * dt;
-  enemyTryFire(ship, "forward", target, {
-    name: "Escort Guns",
-    damage: 11,
-    cooldown: 0.78,
-    range: 400,
-    arc: 34,
-    speed: 610,
-    spread: 5,
-    shots: 2,
-    size: 3,
-    color: "#ff7b8d"
-  });
+// Raiders: fast, reckless dive-bombers that stay in the player's face.
+function updateAggressive(ship, dt) {
+  const target = nearestEnemyTarget(ship);
+  if (!target) return;
+  const td = distance(ship, target);
+  const desired = angleTo(ship, target);
+  const thrust = td < 140 ? -60 : 150;
+  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.985, dt);
+  enemyTryFire(ship, "forward", target, ship.weapon);
+}
+
+// Missile boats: hold the target at arm's length and lob missiles.
+function updateKite(ship, dt) {
+  const target = nearestEnemyTarget(ship);
+  if (!target) return;
+  const td = distance(ship, target);
+  const desired = angleTo(ship, target);
+  const thrust = td > 880 ? 110 : td < 620 ? -95 : 0;
+  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.99, dt);
+  enemyTryFire(ship, "forward", target, ship.weapon);
+}
+
+// Cruisers: broadside duelists — present a beam and rake the target.
+function updateBroadsideShip(ship, dt) {
+  const target = nearestEnemyTarget(ship);
+  if (!target) return;
+  const toT = angleTo(ship, target);
+  const d = distance(ship, target);
+  const side = Math.sin(angleWrap(toT - ship.angle)) > 0 ? Math.PI / 2 : -Math.PI / 2;
+  const desired = toT - side;
+  const thrust = d > 620 ? 50 : d < 360 ? -30 : 0;
+  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.992, dt);
+  enemyTryFire(ship, "port", target, ship.broadside);
+  enemyTryFire(ship, "starboard", target, ship.broadside);
+  enemyTryFire(ship, "forward", target, ship.bow);
 }
 
 function updateProjectiles(dt) {

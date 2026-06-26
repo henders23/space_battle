@@ -362,6 +362,22 @@ const SHIP_SPECS = {
     length: 58, width: 24, hull: "#e89088", hull2: "#6e3330",
     light: "#ffd9d2", deck: "#3a1c1c", glow: "rgba(255,83,71,0.4)", engine: "#ff9b6b", turrets: 0
   },
+  raider: {
+    length: 44, width: 18, hull: "#f0a07e", hull2: "#7a3b28",
+    light: "#ffe0d2", deck: "#3a1c14", glow: "rgba(255,120,80,0.4)", engine: "#ffb07b", turrets: 0
+  },
+  frigate: {
+    length: 82, width: 34, hull: "#e89088", hull2: "#6e3330",
+    light: "#ffd9d2", deck: "#3a1c1c", glow: "rgba(255,83,71,0.42)", engine: "#ff9b6b", turrets: 1
+  },
+  missile_boat: {
+    length: 72, width: 32, hull: "#e0a878", hull2: "#6e4a30",
+    light: "#ffe7c8", deck: "#3a2c18", glow: "rgba(255,180,90,0.4)", engine: "#ffcf6b", turrets: 0
+  },
+  cruiser: {
+    length: 150, width: 62, hull: "#dd8a82", hull2: "#6e302c",
+    light: "#ffd3c6", deck: "#3a1818", glow: "rgba(255,83,71,0.45)", engine: "#ff9b6b", turrets: 3
+  },
   transport: {
     length: 96, width: 44, hull: "#8fd6a8", hull2: "#3e6e52",
     light: "#d7fbe6", deck: "#16402c", glow: "rgba(95,209,122,0.4)", engine: "#9ff0b8", turrets: 0
@@ -400,7 +416,7 @@ function drawShipBody(ship) {
   const L = spec.length;
   const W = spec.width;
   const isPlayer = ship.type === "player";
-  const isEscort = ship.type === "escort";
+  const isEscort = ship.type === "escort" || ship.type === "raider";
   const friendly = ship.team === "player" || ship.team === "ally";
 
   ctx.save();
@@ -415,14 +431,15 @@ function drawShipBody(ship) {
   // Player ship uses the photographic sprite when available; the bow in the art
   // points right (+x), matching the ship's local heading, so no extra rotation.
   if (isPlayer && playerSprite) {
-    const drawW = L * 1.7;
+    const scale = ship.spriteScale || 1.7;
+    const drawW = L * scale;
     const drawH = drawW * (playerSprite.height / playerSprite.width);
-    drawEngines(spec, -drawW * 0.46, W * 1.6, flare); // burn behind the sprite stern
+    drawEngines(spec, -drawW * 0.46, W * scale * 0.95, flare); // burn behind the sprite stern
     ctx.shadowColor = spec.glow;
     ctx.shadowBlur = 16;
     ctx.drawImage(playerSprite, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.shadowBlur = 0;
-    drawShieldEnvelope(ship, L, W, friendly);
+    drawShieldEnvelope(ship, L * scale, W * scale, friendly);
     ctx.restore();
     return;
   }
@@ -607,7 +624,8 @@ function drawPlayerLabel() {
   ctx.fillStyle = PALETTE.accent;
   ctx.font = "11px 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
-  ctx.fillText("CWS RESOLUTE ◆ YOU", cx, cy + 104);
+  const name = (state.player && state.player.name) || "CWS Vanguard";
+  ctx.fillText(`${name.toUpperCase()} ◆ YOU`, cx, cy + 104);
 }
 
 function drawOffscreenTarget() {

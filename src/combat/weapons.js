@@ -21,18 +21,23 @@ export function getSlotAngle(angle, slot) {
 
 export function playerWeaponDefinitions() {
   const loadout = state.career.loadout;
-  const forward = forwardLoadouts[loadout.forward];
-  const port = broadsideLoadouts[loadout.port];
-  const starboard = broadsideLoadouts[loadout.starboard];
+  // Hull class scales firepower: the battleship hits harder but reloads slower.
+  const dmgMod = (state.player && state.player.weaponDamage) || 1;
+  const cdMod = (state.player && state.player.weaponCooldown) || 1;
+  const tune = (def, broadside) => ({
+    ...def,
+    damage: Math.round(def.damage * (broadside ? dmgMod : 1)),
+    cooldown: def.cooldown * cdMod
+  });
   const specialBoost = loadout.forward === "torpedoForward" ? 1.25 : 1;
   return {
-    forward,
-    port,
-    starboard,
+    forward: tune(forwardLoadouts[loadout.forward], false),
+    port: tune(broadsideLoadouts[loadout.port], true),
+    starboard: tune(broadsideLoadouts[loadout.starboard], true),
     torpedo: {
       name: "Torpedo",
-      damage: Math.round(92 * specialBoost),
-      cooldown: 4.8 / specialBoost,
+      damage: Math.round(92 * specialBoost * dmgMod),
+      cooldown: (4.8 / specialBoost) * cdMod,
       range: 760,
       arc: 18,
       speed: 390,

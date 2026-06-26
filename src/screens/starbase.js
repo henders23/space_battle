@@ -3,13 +3,17 @@
 import { state } from "../state.js";
 import { formatCredits } from "../utils.js";
 import { forwardLoadouts, broadsideLoadouts, utilityLoadouts } from "../data/loadouts.js";
+import { HULLS, HULL_ORDER } from "../data/ships.js";
 import {
   calculateRepairCost,
   currentReputation,
   repairShip,
   saveCareer,
   isOwned,
-  buyItem
+  buyItem,
+  ownsShip,
+  buyShip,
+  equipShip
 } from "../career.js";
 
 // Starbase refit hub: repair economy, owned-loadout selection, the armory
@@ -49,10 +53,12 @@ export function initStarbase() {
   dom.baseMissions = document.getElementById("base-missions");
   dom.baseBest = document.getElementById("base-best");
   dom.baseTonnage = document.getElementById("base-tonnage");
+  dom.baseShipclass = document.getElementById("base-shipclass");
   dom.missionPreview = document.getElementById("mission-preview");
   dom.repairShip = document.getElementById("repair-ship");
   dom.armoryList = document.getElementById("armory-list");
   dom.historyList = document.getElementById("history-list");
+  dom.shipyardList = document.getElementById("shipyard-list");
 
   dom.forwardSelect.addEventListener("change", (e) => setLoadout("forward", e.target.value));
   dom.portSelect.addEventListener("change", (e) => setLoadout("port", e.target.value));
@@ -109,6 +115,50 @@ function buildArmory() {
   }
 }
 
+function buildShipyard() {
+  if (!dom.shipyardList) return;
+  dom.shipyardList.innerHTML = "";
+  const rep = state.career.reputationScore;
+  for (const key of HULL_ORDER) {
+    const h = HULLS[key];
+    const owned = ownsShip(key);
+    const current = state.career.ship === key;
+    const row = document.createElement("div");
+    row.className = "shipyard-row" + (current ? " current" : "");
+    const stats =
+      `Hull ${h.hullSide * 2} · Shields ${h.shieldSide * 2} · ` +
+      `Speed ${h.speeds[3]} · ${key === "frigate" ? "Agile" : key === "cruiser" ? "Balanced" : "Heavy"}`;
+    row.innerHTML =
+      `<div class="shipyard-info">` +
+      `<span class="shipyard-name">${h.className}</span>` +
+      `<span class="shipyard-stats mono">${stats}</span>` +
+      `<span class="shipyard-desc">${h.desc}</span>` +
+      `</div>`;
+
+    const btn = document.createElement("button");
+    if (current) {
+      btn.textContent = "In Service";
+      btn.disabled = true;
+    } else if (owned) {
+      btn.textContent = "Commission";
+      btn.addEventListener("click", () => {
+        if (equipShip(key)) updateStarbase();
+      });
+    } else if (rep < h.reqReputation) {
+      btn.textContent = `Needs Rep ${h.reqReputation}`;
+      btn.disabled = true;
+    } else {
+      btn.textContent = `Buy ${formatCredits(h.cost)}`;
+      btn.disabled = state.career.credits < h.cost;
+      btn.addEventListener("click", () => {
+        if (buyShip(key, h.cost)) updateStarbase();
+      });
+    }
+    row.appendChild(btn);
+    dom.shipyardList.appendChild(row);
+  }
+}
+
 function buildHistory() {
   const history = state.career.record.history;
   dom.historyList.innerHTML = "";
@@ -142,6 +192,7 @@ export function updateStarbase() {
   dom.baseMissions.textContent = `${record.missionsCompleted} / ${record.missionsCompleted + record.missionsFailed}`;
   dom.baseBest.textContent = record.bestGrade;
   if (dom.baseTonnage) dom.baseTonnage.textContent = `${record.enemyTonnage.toLocaleString()} t`;
+  if (dom.baseShipclass) dom.baseShipclass.textContent = HULLS[state.career.ship] ? HULLS[state.career.ship].name : "Frigate";
   dom.repairShip.disabled = repairCost === 0 || state.career.credits < repairCost;
 
   const loadout = state.career.loadout;
@@ -158,5 +209,6 @@ export function updateStarbase() {
   ].join(" ");
 
   buildArmory();
+  buildShipyard();
   buildHistory();
 }

@@ -67,6 +67,13 @@ fight. Combat rewards positioning and timing over twitch reflexes.
 - **Mouse-aimed firing**: shots travel toward the cursor; the battery whose arc contains
   the cursor fires (left click = the bearing battery, right click = torpedo), and the
   active arc highlights.
+- **Three player hull classes** — Frigate (fast, fragile), Cruiser (the balanced
+  workhorse), and Battleship (slow, devastating broadsides) — each with distinct hull,
+  shields, turn rate, speed and firepower, bought at the shipyard and gated by reputation
+  and credits.
+- **Six enemy classes** with distinct AI: raiders (fast dive-bombers), escorts and
+  frigates (chargers), missile boats (kiters), cruisers (broadside duelists) and named
+  flagships — mixed into each mission type so different sectors demand different tactics.
 - **Per-side defences**: independent port/starboard shields and hull on every ship —
   protect a damaged side and force the enemy to expose theirs (breach either flank and
   the ship is lost).
@@ -120,7 +127,7 @@ See [`PLAN.md`](PLAN.md) for the full execution plan.
 - **M2** — Starbase & progression (armory, unlocks, mission history). ✅
 - **M3** — Galactic war map with sectors and dynamic war consequences. ✅
 - **M4** — Mission variety (patrol, convoy escort, starbase defence, rescue). ✅
-- **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types.
+- **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types. ✅
 - **M6** — Campaign polish: ranks, war news, settings, audio/SFX.
 - **M7** — Procedural story layer: recurring named enemy ships, operation chains,
   officer voice-lines, battle scars.
