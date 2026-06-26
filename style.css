@@ -225,6 +225,28 @@ select {
 .intro-sign { color: var(--muted) !important; font-style: italic; }
 .intro-panel .primary { width: 100%; }
 
+/* ============ MISSION BRIEFING ============ */
+.briefing-panel { width: min(860px, 100%); max-height: calc(100vh - 56px); overflow-y: auto; }
+.briefing-head { display: grid; grid-template-columns: 120px 1fr; gap: 22px; align-items: center; margin: 16px 0 20px; }
+.brief-portrait { width: 120px; height: 158px; object-fit: cover; object-position: top center; border: 1px solid var(--line-strong); border-radius: 3px; background: #0b1724; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); }
+.briefing-headinfo h2 { font-size: clamp(1.6rem, 3.5vw, 2.6rem); }
+.brief-meta { margin: 6px 0 10px; font-size: 0.74rem; letter-spacing: 2px; color: var(--amber); }
+.brief-officer { margin: 0; color: var(--text-2); }
+.brief-officer b { font-family: var(--display); font-weight: 600; font-size: 1.15rem; letter-spacing: 1px; }
+.brief-officer span { display: block; font-size: 0.7rem; letter-spacing: 2px; color: var(--muted-2); text-transform: uppercase; margin-top: 2px; }
+.briefing-body { border-top: 1px solid var(--line); padding-top: 18px; }
+.brief-objective { display: flex; gap: 12px; align-items: baseline; margin: 0 0 14px; }
+.brief-objective .brief-label { font-size: 0.66rem; letter-spacing: 2px; color: var(--accent); white-space: nowrap; }
+.brief-objective span:last-child { font-family: var(--display); font-weight: 600; font-size: 1.2rem; color: var(--text); }
+.brief-text { color: var(--text-2); font-size: 1.04rem; line-height: 1.6; margin: 0 0 18px; }
+.brief-params { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0 0 22px; }
+.brief-params div { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); background: rgba(8, 18, 26, 0.5); }
+.brief-params dt { color: var(--muted-2); font-size: 0.66rem; letter-spacing: 2px; text-transform: uppercase; }
+.brief-params dd { margin: 0; font-family: var(--mono); font-size: 1.05rem; color: var(--text); }
+.briefing-actions { display: flex; gap: 12px; }
+.briefing-actions .primary { flex: 2; }
+.briefing-actions .ghost { flex: 1; }
+
 /* ============ panels / cards ============ */
 .panel {
   position: relative;

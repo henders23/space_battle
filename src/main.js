@@ -23,8 +23,9 @@ import { initHud, updateHud } from "./ui/hud.js";
 import { initStarbase, updateStarbase } from "./screens/starbase.js";
 import { initEvaluation } from "./screens/evaluation.js";
 import { initWarMap, renderWarMap } from "./screens/warMap.js";
+import { initBriefing, renderBriefing } from "./screens/briefing.js";
 
-const SCREEN_NAMES = ["title", "intro", "warmap", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
+const SCREEN_NAMES = ["title", "intro", "warmap", "briefing", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
 
 let pauseBanner = null;
 let canvas = null;
@@ -58,8 +59,12 @@ function startMission(sectorId) {
   state.activeSectorId = sectorId || null;
   const sector = sectorId ? fullSector(sectorId) : null;
   const mission = setupMissionWorld(sector);
-  addMessage(`Operation ${mission.operationName}: assassinate ${mission.flagshipName} in ${mission.sectorName}.`);
+  addMessage(`Operation ${mission.operationName}: ${mission.typeName} in ${mission.sectorName}.`);
   addMessage(mission.hazard);
+  showScreen("briefing");
+}
+
+function launchFromBriefing() {
   showScreen("combat");
 }
 
@@ -159,6 +164,9 @@ function bindMenu() {
 
   const introBegin = document.getElementById("intro-begin");
   if (introBegin) introBegin.addEventListener("click", () => showScreen("warmap"));
+
+  const briefLaunch = document.getElementById("brief-launch");
+  if (briefLaunch) briefLaunch.addEventListener("click", launchFromBriefing);
 }
 
 function handleKeyDown(event) {
@@ -237,6 +245,7 @@ function init() {
   initHud();
   initEvaluation();
   initStarbase();
+  initBriefing();
 
   registerScreens(SCREEN_NAMES);
   buildControlsScreen();
@@ -256,6 +265,7 @@ function init() {
   window.addEventListener("screen:enter", (e) => {
     if (e.detail.name === "starbase") updateStarbase();
     if (e.detail.name === "warmap") renderWarMap();
+    if (e.detail.name === "briefing") renderBriefing();
   });
 
   showScreen("title");

@@ -60,6 +60,8 @@ export function generateMission(sector) {
     duration,
     timer: duration,
     reward,
+    threat,
+    enemyFleet,
     damaged: firstCommand,
     hazard: firstCommand
       ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields failing, escorts scattered. A clean opportunity for a first command."

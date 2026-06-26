@@ -15,16 +15,11 @@
       <div class="vk-bg vk-bg--title"></div>
       <div class="scanlines"></div>
       <div class="title-layout">
-        <div class="fleet-tag">
-          <span class="sigil"></span>
-          <span class="mono">COMMONWEALTH NAVY <span class="dim">//</span> FLEET COMMAND TERMINAL</span>
-        </div>
-
         <div class="title-block">
           <h1 class="game-title">VALKYRIE</h1>
           <div class="title-sub">
             <span class="rule"></span>
-            <span>BROADSIDE COMMAND</span>
+            <span>HELION WAR</span>
           </div>
           <p class="tagline">You are not a pilot. You are the captain of a warship on the line — and the Helion War will judge every decision you make.</p>
         </div>
@@ -145,6 +140,36 @@
             <h3 class="mono">▤ MISSION HISTORY</h3>
             <div id="history-list" class="history-list"></div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MISSION BRIEFING ============ -->
+    <section id="briefing-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="scanlines"></div>
+      <div class="panel briefing-panel">
+        <p class="mono eyebrow">MISSION BRIEFING // ADMIRALTY COMMAND</p>
+        <div class="briefing-head">
+          <img id="brief-portrait" class="brief-portrait" alt="Briefing officer">
+          <div class="briefing-headinfo">
+            <h2 id="brief-op">OPERATION</h2>
+            <p class="brief-meta mono"><span id="brief-type"></span> · <span id="brief-sector"></span></p>
+            <p class="brief-officer"><b id="brief-officer-name"></b><span id="brief-officer-rank" class="mono"></span></p>
+          </div>
+        </div>
+        <div class="briefing-body">
+          <p class="brief-objective"><span class="brief-label mono">OBJECTIVE</span><span id="brief-objective"></span></p>
+          <p id="brief-text" class="brief-text"></p>
+          <dl class="brief-params">
+            <div><dt>Time Limit</dt><dd id="brief-time">—</dd></div>
+            <div><dt>Reward</dt><dd id="brief-reward">—</dd></div>
+            <div><dt>Sector Threat</dt><dd id="brief-threat">—</dd></div>
+          </dl>
+        </div>
+        <div class="briefing-actions">
+          <button id="brief-launch" class="primary">Launch Mission</button>
+          <button data-warmap class="ghost">Back to War Map</button>
         </div>
       </div>
     </section>
