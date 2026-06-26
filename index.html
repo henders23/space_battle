@@ -161,7 +161,22 @@
               </div>
               <div class="sided-caption mono"><span>◄ PORT</span><span>STARBOARD ►</span></div>
             </div>
-            <ul id="system-list" class="system-list"></ul>
+            <div class="ship-plan">
+              <svg viewBox="0 0 100 132" class="ship-plan-svg" aria-hidden="true">
+                <path id="plan-port" d="M50 6 L31 30 L27 98 L40 124 L50 124 Z"></path>
+                <path id="plan-stbd" d="M50 6 L69 30 L73 98 L60 124 L50 124 Z"></path>
+                <line x1="50" y1="9" x2="50" y2="121" stroke="rgba(4,8,11,0.7)" stroke-width="1.5"></line>
+                <circle id="plan-engines" cx="50" cy="112" r="6"></circle>
+                <circle id="plan-weapons-p" cx="33" cy="66" r="5"></circle>
+                <circle id="plan-weapons-s" cx="67" cy="66" r="5"></circle>
+                <circle id="plan-sensors" cx="50" cy="26" r="5.5"></circle>
+              </svg>
+              <div class="ship-plan-key mono">DAMAGE CONTROL — HULL BY FLANK</div>
+            </div>
+          </div>
+          <div class="hud-card">
+            <h3 class="mono">⚓ BRIDGE CREW &amp; SYSTEMS</h3>
+            <div id="system-officers" class="system-officers"></div>
           </div>
           <div class="hud-card">
             <h3 class="mono">⚉ WEAPON SYSTEMS</h3>

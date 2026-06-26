@@ -5,8 +5,11 @@ import { distance, formatTime } from "../utils.js";
 import { playerWeaponDefinitions } from "../combat/weapons.js";
 import { getSensorRange } from "../combat/systems.js";
 import { sideRatioShield, sideRatioHull } from "../combat/shipStats.js";
+import { OFFICERS, SYSTEM_ORDER } from "../data/officers.js";
 
 const dom = {};
+const officerRows = {};
+const plan = {};
 
 export function initHud() {
   dom.operation = document.getElementById("hud-operation");
@@ -25,14 +28,54 @@ export function initHud() {
     hullStbd: document.getElementById("hull-stbd-val")
   };
   dom.throttle = document.getElementById("hud-throttle");
-  dom.systemList = document.getElementById("system-list");
   dom.weaponList = document.getElementById("weapon-list");
   dom.targetInfo = document.getElementById("target-info");
   dom.messageLog = document.getElementById("message-log");
+
+  // Ship damage schematic nodes
+  plan.port = document.getElementById("plan-port");
+  plan.stbd = document.getElementById("plan-stbd");
+  plan.engines = document.getElementById("plan-engines");
+  plan.weaponsP = document.getElementById("plan-weapons-p");
+  plan.weaponsS = document.getElementById("plan-weapons-s");
+  plan.sensors = document.getElementById("plan-sensors");
+
+  buildOfficerRows();
+}
+
+// Build the officer rows once so the portraits don't reload (and flicker) every
+// frame; only the status text, bar and colour are updated in the loop.
+function buildOfficerRows() {
+  const container = document.getElementById("system-officers");
+  if (!container) return;
+  container.innerHTML = "";
+  for (const sys of SYSTEM_ORDER) {
+    const officer = OFFICERS[sys];
+    const row = document.createElement("div");
+    row.className = "officer-row";
+    row.innerHTML =
+      `<img class="officer-portrait" src="${officer.portrait}" alt="${officer.name}" loading="lazy">` +
+      `<div class="officer-info">` +
+      `<span class="officer-top"><span class="officer-name">${officer.name}</span>` +
+      `<span class="officer-role mono">${officer.role}</span></span>` +
+      `<span class="officer-system"><span class="sys-icon">${officer.icon}</span> ${SYSTEM_NAMES[sys]} — <b class="sys-status">operational</b></span>` +
+      `<div class="officer-bar"><i></i></div>` +
+      `</div>`;
+    container.appendChild(row);
+    officerRows[sys] = {
+      row,
+      status: row.querySelector(".sys-status"),
+      bar: row.querySelector(".officer-bar i")
+    };
+  }
 }
 
 function hullColor(ratio) {
   return ratio > 0.45 ? "#5fd17a" : ratio > 0.22 ? "#f0a93d" : "#ff5347";
+}
+
+function systemColor(level) {
+  return ["#5fd17a", "#f0a93d", "#ff8a40", "#ff5347"][level] || "#5fd17a";
 }
 
 function setBar(bar, val, ratio, color) {
@@ -79,12 +122,30 @@ export function updateHud() {
   setBar(dom.bars.hullPort, dom.vals.hullPort, hp, hullColor(hp));
   setBar(dom.bars.hullStbd, dom.vals.hullStbd, hs, hullColor(hs));
 
-  dom.systemList.innerHTML = "";
-  for (const [key, level] of Object.entries(player.systems)) {
-    const item = document.createElement("li");
-    item.dataset.level = level;
-    item.innerHTML = `<span>${SYSTEM_NAMES[key]}</span><b>${SYSTEM_STATES[level]}</b>`;
-    dom.systemList.appendChild(item);
+  // Bridge crew & system status
+  for (const sys of SYSTEM_ORDER) {
+    const refs = officerRows[sys];
+    if (!refs) continue;
+    const level = player.systems[sys] || 0;
+    refs.row.dataset.level = level;
+    refs.status.textContent = SYSTEM_STATES[level];
+    refs.status.style.color = systemColor(level);
+    refs.bar.style.width = `${((3 - level) / 3) * 100}%`;
+    refs.bar.style.background = systemColor(level);
+  }
+
+  // Ship damage schematic: flanks coloured by hull, outline by shields, system
+  // markers by their own state.
+  if (plan.port) {
+    plan.port.style.fill = hullColor(hp);
+    plan.stbd.style.fill = hullColor(hs);
+    const shieldStroke = systemColor(player.systems.shields || 0);
+    plan.port.style.stroke = shieldStroke;
+    plan.stbd.style.stroke = shieldStroke;
+    plan.engines.style.fill = systemColor(player.systems.engines || 0);
+    plan.weaponsP.style.fill = systemColor(player.systems.weapons || 0);
+    plan.weaponsS.style.fill = systemColor(player.systems.weapons || 0);
+    plan.sensors.style.fill = systemColor(player.systems.sensors || 0);
   }
 
   const weapons = playerWeaponDefinitions();

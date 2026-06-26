@@ -46,14 +46,14 @@ export function generateMission(sector) {
   const threat = sector ? sector.threat : 60;
   const sectorName = sector ? sector.name : `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
   const flagshipName = `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
-  const duration = firstCommand ? randomInt(280, 340) : randomInt(190, 300);
+  const duration = firstCommand ? randomInt(320, 380) : randomInt(280, 380);
   const reward = firstCommand
     ? Math.round(750 * randomRange(0.9, 1.1))
     : Math.round((850 + threat * 6) * randomRange(0.9, 1.1));
   const escortCount = firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3);
   const flagshipHull = firstCommand
-    ? Math.round(360 * randomRange(0.9, 1.1))
-    : Math.round((560 + enemyFleet * 3) * randomRange(0.9, 1.1));
+    ? Math.round(520 * randomRange(0.9, 1.1))
+    : Math.round((820 + enemyFleet * 4) * randomRange(0.9, 1.1));
   const hazard = firstCommand
     ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields are failing and its escorts have scattered. A clean opportunity for a first command."
     : pick(hazards);
@@ -78,8 +78,8 @@ export function createPlayerShip() {
   const utility = state.career.loadout.utility;
   const shieldBonus = utility === "reinforcedShields" ? 85 : 0;
   const engineBonus = utility === "engineBoost" ? 0.16 : 0;
-  const sideShield = (245 + shieldBonus) / 2;
-  const sideHull = 210 * state.career.hull;
+  const sideShield = (360 + shieldBonus) / 2;
+  const sideHull = 340 * state.career.hull;
   return {
     id: "player",
     type: "player",
@@ -90,7 +90,7 @@ export function createPlayerShip() {
     vy: 0,
     angle: 0,
     radius: 56,
-    hullMax: { port: 210, starboard: 210 },
+    hullMax: { port: 340, starboard: 340 },
     hull: { port: sideHull, starboard: sideHull },
     shieldsMax: { port: sideShield, starboard: sideShield },
     shields: { port: sideShield, starboard: sideShield },
@@ -108,7 +108,7 @@ export function createPlayerShip() {
 export function createEnemyShip(type, x, y, mission, index) {
   if (type === "flagship") {
     // A damaged flagship has weaker shields and already-degraded subsystems.
-    const sideShield = mission.damaged ? 55 : 130;
+    const sideShield = mission.damaged ? 90 : 200;
     const systems = mission.damaged
       ? { engines: 2, weapons: 1, sensors: 1, shields: 1 }
       : createSystems();
@@ -149,10 +149,10 @@ export function createEnemyShip(type, x, y, mission, index) {
     vy: randomRange(-20, 20),
     angle: Math.PI,
     radius: 22,
-    hullMax: { port: 72, starboard: 72 },
-    hull: { port: 72, starboard: 72 },
-    shieldsMax: { port: 45, starboard: 45 },
-    shields: { port: 45, starboard: 45 },
+    hullMax: { port: 120, starboard: 120 },
+    hull: { port: 120, starboard: 120 },
+    shieldsMax: { port: 78, starboard: 78 },
+    shields: { port: 78, starboard: 78 },
     shieldDelay: { port: 0, starboard: 0 },
     shieldRegen: 5,
     systems: createSystems(),

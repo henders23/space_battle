@@ -68,7 +68,12 @@ fight. Combat rewards positioning and timing over twitch reflexes.
   the cursor fires (left click = the bearing battery, right click = torpedo), and the
   active arc highlights.
 - **Per-side defences**: independent port/starboard shields and hull on every ship —
-  protect a damaged side and force the enemy to expose theirs.
+  protect a damaged side and force the enemy to expose theirs (breach either flank and
+  the ship is lost).
+- **Bridge crew & damage control**: each ship system is run by a named officer shown
+  with a portrait, and a live ship schematic shows hull damage by flank and the state of
+  each system. Engagements are deliberately weighty — large hull/shield pools mean
+  duels are won by position and discipline, not a quick burst.
 - **Galactic war map**: a network of sectors with control states (Commonwealth /
   contested / Veyr), threat / stability / supply / enemy-fleet values, and routes. You
   deploy to contested sectors from the map; missions scale to the sector's fleet
