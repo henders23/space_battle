@@ -25,24 +25,58 @@ export function initRenderer(canvasEl) {
   loadPlayerSprite();
 }
 
-// Load the player ship artwork (a side-on render on a white background) and key
-// the white out to transparency so only the hull shows. Falls back silently to
-// the vector ship if the asset is missing.
+// A background pixel: either near-white or the bright green/yellow studio
+// backdrop (high green, low blue). The hull is desaturated grey, so it fails.
+function isBackgroundPixel(r, g, b) {
+  if (Math.min(r, g, b) > 232) return true;
+  return g > 95 && g - b > 34 && r - b > -12;
+}
+
+// Load the player ship artwork (a side-on render on a coloured backdrop) and
+// remove the background by flood-filling inward from the image borders — this
+// follows a gradient cleanly and stops at the high-contrast hull edge, leaving
+// only the ship. Falls back silently to the vector ship if the asset is missing.
 function loadPlayerSprite() {
   const img = new Image();
   img.onload = () => {
     try {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
       const off = document.createElement("canvas");
-      off.width = img.naturalWidth;
-      off.height = img.naturalHeight;
+      off.width = w;
+      off.height = h;
       const octx = off.getContext("2d");
       octx.drawImage(img, 0, 0);
-      const id = octx.getImageData(0, 0, off.width, off.height);
+      const id = octx.getImageData(0, 0, w, h);
       const d = id.data;
-      for (let i = 0; i < d.length; i += 4) {
-        const m = Math.min(d[i], d[i + 1], d[i + 2]);
-        if (m > 234) d[i + 3] = 0;
-        else if (m > 205) d[i + 3] = Math.round(((234 - m) / 29) * 255); // feather edges
+      const visited = new Uint8Array(w * h);
+      const stack = [];
+      const seed = (x, y) => {
+        const p = y * w + x;
+        if (!visited[p]) {
+          visited[p] = 1;
+          stack.push(p);
+        }
+      };
+      for (let x = 0; x < w; x += 1) {
+        seed(x, 0);
+        seed(x, h - 1);
+      }
+      for (let y = 0; y < h; y += 1) {
+        seed(0, y);
+        seed(w - 1, y);
+      }
+      while (stack.length) {
+        const p = stack.pop();
+        const i = p * 4;
+        if (!isBackgroundPixel(d[i], d[i + 1], d[i + 2])) continue;
+        d[i + 3] = 0;
+        const x = p % w;
+        const y = (p - x) / w;
+        if (x > 0 && !visited[p - 1]) { visited[p - 1] = 1; stack.push(p - 1); }
+        if (x < w - 1 && !visited[p + 1]) { visited[p + 1] = 1; stack.push(p + 1); }
+        if (y > 0 && !visited[p - w]) { visited[p - w] = 1; stack.push(p - w); }
+        if (y < h - 1 && !visited[p + w]) { visited[p + w] = 1; stack.push(p + w); }
       }
       octx.putImageData(id, 0, 0);
       playerSprite = off;
@@ -307,21 +341,20 @@ const SHIP_SPECS = {
   }
 };
 
-function drawEngines(spec, L, W, flare) {
-  const sternX = -L * 0.5;
+function drawEngines(spec, sternX, spanW, flare) {
   const nozzles = spec.turrets >= 4 ? 3 : spec.turrets >= 3 ? 2 : 1;
   for (let i = 0; i < nozzles; i += 1) {
     const t = nozzles === 1 ? 0.5 : i / (nozzles - 1);
-    const y = (t - 0.5) * W * 0.6;
-    const len = W * 0.5 * flare;
+    const y = (t - 0.5) * spanW * 0.6;
+    const len = spanW * 0.5 * flare;
     const grad = ctx.createLinearGradient(sternX, 0, sternX - len, 0);
     grad.addColorStop(0, spec.engine);
     grad.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(sternX, y - W * 0.08);
+    ctx.moveTo(sternX, y - spanW * 0.08);
     ctx.lineTo(sternX - len, y);
-    ctx.lineTo(sternX, y + W * 0.08);
+    ctx.lineTo(sternX, y + spanW * 0.08);
     ctx.closePath();
     ctx.fill();
   }
@@ -342,21 +375,23 @@ function drawShipBody(ship) {
   const flare = isPlayer
     ? (0.5 + (ship.throttle || 0) * 0.45) * (0.92 + Math.random() * 0.16)
     : 0.85 + Math.random() * 0.15;
-  drawEngines(spec, L, W, flare);
 
   // Player ship uses the photographic sprite when available; the bow in the art
   // points right (+x), matching the ship's local heading, so no extra rotation.
   if (isPlayer && playerSprite) {
     const drawW = L * 1.7;
     const drawH = drawW * (playerSprite.height / playerSprite.width);
+    drawEngines(spec, -drawW * 0.46, W * 1.6, flare); // burn behind the sprite stern
     ctx.shadowColor = spec.glow;
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 16;
     ctx.drawImage(playerSprite, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.shadowBlur = 0;
     drawShieldEnvelope(ship, L, W, isPlayer);
     ctx.restore();
     return;
   }
+
+  drawEngines(spec, -L * 0.5, W, flare);
 
   // hull with a top-lit gradient for volume
   ctx.shadowColor = spec.glow;
