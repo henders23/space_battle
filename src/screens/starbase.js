@@ -145,8 +145,12 @@ export function updateStarbase() {
   dom.repairShip.disabled = repairCost === 0 || state.career.credits < repairCost;
 
   const loadout = state.career.loadout;
+  const firstCommand = record.missionsCompleted === 0;
+  const briefing = firstCommand
+    ? "First command: hunt down a battle-damaged enemy flagship — shields failing, escorts scattered."
+    : "Assassinate a hostile flagship in a contested sector.";
   dom.missionPreview.textContent = [
-    "Assassinate a hostile flagship in a contested sector.",
+    briefing,
     `Forward: ${forwardLoadouts[loadout.forward].name}.`,
     `Port: ${broadsideLoadouts[loadout.port].name}.`,
     `Starboard: ${broadsideLoadouts[loadout.starboard].name}.`,

@@ -191,9 +191,11 @@ function updateFlagship(ship, dt) {
   ship.x += ship.vx * dt;
   ship.y += ship.vy * dt;
 
+  // A damaged flagship fires a weaker, slower broadside.
+  const dmgScale = state.mission.damaged ? 0.55 : 1;
   const broadside = {
-    damage: 23,
-    cooldown: 1.35,
+    damage: Math.round(23 * dmgScale),
+    cooldown: state.mission.damaged ? 1.9 : 1.35,
     range: 500,
     arc: 70,
     speed: 520,
@@ -206,7 +208,7 @@ function updateFlagship(ship, dt) {
   enemyTryFire(ship, "starboard", player, { name: "Flagship Starboard Battery", ...broadside });
   enemyTryFire(ship, "forward", player, {
     name: "Flagship Bow Guns",
-    damage: 16,
+    damage: Math.round(16 * dmgScale),
     cooldown: 1.1,
     range: 440,
     arc: 28,

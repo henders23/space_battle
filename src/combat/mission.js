@@ -36,15 +36,25 @@ export function generateMission() {
     "Solar interference will punish slow pursuit vectors.",
     "A debris field from an old convoy action is drifting across the intercept lane."
   ];
+  // The captain's very first command (before any completed mission) is a gentler
+  // engagement: a battle-damaged flagship limping home, with failing shields and
+  // no escort screen — a winnable introduction.
+  const firstCommand = state.career.record.missionsCompleted === 0;
+
   const sectorName = `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
   const flagshipName = `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
-  const duration = randomInt(180, 300);
-  const reward = Math.round(1250 * randomRange(0.8, 1.2));
-  const escortCount = randomInt(1, 3);
-  const flagshipHull = Math.round(820 * randomRange(0.85, 1.15));
+  const duration = firstCommand ? randomInt(280, 340) : randomInt(180, 300);
+  const reward = firstCommand ? Math.round(750 * randomRange(0.9, 1.1)) : Math.round(1250 * randomRange(0.8, 1.2));
+  const escortCount = firstCommand ? 0 : randomInt(1, 3);
+  const flagshipHull = firstCommand
+    ? Math.round(360 * randomRange(0.9, 1.1))
+    : Math.round(820 * randomRange(0.85, 1.15));
+  const hazard = firstCommand
+    ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields are failing and its escorts have scattered. A clean opportunity for a first command."
+    : pick(hazards);
   return {
     type: "assassinate_flagship",
-    operationName: pick(operationNames),
+    operationName: firstCommand ? "First Blood" : pick(operationNames),
     sectorName,
     flagshipName,
     duration,
@@ -52,7 +62,8 @@ export function generateMission() {
     reward,
     escortCount,
     flagshipHull,
-    hazard: pick(hazards),
+    damaged: firstCommand,
+    hazard,
     startedAt: performance.now()
   };
 }
@@ -89,6 +100,11 @@ export function createPlayerShip() {
 
 export function createEnemyShip(type, x, y, mission, index) {
   if (type === "flagship") {
+    // A damaged flagship has weaker shields and already-degraded subsystems.
+    const sideShield = mission.damaged ? 55 : 130;
+    const systems = mission.damaged
+      ? { engines: 2, weapons: 1, sensors: 1, shields: 1 }
+      : createSystems();
     return {
       id: "flagship",
       type,
@@ -101,11 +117,11 @@ export function createEnemyShip(type, x, y, mission, index) {
       radius: 64,
       hullMax: { port: mission.flagshipHull / 2, starboard: mission.flagshipHull / 2 },
       hull: { port: mission.flagshipHull / 2, starboard: mission.flagshipHull / 2 },
-      shieldsMax: { port: 130, starboard: 130 },
-      shields: { port: 130, starboard: 130 },
+      shieldsMax: { port: sideShield, starboard: sideShield },
+      shields: { port: sideShield, starboard: sideShield },
       shieldDelay: { port: 0, starboard: 0 },
-      shieldRegen: 6,
-      systems: createSystems(),
+      shieldRegen: mission.damaged ? 3 : 6,
+      systems,
       cooldowns: {
         port: randomRange(0.2, 1.2),
         starboard: randomRange(0.5, 1.4),
