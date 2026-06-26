@@ -65,7 +65,7 @@ export function updateHud() {
   dom.objective.textContent = `Destroy ${mission.flagshipName} in ${mission.sectorName}.`;
   dom.timer.textContent = formatTime(mission.timer);
 
-  const throttleLabels = ["STOP", "VERY SLOW", "SLOW", "MODERATE"];
+  const throttleLabels = ["STOP", "SLOW", "MODERATE", "FULL"];
   if (dom.throttle) {
     const t = player.throttle || 0;
     dom.throttle.textContent = throttleLabels[t];

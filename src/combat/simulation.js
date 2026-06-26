@@ -172,7 +172,9 @@ function updateFlagship(ship, dt) {
   let desiredAngle;
   let thrust = 0;
   if (ship.escaping) {
-    desiredAngle = 0;
+    // Run directly away from the player rather than toward a fixed heading, so a
+    // damaged flagship doesn't end up pinned against the boundary.
+    desiredAngle = angleTo(player, ship);
     thrust = 68;
   } else {
     const broadsideSide = Math.sin(angleWrap(toPlayer - ship.angle)) > 0 ? Math.PI / 2 : -Math.PI / 2;

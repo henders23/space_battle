@@ -27,7 +27,7 @@ toggle it from the title screen or **Settings**.
 
 | Input | Action |
 |---|---|
-| `W` | Throttle up (stop → very slow → slow → moderate) |
+| `W` | Throttle up (stop → slow → moderate → full) |
 | `S` | Throttle down |
 | `A` / `D` | Rotate left / right |
 | Mouse | Aim — shots travel toward the cursor |
@@ -48,8 +48,8 @@ Your ship is fixed at the **centre of the screen, pointing up**; the world — e
 asteroids, projectiles, range rings — rotates around it. Your **forward gun cone faces
 up, the port broadside arc is always to the left, and the starboard arc to the right**,
 so you read your firing envelopes at a glance and fight by *turning* the ship to bring a
-broadside to bear. Ships are heavy: you set a **throttle** (stop / very slow / slow /
-moderate) rather than free-thrusting, turns are wide, and momentum bleeds off slowly.
+broadside to bear. Ships are heavy: you set a **throttle** (stop / slow / moderate /
+full) rather than free-thrusting, turns are wide, and momentum bleeds off slowly.
 Every ship has independent port and starboard hull — **breach either flank and the ship
 is lost** — so protecting a wounded side while working the enemy's is the heart of the
 fight. Combat rewards positioning and timing over twitch reflexes.

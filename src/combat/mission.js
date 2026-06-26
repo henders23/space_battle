@@ -215,8 +215,10 @@ export function setupMissionWorld(sector) {
   state.stats = createStats();
   state.stars = createStars(220);
 
-  const flagshipX = randomRange(WORLD.width - 720, WORLD.width - 360);
-  const flagshipY = randomRange(420, WORLD.height - 420);
+  // Spawn the flagship out in open space (not hugging a boundary) so the duel
+  // has room to manoeuvre.
+  const flagshipX = randomRange(WORLD.width * 0.45, WORLD.width * 0.72);
+  const flagshipY = randomRange(WORLD.height * 0.3, WORLD.height * 0.7);
   state.enemies.push(createEnemyShip("flagship", flagshipX, flagshipY, mission, 0));
 
   for (let i = 1; i <= mission.escortCount; i += 1) {

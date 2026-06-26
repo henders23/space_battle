@@ -4,8 +4,8 @@
 // from the rest of the game so every other module can depend on it safely.
 
 export const WORLD = {
-  width: 3200,
-  height: 2200
+  width: 4000,
+  height: 2800
 };
 
 export const SYSTEM_NAMES = {
