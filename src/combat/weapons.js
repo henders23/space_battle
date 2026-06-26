@@ -11,7 +11,7 @@ import {
   lerpAngle,
   randomRange
 } from "../utils.js";
-import { addEffect } from "./effects.js";
+import { addEffect, addShake } from "./effects.js";
 
 export function getSlotAngle(angle, slot) {
   if (slot === "port") return angle - Math.PI / 2;
@@ -74,6 +74,8 @@ export function firePlayerWeapon(slot, aimAngle) {
   ship.cooldowns[slot] = weapon.cooldown * getSystemMultiplier(ship, "weapons");
   state.stats.shotsFired += weapon.shots;
   if (weapon.torpedo || slot === "torpedo") state.stats.torpedoesFired += 1;
+  // Recoil — heavy batteries kick the camera.
+  addShake(weapon.torpedo ? 6 : weapon.shots >= 5 ? 7 : 3.5);
   return true;
 }
 

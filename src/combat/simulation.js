@@ -11,7 +11,7 @@ import {
 } from "../utils.js";
 import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
-import { addMessage, addEffect } from "./effects.js";
+import { addMessage, addEffect, addShake } from "./effects.js";
 import { hullTotal, hullMaxTotal, impactSide } from "./shipStats.js";
 import { finishMission } from "../screens/evaluation.js";
 
@@ -30,9 +30,9 @@ export function update(dt) {
 function updatePlayer(dt) {
   const ship = state.player;
   const engineMult = getSystemMultiplier(ship, "engines") + ship.engineBonus;
-  const accel = 112 * engineMult;
-  const reverse = 58 * engineMult;
-  const turn = 0.82 * engineMult;
+  const accel = 88 * engineMult;
+  const reverse = 44 * engineMult;
+  const turn = 0.58 * engineMult;
   const forwardX = Math.cos(ship.angle);
   const forwardY = Math.sin(ship.angle);
 
@@ -49,15 +49,16 @@ function updatePlayer(dt) {
     ship.vy -= forwardY * brakeForce * dt;
   }
 
-  const maxSpeed = 212 * engineMult;
+  const maxSpeed = 165 * engineMult;
   const speed = Math.hypot(ship.vx, ship.vy);
   if (speed > maxSpeed) {
     ship.vx = (ship.vx / speed) * maxSpeed;
     ship.vy = (ship.vy / speed) * maxSpeed;
   }
 
-  ship.vx *= Math.pow(0.992, dt * 60);
-  ship.vy *= Math.pow(0.992, dt * 60);
+  // Light damping — a heavy capital ship keeps gliding after the engines cut.
+  ship.vx *= Math.pow(0.996, dt * 60);
+  ship.vy *= Math.pow(0.996, dt * 60);
   ship.x += ship.vx * dt;
   ship.y += ship.vy * dt;
   enforceBoundary(ship);
@@ -305,6 +306,7 @@ function updateProjectiles(dt) {
       const taken = applyDamage(state.player, projectile.damage, "enemy", impactSide(state.player, projectile));
       state.stats.damageTaken += taken;
       addEffect(projectile.x, projectile.y, projectile.color, 0.28);
+      addShake(Math.min(14, 3 + projectile.damage * 0.25));
       if (hullTotal(state.player) < hullMaxTotal(state.player) * 0.25) state.stats.hullCritical = true;
       if (hullTotal(state.player) <= 0) {
         state.player.alive = false;
@@ -351,6 +353,7 @@ function destroyEnemy(enemy) {
   enemy.alive = false;
   state.stats.tonnage += hullMaxTotal(enemy);
   addEffect(enemy.x, enemy.y, enemy.type === "flagship" ? "#ffcc66" : "#ff917d", 0.65);
+  addShake(enemy.type === "flagship" ? 18 : 7);
   if (enemy.type === "flagship") {
     state.stats.targetDestroyed = true;
     addMessage(`${enemy.name} destroyed. Objective complete.`);

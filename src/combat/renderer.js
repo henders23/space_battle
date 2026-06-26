@@ -2,7 +2,7 @@
 
 import { state, WORLD } from "../state.js";
 import { clamp, degToRad, distance } from "../utils.js";
-import { PALETTE, ARC_COLORS } from "../data/theme.js";
+import { PALETTE } from "../data/theme.js";
 import { getSlotAngle, playerWeaponDefinitions, slotForPrimaryAim } from "./weapons.js";
 import { getSensorRange } from "./systems.js";
 import { hullRatio, sideRatioShield } from "./shipStats.js";
@@ -78,8 +78,20 @@ export function draw() {
   ctx.fillStyle = PALETTE.spaceDeep;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Distant parallax starfield — moves slower than the foreground, so the ship
+  // reads as an enormous, slow object gliding through depth.
+  drawFarStars(player);
+
+  // Screen shake offset (recoil / impacts) applied to the whole world frame.
+  let shx = 0;
+  let shy = 0;
+  if ((state.shake || 0) > 0.3) {
+    shx = (Math.random() - 0.5) * state.shake;
+    shy = (Math.random() - 0.5) * state.shake;
+  }
+
   ctx.save();
-  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.translate(canvas.width / 2 + shx, canvas.height / 2 + shy);
   ctx.rotate(rot);
   ctx.translate(-player.x, -player.y);
 
@@ -95,6 +107,8 @@ export function draw() {
   drawEffects();
   ctx.restore();
 
+  state.shake = (state.shake || 0) * 0.85;
+
   // Screen-fixed overlays
   drawRangeRings();
   for (const enemy of state.enemies) {
@@ -103,6 +117,39 @@ export function draw() {
   drawPlayerLabel();
   drawOffscreenTarget();
   drawAimReticle(aimSlot);
+}
+
+let farStars = [];
+
+function ensureFarStars() {
+  if (farStars.length) return;
+  for (let i = 0; i < 160; i += 1) {
+    farStars.push({
+      x: Math.random() * WORLD.width,
+      y: Math.random() * WORLD.height,
+      r: 0.4 + Math.random() * 0.9,
+      a: 0.18 + Math.random() * 0.32
+    });
+  }
+}
+
+// Parallax background drawn in its own transform at a reduced translation factor.
+function drawFarStars(player) {
+  ensureFarStars();
+  const p = 0.4;
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(rot);
+  ctx.translate(-player.x * p, -player.y * p);
+  ctx.fillStyle = PALETTE.star;
+  for (const star of farStars) {
+    ctx.globalAlpha = star.a;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 function drawSpace() {
@@ -116,13 +163,13 @@ function drawSpace() {
   ctx.globalAlpha = 1;
   ctx.strokeStyle = PALETTE.grid;
   ctx.lineWidth = 1;
-  for (let x = 0; x <= WORLD.width; x += 200) {
+  for (let x = 0; x <= WORLD.width; x += 320) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, WORLD.height);
     ctx.stroke();
   }
-  for (let y = 0; y <= WORLD.height; y += 200) {
+  for (let y = 0; y <= WORLD.height; y += 320) {
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(WORLD.width, y);
@@ -169,79 +216,187 @@ function drawAsteroids() {
   }
 }
 
-const ARC_HIGHLIGHT = {
-  forward: "rgba(240, 169, 61, 0.30)",
-  port: "rgba(69, 224, 240, 0.30)",
-  starboard: "rgba(69, 224, 240, 0.30)"
+const ARC_RGB = {
+  forward: [240, 169, 61],
+  port: [69, 224, 240],
+  starboard: [69, 224, 240],
+  torpedo: [255, 83, 71]
 };
 
+// Weapon arcs fade outward and are capped well short of full range, so they
+// frame the ship rather than swallowing it — keeping the hulls reading as large.
 function drawWeaponArcs(ship, aimSlot) {
   const weapons = playerWeaponDefinitions();
-  const arcs = [
-    ["forward", weapons.forward, ARC_COLORS.forward],
-    ["port", weapons.port, ARC_COLORS.port],
-    ["starboard", weapons.starboard, ARC_COLORS.starboard],
-    ["torpedo", weapons.torpedo, ARC_COLORS.torpedo]
+  const order = [
+    ["forward", weapons.forward],
+    ["port", weapons.port],
+    ["starboard", weapons.starboard],
+    ["torpedo", weapons.torpedo]
   ];
-  for (const [slot, weapon, color] of arcs) {
+  for (const [slot, weapon] of order) {
     const center = getSlotAngle(ship.angle, slot);
     const width = degToRad(weapon.arc);
-    // The aim-selected battery glows so the player can see which weapon bears.
-    ctx.fillStyle = slot === aimSlot ? ARC_HIGHLIGHT[slot] : color;
+    const capR = Math.min(weapon.range, 300);
+    const [r, g, b] = ARC_RGB[slot];
+    const active = slot === aimSlot;
+    const inner = `rgba(${r},${g},${b},${active ? 0.34 : 0.15})`;
+    const outer = `rgba(${r},${g},${b},0)`;
+    const grad = ctx.createRadialGradient(ship.x, ship.y, ship.radius * 0.5, ship.x, ship.y, capR);
+    grad.addColorStop(0, inner);
+    grad.addColorStop(1, outer);
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(ship.x, ship.y);
-    ctx.arc(ship.x, ship.y, weapon.range, center - width / 2, center + width / 2);
+    ctx.arc(ship.x, ship.y, capR, center - width / 2, center + width / 2);
+    ctx.closePath();
+    ctx.fill();
+    if (active) {
+      ctx.strokeStyle = `rgba(${r},${g},${b},0.5)`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+}
+
+const SHIP_SPECS = {
+  player: {
+    length: 168, width: 60, hull: "#86d6e8", hull2: "#37606e",
+    light: "#d7fbff", deck: "#15384d", glow: "rgba(69,224,240,0.55)", engine: "#8ff0ff", turrets: 3
+  },
+  flagship: {
+    length: 320, width: 116, hull: "#e0938a", hull2: "#7a3b38",
+    light: "#ffd3c6", deck: "#3c1c1c", glow: "rgba(255,83,71,0.5)", engine: "#ff9b6b", turrets: 4
+  },
+  escort: {
+    length: 58, width: 24, hull: "#e89088", hull2: "#6e3330",
+    light: "#ffd9d2", deck: "#3a1c1c", glow: "rgba(255,83,71,0.4)", engine: "#ff9b6b", turrets: 0
+  }
+};
+
+function drawEngines(spec, L, W, flare) {
+  const sternX = -L * 0.5;
+  const nozzles = spec.turrets >= 4 ? 3 : spec.turrets >= 3 ? 2 : 1;
+  for (let i = 0; i < nozzles; i += 1) {
+    const t = nozzles === 1 ? 0.5 : i / (nozzles - 1);
+    const y = (t - 0.5) * W * 0.6;
+    const len = W * 0.5 * flare;
+    const grad = ctx.createLinearGradient(sternX, 0, sternX - len, 0);
+    grad.addColorStop(0, spec.engine);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(sternX, y - W * 0.08);
+    ctx.lineTo(sternX - len, y);
+    ctx.lineTo(sternX, y + W * 0.08);
     ctx.closePath();
     ctx.fill();
   }
 }
 
 function drawShipBody(ship) {
+  const spec = SHIP_SPECS[ship.type];
+  const L = spec.length;
+  const W = spec.width;
+  const isPlayer = ship.type === "player";
+  const isEscort = ship.type === "escort";
+
   ctx.save();
   ctx.translate(ship.x, ship.y);
   ctx.rotate(ship.angle);
-  const isPlayer = ship.type === "player";
-  const isFlagship = ship.type === "flagship";
-  const length = isFlagship ? 128 : isPlayer ? 90 : 60;
-  const width = isFlagship ? 46 : isPlayer ? 36 : 22;
 
-  ctx.shadowColor = isPlayer ? "rgba(69,224,240,0.6)" : "rgba(255,83,71,0.45)";
-  ctx.shadowBlur = isPlayer ? 22 : 14;
-  ctx.fillStyle = isPlayer ? PALETTE.player : isFlagship ? PALETTE.flagship : PALETTE.enemy;
-  ctx.strokeStyle = isPlayer ? "#d7fbff" : "#ffd3c6";
-  ctx.lineWidth = 2;
+  // engine exhaust (behind hull); the player's flares up while thrusting
+  const flare = isPlayer && state.keys.KeyW ? 1.7 + Math.random() * 0.3 : 0.85 + Math.random() * 0.15;
+  drawEngines(spec, L, W, flare);
+
+  // hull with a top-lit gradient for volume
+  ctx.shadowColor = spec.glow;
+  ctx.shadowBlur = isEscort ? 8 : 24;
+  const hullGrad = ctx.createLinearGradient(0, -W / 2, 0, W / 2);
+  hullGrad.addColorStop(0, spec.hull);
+  hullGrad.addColorStop(1, spec.hull2);
+  ctx.fillStyle = hullGrad;
+  ctx.strokeStyle = spec.light;
+  ctx.lineWidth = isEscort ? 1.5 : 2;
   ctx.beginPath();
-  ctx.moveTo(length / 2, 0);
-  ctx.lineTo(length * 0.18, -width / 2);
-  ctx.lineTo(-length / 2, -width * 0.34);
-  ctx.lineTo(-length / 2, width * 0.34);
-  ctx.lineTo(length * 0.18, width / 2);
+  ctx.moveTo(L * 0.5, 0);
+  ctx.lineTo(L * 0.3, -W * 0.5);
+  ctx.lineTo(-L * 0.42, -W * 0.5);
+  ctx.lineTo(-L * 0.5, -W * 0.3);
+  ctx.lineTo(-L * 0.5, W * 0.3);
+  ctx.lineTo(-L * 0.42, W * 0.5);
+  ctx.lineTo(L * 0.3, W * 0.5);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-
   ctx.shadowBlur = 0;
-  ctx.fillStyle = isPlayer ? "#18374d" : "#4a1f25";
-  ctx.fillRect(-length * 0.2, -width * 0.26, length * 0.45, width * 0.52);
 
-  ctx.fillStyle = "#f8fbff";
-  ctx.fillRect(-length * 0.08, -width * 0.42, length * 0.24, 3);
-  ctx.fillRect(-length * 0.08, width * 0.35, length * 0.24, 3);
+  // keel spine
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-L * 0.46, 0);
+  ctx.lineTo(L * 0.46, 0);
+  ctx.stroke();
 
-  // Per-side shield arcs: in the ship's local frame +y is starboard, -y is
-  // port. Each half-ellipse brightens with that facing's remaining shield.
-  const rx = ship.radius * 1.18;
-  const ry = ship.radius * 0.86;
-  const sides = [
-    ["starboard", 0, Math.PI],
-    ["port", Math.PI, Math.PI * 2]
-  ];
-  for (const [side, a0, a1] of sides) {
+  if (!isEscort) {
+    // panel lines across the hull
+    ctx.strokeStyle = "rgba(0,0,0,0.22)";
+    for (let i = -2; i <= 2; i += 1) {
+      const x = i * L * 0.12;
+      ctx.beginPath();
+      ctx.moveTo(x, -W * 0.46);
+      ctx.lineTo(x, W * 0.46);
+      ctx.stroke();
+    }
+
+    // bridge superstructure
+    ctx.fillStyle = spec.deck;
+    ctx.fillRect(-L * 0.08, -W * 0.22, L * 0.3, W * 0.44);
+    ctx.fillStyle = spec.light;
+    ctx.fillRect(L * 0.12, -W * 0.07, L * 0.05, W * 0.14); // bridge block
+    // bridge light
+    ctx.fillStyle = isPlayer ? "#bff6ff" : "#ffd0c8";
+    ctx.fillRect(L * 0.16, -2, 4, 4);
+
+    // broadside turret blisters down each side
+    ctx.fillStyle = spec.deck;
+    ctx.strokeStyle = spec.light;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < spec.turrets; i += 1) {
+      const tx = L * (0.18 - i * (0.46 / spec.turrets));
+      for (const sy of [-W * 0.42, W * 0.42]) {
+        ctx.beginPath();
+        ctx.arc(tx, sy, W * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // short barrel pointing outboard
+        ctx.beginPath();
+        ctx.moveTo(tx, sy);
+        ctx.lineTo(tx, sy + Math.sign(sy) * W * 0.22);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // running lights: red to port (−y), green to starboard (+y)
+  const lightCount = isEscort ? 2 : 5;
+  for (let i = 0; i < lightCount; i += 1) {
+    const x = L * (0.34 - (i / (lightCount - 1)) * 0.78);
+    ctx.fillStyle = "#ff5347";
+    ctx.fillRect(x, -W * 0.5 - 1, 2, 2);
+    ctx.fillStyle = "#5fd17a";
+    ctx.fillRect(x, W * 0.5 - 1, 2, 2);
+  }
+
+  // per-side shield envelope sized to the hull (+y starboard, −y port)
+  const rx = L * 0.58;
+  const ry = W * 0.85;
+  for (const [side, a0, a1] of [["starboard", 0, Math.PI], ["port", Math.PI, Math.PI * 2]]) {
     const ratio = sideRatioShield(ship, side);
     if (ratio <= 0.02) continue;
     ctx.strokeStyle = isPlayer
-      ? `rgba(69, 224, 240, ${0.14 + ratio * 0.36})`
-      : `rgba(255, 122, 112, ${0.12 + ratio * 0.28})`;
+      ? `rgba(69, 224, 240, ${0.12 + ratio * 0.34})`
+      : `rgba(255, 122, 112, ${0.1 + ratio * 0.26})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(0, 0, rx, ry, 0, a0, a1);
@@ -326,7 +481,7 @@ function drawPlayerLabel() {
   ctx.fillStyle = PALETTE.accent;
   ctx.font = "11px 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
-  ctx.fillText("CWS RESOLUTE ◆ YOU", cx, cy + 60);
+  ctx.fillText("CWS RESOLUTE ◆ YOU", cx, cy + 104);
 }
 
 function drawOffscreenTarget() {

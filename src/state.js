@@ -66,6 +66,7 @@ export const state = {
   keys: {},
   mouseScreen: null, // last cursor position in canvas pixel coords
   paused: false,
+  shake: 0,
   lastTime: 0,
   hasSave: false,
   career: defaultCareer(),
