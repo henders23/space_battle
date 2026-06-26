@@ -280,11 +280,15 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 .hud-card h3 { margin-bottom: 10px; }
 .hud-card.danger, .hud-card h3.danger { color: var(--danger-soft); }
 
-.meter { display: grid; grid-template-columns: 56px 1fr 44px; gap: 8px; align-items: center; margin: 9px 0; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
-.meter .track { height: 10px; overflow: hidden; border-radius: 1px; background: #091420; }
-.meter i { display: block; height: 100%; width: 100%; background: var(--success); }
-.meter b { text-align: right; color: var(--text); }
-#shield-bar { background: var(--accent); }
+.sided { margin-bottom: 6px; }
+.sided-row { display: grid; grid-template-columns: 54px 32px 1fr 1fr 32px; gap: 6px; align-items: center; margin: 8px 0; }
+.sided-label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 1px; color: var(--muted); }
+.sided-row b { font-family: var(--mono); font-size: 0.66rem; color: var(--text); text-align: center; }
+.sided-row .track { height: 10px; overflow: hidden; border-radius: 1px; background: #091420; }
+.sided-row .track i { display: block; height: 100%; width: 100%; background: var(--success); }
+.sided-row .track.port { transform: scaleX(-1); } /* mirror: port fills from centre outward */
+.sided-caption { display: flex; justify-content: space-between; padding: 0 2px; margin-top: 2px; font-size: 0.6rem; letter-spacing: 1px; color: var(--muted-2); }
+#target-info .sd { color: var(--muted-2); }
 
 .system-list, .weapon-list, #message-log { margin: 10px 0 0; padding: 0; list-style: none; }
 .system-list li, .weapon-list li {
@@ -318,6 +322,10 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 .grade-card span[data-grade="B"], .grade-card span[data-grade="C"] { color: var(--amber); }
 .grade-card span[data-grade="D"], .grade-card span[data-grade="F"] { color: var(--danger); }
 .grade-card p { margin: 10px 0 0; color: var(--muted); }
+.commendation { margin: 12px 0 0; font-size: 0.82rem; line-height: 1.4; }
+.commendation[data-kind="commendation"] { color: var(--success); }
+.commendation[data-kind="reprimand"] { color: var(--danger-soft); }
+.career-line { margin: 0 0 18px; padding: 10px 14px; font-size: 0.72rem; letter-spacing: 1px; color: var(--muted); border: 1px solid var(--line); background: rgba(8, 18, 26, 0.6); }
 .report-card { grid-row: span 2; }
 .report-card p { color: var(--text-2); line-height: 1.6; }
 .stats-card { grid-column: 1 / -1; }

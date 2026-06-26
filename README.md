@@ -25,19 +25,22 @@ toggle it from the title screen or **Settings**.
 
 ## Controls
 
-| Key | Action |
+| Input | Action |
 |---|---|
 | `W` | Thrust forward |
 | `S` | Reverse / braking thrust |
 | `A` / `D` | Rotate left / right |
-| `Space` | Fire forward guns |
-| `Q` | Fire port broadside |
-| `E` | Fire starboard broadside |
-| `F` | Fire torpedo / special weapon |
+| Mouse | Aim — shots travel toward the cursor |
+| Left click | Fire whichever battery's arc the cursor falls in |
+| Right click | Fire torpedo (cursor in the forward arc) |
+| Hold a button | Keep firing that weapon as it reloads |
 | `R` | Retreat (forfeits the mission) |
 | `Esc` | Pause |
 
-A full reference is on the in-game **Controls** screen.
+You fire with the **mouse**: aim where you want the shots to go, and the battery
+whose arc contains the cursor (port, starboard, or forward) is the one that fires —
+the bearing battery's arc lights up so you can see what bears. A full reference is on
+the in-game **Controls** screen.
 
 ## Combat model
 

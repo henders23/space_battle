@@ -1,6 +1,12 @@
 "use strict";
 
-import { state, defaultCareer, createSystems } from "./state.js";
+import { state, defaultCareer, defaultRecord, createSystems } from "./state.js";
+
+const GRADE_ORDER = ["—", "F", "D", "C", "B", "A", "S"];
+
+export function betterGrade(a, b) {
+  return GRADE_ORDER.indexOf(a) >= GRADE_ORDER.indexOf(b) ? a : b;
+}
 
 // Career economy + persistence. A light localStorage layer for M0; the full
 // save system (mission history, unlocks, war map) arrives in later milestones.
@@ -53,6 +59,9 @@ export function loadCareer() {
     state.career = { ...defaultCareer(), ...parsed };
     state.career.systems = { ...createSystems(), ...(parsed.systems || {}) };
     state.career.loadout = { ...defaultCareer().loadout, ...(parsed.loadout || {}) };
+    const rec = defaultRecord();
+    state.career.record = { ...rec, ...(parsed.record || {}) };
+    state.career.record.grades = { ...rec.grades, ...((parsed.record && parsed.record.grades) || {}) };
     state.hasSave = true;
     return true;
   } catch (err) {

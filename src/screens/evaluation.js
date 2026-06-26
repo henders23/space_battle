@@ -3,7 +3,8 @@
 import { state } from "../state.js";
 import { clamp, formatCredits, formatTime } from "../utils.js";
 import { showScreen } from "../router.js";
-import { calculateRepairCost, currentReputation, saveCareer } from "../career.js";
+import { calculateRepairCost, currentReputation, saveCareer, betterGrade } from "../career.js";
+import { hullRatio, shieldRatio } from "../combat/shipStats.js";
 
 // After-action review: grade, captain's report, economy, statistics.
 
@@ -18,12 +19,14 @@ export function initEvaluation() {
   dom.evalNet = document.getElementById("eval-net");
   dom.evalReputation = document.getElementById("eval-reputation");
   dom.evalStats = document.getElementById("eval-stats");
+  dom.commendation = document.getElementById("eval-commendation");
+  dom.careerLine = document.getElementById("eval-career");
 }
 
 export function finishMission(result, reason) {
   if (state.screen !== "combat") return;
   state.stats.timeTaken = state.mission.duration - state.mission.timer;
-  state.career.hull = clamp(state.player.hull / state.player.hullMax, 0, 1);
+  state.career.hull = hullRatio(state.player);
   state.career.systems = { ...state.player.systems };
 
   const grade = calculateMissionGrade(result);
@@ -36,6 +39,18 @@ export function finishMission(result, reason) {
 
   state.career.credits += reward;
   state.career.reputationScore += reputationDelta(grade, result);
+
+  const record = state.career.record;
+  if (result === "success") record.missionsCompleted += 1;
+  else record.missionsFailed += 1;
+  record.grades[grade] = (record.grades[grade] || 0) + 1;
+  record.bestGrade = betterGrade(record.bestGrade, grade);
+  record.escortsDestroyed += state.stats.escortsDestroyed;
+  if (state.stats.targetDestroyed) record.flagshipsDestroyed += 1;
+  record.enemyTonnage += Math.round(state.stats.tonnage);
+  if (state.stats.hullCritical) record.timesHullCritical += 1;
+
+  const commendation = pickCommendation(result, grade);
   saveCareer();
 
   state.evaluation = {
@@ -45,6 +60,7 @@ export function finishMission(result, reason) {
     reward,
     repairCost,
     net,
+    commendation,
     report: buildCaptainReport(result, reason, grade)
   };
 
@@ -52,15 +68,30 @@ export function finishMission(result, reason) {
   showScreen("evaluation");
 }
 
+// A light commendation/reprimand layer; the full medal system arrives later.
+function pickCommendation(result, grade) {
+  if (result === "success" && state.stats.targetDestroyed && state.stats.hullCritical && grade !== "F") {
+    return { kind: "commendation", text: "Linebreaker Citation — flagship destroyed with the hull in critical condition." };
+  }
+  if (grade === "S") return { kind: "commendation", text: "Cold Command Star — exemplary, efficient command action." };
+  if (result !== "success" && state.stats.retreated) {
+    return { kind: "reprimand", text: "Withdrawal noted — the objective was abandoned under fire." };
+  }
+  if (result !== "success") {
+    return { kind: "reprimand", text: "Mission failure recorded against your service file." };
+  }
+  return null;
+}
+
 function calculateMissionGrade(result) {
   if (result !== "success" || !state.stats.targetDestroyed) return "F";
-  const hullRatio = state.player.hull / state.player.hullMax;
-  const shieldRatio = state.player.shields / state.player.shieldsMax;
+  const hull = hullRatio(state.player);
+  const shield = shieldRatio(state.player);
   const timeRatio = state.stats.timeTaken / state.mission.duration;
   const accuracy = state.stats.shotsFired > 0 ? state.stats.shotsHit / state.stats.shotsFired : 0;
   let score = 55;
-  score += hullRatio * 18;
-  score += shieldRatio * 7;
+  score += hull * 18;
+  score += shield * 7;
   score += clamp(1 - timeRatio, 0, 1) * 10;
   score += state.stats.escortsDestroyed * 4;
   score += accuracy * 10;
@@ -106,6 +137,22 @@ function updateEvaluation() {
   dom.evalRepair.textContent = formatCredits(evaluation.repairCost);
   dom.evalNet.textContent = `${evaluation.net >= 0 ? "+" : ""}${formatCredits(evaluation.net)}`;
   dom.evalReputation.textContent = currentReputation();
+
+  if (dom.commendation) {
+    if (evaluation.commendation) {
+      dom.commendation.textContent = evaluation.commendation.text;
+      dom.commendation.dataset.kind = evaluation.commendation.kind;
+      dom.commendation.classList.remove("hidden");
+    } else {
+      dom.commendation.classList.add("hidden");
+    }
+  }
+  if (dom.careerLine) {
+    const r = state.career.record;
+    dom.careerLine.textContent =
+      `SERVICE RECORD — ${r.missionsCompleted} completed · ${r.missionsFailed} failed · ` +
+      `best ${r.bestGrade} · ${r.flagshipsDestroyed} flagships · ${r.enemyTonnage.toLocaleString()} t destroyed`;
+  }
 
   dom.evalStats.innerHTML = "";
   const accuracy = state.stats.shotsFired > 0 ? Math.round((state.stats.shotsHit / state.stats.shotsFired) * 100) : 0;

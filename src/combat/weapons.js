@@ -11,7 +11,7 @@ import {
   lerpAngle,
   randomRange
 } from "../utils.js";
-import { addMessage, addEffect } from "./effects.js";
+import { addEffect } from "./effects.js";
 
 export function getSlotAngle(angle, slot) {
   if (slot === "port") return angle - Math.PI / 2;
@@ -33,7 +33,7 @@ export function playerWeaponDefinitions() {
       name: "Torpedo",
       damage: Math.round(92 * specialBoost),
       cooldown: 4.8 / specialBoost,
-      range: 1080,
+      range: 760,
       arc: 18,
       speed: 390,
       spread: 0,
@@ -45,51 +45,39 @@ export function playerWeaponDefinitions() {
   };
 }
 
-export function findTargetInArc(ship, arcCenter, arcWidth, range) {
-  let best = null;
-  let bestDistance = Infinity;
-  for (const target of state.enemies) {
-    if (!target.alive) continue;
-    const d = distance(ship, target);
-    if (d > range + target.radius) continue;
-    const diff = Math.abs(angleWrap(angleTo(ship, target) - arcCenter));
-    if (diff <= arcWidth / 2 && d < bestDistance) {
-      best = target;
-      bestDistance = d;
-    }
+// Which battery's arc contains the given world bearing (port and starboard are
+// checked before the narrower forward cone). Returns null if nothing bears.
+export function slotForPrimaryAim(ship, aimAngle) {
+  const weapons = playerWeaponDefinitions();
+  for (const slot of ["port", "starboard", "forward"]) {
+    const center = getSlotAngle(ship.angle, slot);
+    if (Math.abs(angleWrap(aimAngle - center)) <= degToRad(weapons[slot].arc) / 2) return slot;
   }
-  return best;
+  return null;
 }
 
-export function attemptPlayerFire(slot) {
-  if (state.screen !== "combat" || state.paused || !state.player || !state.player.alive) return;
+export function aimInTorpedoArc(ship, aimAngle) {
+  const weapon = playerWeaponDefinitions().torpedo;
+  const center = getSlotAngle(ship.angle, "forward");
+  return Math.abs(angleWrap(aimAngle - center)) <= degToRad(weapon.arc) / 2;
+}
 
+// Fire `slot` toward an explicit world bearing. Returns true if a volley left
+// the tubes (used by the mouse hold-to-fire loop, which gates on cooldown).
+export function firePlayerWeapon(slot, aimAngle) {
   const ship = state.player;
-  const weapons = playerWeaponDefinitions();
-  const weapon = weapons[slot];
-  if (!weapon) return;
+  if (state.screen !== "combat" || state.paused || !ship || !ship.alive) return false;
+  const weapon = playerWeaponDefinitions()[slot];
+  if (!weapon || ship.cooldowns[slot] > 0) return false;
 
-  if (ship.cooldowns[slot] > 0) {
-    addMessage("Weapon recharging.");
-    return;
-  }
-
-  const arcCenter = getSlotAngle(ship.angle, slot);
-  const target = findTargetInArc(ship, arcCenter, degToRad(weapon.arc), weapon.range);
-  if (!target) {
-    addMessage("No firing solution.");
-    return;
-  }
-
-  fireWeapon(ship, target, slot, weapon, "player");
+  fireWeapon(ship, slot, weapon, "player", aimAngle);
   ship.cooldowns[slot] = weapon.cooldown * getSystemMultiplier(ship, "weapons");
   state.stats.shotsFired += weapon.shots;
   if (weapon.torpedo || slot === "torpedo") state.stats.torpedoesFired += 1;
+  return true;
 }
 
-export function fireWeapon(ship, target, slot, weapon, owner) {
-  const baseAngle = angleTo(ship, target);
-  const slotAngle = getSlotAngle(ship.angle, slot);
+export function fireWeapon(ship, slot, weapon, owner, aimAngle) {
   const originOffset = slot === "port" ? -ship.radius * 0.55 : slot === "starboard" ? ship.radius * 0.55 : 0;
   const sideAngle = ship.angle + Math.PI / 2;
   const shotCount = weapon.shots || 1;
@@ -101,7 +89,7 @@ export function fireWeapon(ship, target, slot, weapon, owner) {
     const muzzleX = ship.x + Math.cos(ship.angle) * offsetAlongHull + Math.cos(sideAngle) * originOffset;
     const muzzleY = ship.y + Math.sin(ship.angle) * offsetAlongHull + Math.sin(sideAngle) * originOffset;
     const aimNoise = randomRange(-spread / 2, spread / 2);
-    const direction = angleWrap(lerpAngle(baseAngle, slotAngle, owner === "enemy" ? 0.14 : 0.06) + aimNoise);
+    const direction = angleWrap(aimAngle + aimNoise);
     state.projectiles.push({
       x: muzzleX,
       y: muzzleY,
@@ -126,7 +114,8 @@ export function enemyTryFire(ship, slot, target, weapon) {
   const d = distance(ship, target);
   const diff = Math.abs(angleWrap(angleTo(ship, target) - slotAngle));
   if (d <= weapon.range && diff <= degToRad(weapon.arc) / 2) {
-    fireWeapon(ship, target, slot, weapon, "enemy");
+    const aim = lerpAngle(angleTo(ship, target), slotAngle, 0.12);
+    fireWeapon(ship, slot, weapon, "enemy", aim);
     ship.cooldowns[slot] = weapon.cooldown;
   }
 }

@@ -61,6 +61,8 @@ export function createPlayerShip() {
   const utility = state.career.loadout.utility;
   const shieldBonus = utility === "reinforcedShields" ? 85 : 0;
   const engineBonus = utility === "engineBoost" ? 0.16 : 0;
+  const sideShield = (245 + shieldBonus) / 2;
+  const sideHull = 210 * state.career.hull;
   return {
     id: "player",
     type: "player",
@@ -70,12 +72,12 @@ export function createPlayerShip() {
     vx: 0,
     vy: 0,
     angle: 0,
-    radius: 31,
-    hullMax: 420,
-    hull: 420 * state.career.hull,
-    shieldsMax: 245 + shieldBonus,
-    shields: 245 + shieldBonus,
-    shieldDelay: 0,
+    radius: 42,
+    hullMax: { port: 210, starboard: 210 },
+    hull: { port: sideHull, starboard: sideHull },
+    shieldsMax: { port: sideShield, starboard: sideShield },
+    shields: { port: sideShield, starboard: sideShield },
+    shieldDelay: { port: 0, starboard: 0 },
     shieldRegen: 9 + (utility === "reinforcedShields" ? 4 : 0),
     systems: { ...state.career.systems },
     cooldowns: { forward: 0, port: 0, starboard: 0, torpedo: 0 },
@@ -96,12 +98,12 @@ export function createEnemyShip(type, x, y, mission, index) {
       vx: 0,
       vy: 0,
       angle: Math.PI,
-      radius: 46,
-      hullMax: mission.flagshipHull,
-      hull: mission.flagshipHull,
-      shieldsMax: 260,
-      shields: 260,
-      shieldDelay: 0,
+      radius: 64,
+      hullMax: { port: mission.flagshipHull / 2, starboard: mission.flagshipHull / 2 },
+      hull: { port: mission.flagshipHull / 2, starboard: mission.flagshipHull / 2 },
+      shieldsMax: { port: 130, starboard: 130 },
+      shields: { port: 130, starboard: 130 },
+      shieldDelay: { port: 0, starboard: 0 },
       shieldRegen: 6,
       systems: createSystems(),
       cooldowns: {
@@ -123,12 +125,12 @@ export function createEnemyShip(type, x, y, mission, index) {
     vx: randomRange(-20, 20),
     vy: randomRange(-20, 20),
     angle: Math.PI,
-    radius: 23,
-    hullMax: 145,
-    hull: 145,
-    shieldsMax: 90,
-    shields: 90,
-    shieldDelay: 0,
+    radius: 32,
+    hullMax: { port: 72, starboard: 72 },
+    hull: { port: 72, starboard: 72 },
+    shieldsMax: { port: 45, starboard: 45 },
+    shields: { port: 45, starboard: 45 },
+    shieldDelay: { port: 0, starboard: 0 },
     shieldRegen: 5,
     systems: createSystems(),
     cooldowns: { forward: randomRange(0.2, 1.2) },
@@ -170,7 +172,9 @@ export function createStats() {
     torpedoesFired: 0,
     shotsFired: 0,
     shotsHit: 0,
-    systemsDamaged: 0
+    systemsDamaged: 0,
+    tonnage: 0,
+    hullCritical: false
   };
 }
 

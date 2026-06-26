@@ -11,10 +11,10 @@ export const CONTROLS = [
   { keys: ["A"], action: "Rotate left", group: "Manoeuvre" },
   { keys: ["D"], action: "Rotate right", group: "Manoeuvre" },
 
-  { keys: ["Space"], action: "Fire forward guns", group: "Weapons" },
-  { keys: ["Q"], action: "Fire port broadside", group: "Weapons" },
-  { keys: ["E"], action: "Fire starboard broadside", group: "Weapons" },
-  { keys: ["F"], action: "Fire torpedo / special weapon", group: "Weapons" },
+  { keys: ["Mouse"], action: "Aim — shots travel toward the cursor", group: "Weapons" },
+  { keys: ["L-Click"], action: "Fire the battery whose arc the cursor is in", group: "Weapons" },
+  { keys: ["R-Click"], action: "Fire torpedo (cursor in the forward arc)", group: "Weapons" },
+  { keys: ["Hold"], action: "Hold a button to keep firing as it reloads", group: "Weapons" },
 
   { keys: ["R"], action: "Retreat if available", group: "Command" },
   { keys: ["Esc"], action: "Pause", group: "Command" }
