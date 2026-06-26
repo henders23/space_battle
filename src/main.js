@@ -171,6 +171,9 @@ function handleKeyDown(event) {
     return;
   }
   if (state.screen !== "combat") return;
+  // W / S step the throttle up / down through stop → very slow → slow → moderate.
+  if (event.code === "KeyW" && state.player) state.player.throttle = Math.min(3, (state.player.throttle || 0) + 1);
+  if (event.code === "KeyS" && state.player) state.player.throttle = Math.max(0, (state.player.throttle || 0) - 1);
   if (event.code === "KeyR") retreatToStarbase();
 }
 

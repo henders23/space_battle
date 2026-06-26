@@ -12,7 +12,7 @@ import {
 import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
 import { addMessage, addEffect, addShake } from "./effects.js";
-import { hullTotal, hullMaxTotal, impactSide } from "./shipStats.js";
+import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
 import { finishMission } from "../screens/evaluation.js";
 
 // Per-frame world simulation: movement, enemy AI, projectiles, damage, timer.
@@ -27,38 +27,36 @@ export function update(dt) {
   updateMissionTimer(dt);
 }
 
+// Throttle notches: stop, very slow, slow, moderate (engine bonus scales them).
+const THROTTLE_SPEEDS = [0, 30, 70, 130];
+
 function updatePlayer(dt) {
   const ship = state.player;
   const engineMult = getSystemMultiplier(ship, "engines") + ship.engineBonus;
-  const accel = 88 * engineMult;
-  const reverse = 44 * engineMult;
-  const turn = 0.58 * engineMult;
+  const turn = 0.55 * engineMult;
   const forwardX = Math.cos(ship.angle);
   const forwardY = Math.sin(ship.angle);
 
   if (state.keys.KeyA) ship.angle -= turn * dt;
   if (state.keys.KeyD) ship.angle += turn * dt;
-  if (state.keys.KeyW) {
-    ship.vx += forwardX * accel * dt;
-    ship.vy += forwardY * accel * dt;
-  }
-  if (state.keys.KeyS) {
-    const forwardSpeed = ship.vx * forwardX + ship.vy * forwardY;
-    const brakeForce = forwardSpeed > 30 ? 130 : reverse;
-    ship.vx -= forwardX * brakeForce * dt;
-    ship.vy -= forwardY * brakeForce * dt;
-  }
 
-  const maxSpeed = 165 * engineMult;
-  const speed = Math.hypot(ship.vx, ship.vy);
-  if (speed > maxSpeed) {
-    ship.vx = (ship.vx / speed) * maxSpeed;
-    ship.vy = (ship.vy / speed) * maxSpeed;
-  }
+  // The engines drive the ship toward the selected throttle speed along its
+  // heading. Forward speed eases toward the target; any sideways momentum from
+  // turning bleeds off via strong inertia damping, so the ship tracks its nose.
+  const targetSpeed = THROTTLE_SPEEDS[ship.throttle || 0] * engineMult;
+  let along = ship.vx * forwardX + ship.vy * forwardY;
+  let latX = ship.vx - along * forwardX;
+  let latY = ship.vy - along * forwardY;
 
-  // Light damping — a heavy capital ship keeps gliding after the engines cut.
-  ship.vx *= Math.pow(0.996, dt * 60);
-  ship.vy *= Math.pow(0.996, dt * 60);
+  const accelRate = 55 * engineMult; // change in speed per second — heavy
+  along += clamp(targetSpeed - along, -accelRate * dt, accelRate * dt);
+
+  const latDamp = Math.pow(0.86, dt * 60); // inertia damping on drift
+  latX *= latDamp;
+  latY *= latDamp;
+
+  ship.vx = along * forwardX + latX;
+  ship.vy = along * forwardY + latY;
   ship.x += ship.vx * dt;
   ship.y += ship.vy * dt;
   enforceBoundary(ship);
@@ -118,7 +116,7 @@ function handleAsteroidImpacts(ship, dt) {
       if (ship.type === "player" && Math.hypot(ship.vx, ship.vy) > 55 && Math.random() < 0.05) {
         applyDamage(ship, 8, "asteroid", impactSide(ship, asteroid));
         addMessage("Asteroid impact across the hull.");
-        if (hullTotal(ship) <= 0) {
+        if (isDestroyed(ship)) {
           ship.alive = false;
           state.stats.survived = false;
           finishMission("failed", "CWS Resolute was lost to a collision.");
@@ -294,7 +292,7 @@ function updateProjectiles(dt) {
           state.stats.damageDealt += dealt;
           state.stats.shotsHit += 1;
           addEffect(projectile.x, projectile.y, projectile.color, 0.28);
-          if (hullTotal(enemy) <= 0) destroyEnemy(enemy);
+          if (isDestroyed(enemy)) destroyEnemy(enemy);
           break;
         }
       }
@@ -308,7 +306,7 @@ function updateProjectiles(dt) {
       addEffect(projectile.x, projectile.y, projectile.color, 0.28);
       addShake(Math.min(14, 3 + projectile.damage * 0.25));
       if (hullTotal(state.player) < hullMaxTotal(state.player) * 0.25) state.stats.hullCritical = true;
-      if (hullTotal(state.player) <= 0) {
+      if (isDestroyed(state.player)) {
         state.player.alive = false;
         state.stats.survived = false;
         finishMission("failed", "CWS Resolute was destroyed in action.");

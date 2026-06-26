@@ -24,6 +24,7 @@ export function initHud() {
     hullPort: document.getElementById("hull-port-val"),
     hullStbd: document.getElementById("hull-stbd-val")
   };
+  dom.throttle = document.getElementById("hud-throttle");
   dom.systemList = document.getElementById("system-list");
   dom.weaponList = document.getElementById("weapon-list");
   dom.targetInfo = document.getElementById("target-info");
@@ -63,6 +64,13 @@ export function updateHud() {
   if (dom.operation) dom.operation.textContent = mission.operationName.toUpperCase();
   dom.objective.textContent = `Destroy ${mission.flagshipName} in ${mission.sectorName}.`;
   dom.timer.textContent = formatTime(mission.timer);
+
+  const throttleLabels = ["STOP", "VERY SLOW", "SLOW", "MODERATE"];
+  if (dom.throttle) {
+    const t = player.throttle || 0;
+    dom.throttle.textContent = throttleLabels[t];
+    dom.throttle.dataset.level = t;
+  }
 
   setBar(dom.bars.shieldPort, dom.vals.shieldPort, sideRatioShield(player, "port"), "#45e0f0");
   setBar(dom.bars.shieldStbd, dom.vals.shieldStbd, sideRatioShield(player, "starboard"), "#45e0f0");

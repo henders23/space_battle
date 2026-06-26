@@ -10,6 +10,12 @@ export function hullTotal(ship) {
   return ship.hull.port + ship.hull.starboard;
 }
 
+// A ship is lost the moment either flank's hull is breached — so exposing a
+// wounded side is lethal, not just costly.
+export function isDestroyed(ship) {
+  return ship.hull.port <= 0 || ship.hull.starboard <= 0;
+}
+
 export function hullMaxTotal(ship) {
   return ship.hullMax.port + ship.hullMax.starboard;
 }

@@ -6,8 +6,8 @@
 export const CONTROL_GROUPS = ["Manoeuvre", "Weapons", "Command"];
 
 export const CONTROLS = [
-  { keys: ["W"], action: "Thrust forward", group: "Manoeuvre" },
-  { keys: ["S"], action: "Reverse / braking thrust", group: "Manoeuvre" },
+  { keys: ["W"], action: "Throttle up (stop / very slow / slow / moderate)", group: "Manoeuvre" },
+  { keys: ["S"], action: "Throttle down", group: "Manoeuvre" },
   { keys: ["A"], action: "Rotate left", group: "Manoeuvre" },
   { keys: ["D"], action: "Rotate right", group: "Manoeuvre" },
 

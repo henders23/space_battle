@@ -304,8 +304,10 @@ function drawShipBody(ship) {
   ctx.translate(ship.x, ship.y);
   ctx.rotate(ship.angle);
 
-  // engine exhaust (behind hull); the player's flares up while thrusting
-  const flare = isPlayer && state.keys.KeyW ? 1.7 + Math.random() * 0.3 : 0.85 + Math.random() * 0.15;
+  // engine exhaust (behind hull); the player's scales with throttle setting
+  const flare = isPlayer
+    ? (0.5 + (ship.throttle || 0) * 0.45) * (0.92 + Math.random() * 0.16)
+    : 0.85 + Math.random() * 0.15;
   drawEngines(spec, L, W, flare);
 
   // hull with a top-lit gradient for volume

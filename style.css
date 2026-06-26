@@ -305,6 +305,11 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 .hud-card h3 { margin-bottom: 10px; }
 .hud-card.danger, .hud-card h3.danger { color: var(--danger-soft); }
 
+.throttle-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 10px; font-size: 0.7rem; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid rgba(70, 160, 180, 0.18); margin-bottom: 10px; }
+.throttle-row b { font-size: 0.78rem; color: var(--muted); }
+.throttle-row b[data-level="1"] { color: var(--accent); }
+.throttle-row b[data-level="2"] { color: var(--accent); }
+.throttle-row b[data-level="3"] { color: var(--amber); }
 .sided { margin-bottom: 6px; }
 .sided-row { display: grid; grid-template-columns: 54px 32px 1fr 1fr 32px; gap: 6px; align-items: center; margin: 8px 0; }
 .sided-label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 1px; color: var(--muted); }

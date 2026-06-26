@@ -99,6 +99,7 @@ export function createPlayerShip() {
     systems: { ...state.career.systems },
     cooldowns: { forward: 0, port: 0, starboard: 0, torpedo: 0 },
     engineBonus,
+    throttle: 0,
     repairPulse: 0,
     alive: true
   };
@@ -162,7 +163,7 @@ export function createEnemyShip(type, x, y, mission, index) {
 }
 
 export function createAsteroids() {
-  const count = randomInt(10, 25);
+  const count = randomInt(3, 8);
   const asteroids = [];
   for (let i = 0; i < count; i += 1) {
     let x = randomRange(620, WORLD.width - 250);
