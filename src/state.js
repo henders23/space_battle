@@ -69,6 +69,7 @@ export const state = {
   lastTime: 0,
   hasSave: false,
   career: defaultCareer(),
+  activeSectorId: null,
   mission: null,
   player: null,
   enemies: [],

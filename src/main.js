@@ -12,6 +12,8 @@ import {
 } from "./audio.js";
 import { loadCareer, newCampaign, hasSavedCareer } from "./career.js";
 import { CONTROLS, CONTROL_GROUPS } from "./data/controls.js";
+import { SECTORS } from "./data/sectors.js";
+import { fullSector } from "./game/warMap.js";
 import { setupMissionWorld } from "./combat/mission.js";
 import { addMessage } from "./combat/effects.js";
 import { update, retreatToStarbase } from "./combat/simulation.js";
@@ -20,8 +22,9 @@ import { initRenderer, draw, eventToScreen, aimFromScreen } from "./combat/rende
 import { initHud, updateHud } from "./ui/hud.js";
 import { initStarbase, updateStarbase } from "./screens/starbase.js";
 import { initEvaluation } from "./screens/evaluation.js";
+import { initWarMap, renderWarMap } from "./screens/warMap.js";
 
-const SCREEN_NAMES = ["title", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
+const SCREEN_NAMES = ["title", "warmap", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
 
 let pauseBanner = null;
 let canvas = null;
@@ -51,8 +54,10 @@ function combatReady() {
   return state.screen === "combat" && !state.paused && state.player && state.player.alive;
 }
 
-function startMission() {
-  const mission = setupMissionWorld();
+function startMission(sectorId) {
+  state.activeSectorId = sectorId || null;
+  const sector = sectorId ? fullSector(sectorId) : null;
+  const mission = setupMissionWorld(sector);
   addMessage(`Operation ${mission.operationName}: assassinate ${mission.flagshipName} in ${mission.sectorName}.`);
   addMessage(mission.hazard);
   showScreen("combat");
@@ -120,11 +125,11 @@ function bindMenu() {
   const actions = {
     "menu-new": () => {
       newCampaign();
-      showScreen("starbase");
+      showScreen("warmap");
     },
     "menu-continue": () => {
       loadCareer();
-      showScreen("starbase");
+      showScreen("warmap");
     },
     "menu-controls": () => showScreen("controls"),
     "menu-settings": () => showScreen("settings"),
@@ -145,11 +150,12 @@ function bindMenu() {
   document.querySelectorAll("[data-back-title]").forEach((btn) =>
     btn.addEventListener("click", () => showScreen("title"))
   );
-
-  const launch = document.getElementById("launch-mission");
-  if (launch) launch.addEventListener("click", startMission);
-  const cont2 = document.getElementById("continue-starbase");
-  if (cont2) cont2.addEventListener("click", () => showScreen("starbase"));
+  document.querySelectorAll("[data-warmap]").forEach((btn) =>
+    btn.addEventListener("click", () => showScreen("warmap"))
+  );
+  document.querySelectorAll("[data-starbase]").forEach((btn) =>
+    btn.addEventListener("click", () => showScreen("starbase"))
+  );
 }
 
 function handleKeyDown(event) {
@@ -229,6 +235,7 @@ function init() {
   registerScreens(SCREEN_NAMES);
   buildControlsScreen();
   setupAudioControls();
+  initWarMap(startMission);
   bindMenu();
 
   // Music must wait for a user gesture (browser autoplay policy). Start on the
@@ -242,6 +249,7 @@ function init() {
   bindMouse();
   window.addEventListener("screen:enter", (e) => {
     if (e.detail.name === "starbase") updateStarbase();
+    if (e.detail.name === "warmap") renderWarMap();
   });
 
   showScreen("title");

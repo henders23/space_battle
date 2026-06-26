@@ -378,12 +378,84 @@ kbd {
 .setting-row input[type="range"] { flex: 1; max-width: 320px; accent-color: var(--accent); }
 .credits-card p { margin: 0; line-height: 1.6; }
 
+/* ============ WAR MAP ============ */
+.warmap-shell { width: min(1320px, 100%); display: flex; flex-direction: column; gap: 16px; }
+.warmap-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; }
+.warmap-cycle-box { text-align: right; }
+.warmap-cycle-box span { display: block; font-size: 0.68rem; letter-spacing: 2px; color: var(--muted-2); }
+.warmap-cycle-box b { font-family: var(--display); font-weight: 700; font-size: 2.4rem; color: var(--accent); }
+
+.warmap-body { display: grid; grid-template-columns: 1fr 340px; gap: 18px; }
+.warmap-stage {
+  position: relative; height: 56vh; min-height: 420px;
+  border: 1px solid var(--line); border-radius: 2px;
+  background:
+    linear-gradient(rgba(70,160,180,0.05) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(90deg, rgba(70,160,180,0.05) 1px, transparent 1px) 0 0 / 64px 64px,
+    radial-gradient(ellipse 60% 60% at 50% 50%, #061119 0%, #03070a 100%);
+  overflow: hidden;
+}
+#warmap-routes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#warmap-routes line { stroke: rgba(70, 160, 180, 0.28); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#warmap-nodes { position: absolute; inset: 0; }
+
+.warmap-node {
+  position: absolute; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-height: 0; padding: 0; border: 0; background: transparent;
+  text-transform: none; letter-spacing: 0; font-family: var(--body);
+  --node-color: #45e0f0;
+}
+.node-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--node-color); box-shadow: 0 0 12px var(--node-color);
+  border: 2px solid rgba(4, 8, 11, 0.8);
+}
+.node-marker { position: absolute; top: -7px; width: 34px; height: 34px; border-radius: 50%; pointer-events: none; }
+.warmap-node.has-mission .node-marker {
+  border: 1.5px solid var(--node-color); opacity: 0.7; animation: vk-pulse 2.2s ease-in-out infinite;
+}
+.node-label {
+  font-family: var(--display); font-weight: 600; font-size: 0.92rem; letter-spacing: 1px;
+  color: var(--text-2); white-space: nowrap; text-shadow: 0 1px 4px #000;
+}
+.warmap-node:hover .node-dot { transform: scale(1.15); }
+.warmap-node.selected .node-dot { box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 0 16px var(--node-color); }
+.warmap-node.selected .node-label { color: #fff; }
+
+.warmap-panel { align-self: start; }
+.wm-head { margin-bottom: 14px; }
+.wm-name { margin: 2px 0 4px; font-family: var(--display); font-weight: 700; font-size: 1.5rem; }
+.wm-control { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 2px; }
+.wm-bar { display: grid; grid-template-columns: 86px 1fr 30px; gap: 8px; align-items: center; margin: 7px 0; }
+.wm-bar-label { font-size: 0.64rem; color: var(--muted); }
+.wm-track { height: 8px; background: #091420; border-radius: 1px; overflow: hidden; }
+.wm-track i { display: block; height: 100%; }
+.wm-bar-val { font-size: 0.66rem; color: var(--text); text-align: right; }
+.wm-meta { margin: 12px 0; font-size: 0.68rem; color: var(--muted-2); letter-spacing: 1px; }
+.wm-order { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+.wm-brief { color: var(--muted); font-size: 0.86rem; line-height: 1.5; margin: 6px 0 14px; }
+.wm-order button { width: 100%; }
+.wm-secured { margin-top: 16px; color: var(--success); font-size: 0.78rem; letter-spacing: 1px; }
+
+.warmap-news { border: 1px solid var(--line); background: rgba(8, 18, 26, 0.5); padding: 12px 16px; min-height: 48px; }
+.news-line { display: flex; gap: 12px; align-items: baseline; padding: 4px 0; }
+.news-cycle { font-size: 0.64rem; letter-spacing: 1px; white-space: nowrap; }
+.news-cycle.good { color: var(--success); }
+.news-cycle.bad { color: var(--danger-soft); }
+.news-text { color: var(--text-2); font-size: 0.86rem; line-height: 1.4; }
+.warmap-actions { display: flex; gap: 12px; }
+.warmap-actions button { flex: 1; }
+
+.warupdate { margin: 0 0 12px; padding: 12px 16px; font-size: 0.88rem; line-height: 1.5; color: var(--text-2); border-left: 2px solid var(--accent); background: rgba(69, 224, 240, 0.06); }
+
 /* ============ animations ============ */
 @keyframes vk-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+@keyframes vk-pulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.12); } }
 
 /* ============ responsive ============ */
 @media (max-width: 1100px) {
-  .base-grid, .base-grid-2, .evaluation-grid, .controls-grid { grid-template-columns: 1fr; }
+  .base-grid, .base-grid-2, .evaluation-grid, .controls-grid, .warmap-body { grid-template-columns: 1fr; }
   .combat-layout { grid-template-columns: 1fr; height: auto; }
   .hud { grid-template-rows: none; }
   #game-canvas { min-height: 60vh; }

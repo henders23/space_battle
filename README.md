@@ -66,6 +66,11 @@ positioning and timing over twitch reflexes.
   active arc highlights.
 - **Per-side defences**: independent port/starboard shields and hull on every ship —
   protect a damaged side and force the enemy to expose theirs.
+- **Galactic war map**: a network of sectors with control states (Commonwealth /
+  contested / Veyr), threat / stability / supply / enemy-fleet values, and routes. You
+  deploy to contested sectors from the map; missions scale to the sector's fleet
+  strength, and each outcome advances the war — shifting control, threat and stability,
+  with war-update bulletins.
 - Flagship-assassination missions with escorts, asteroid fields and an escape timer.
 - **Starbase loop**: repair economy, an **armory** to purchase weapons/modules with
   credits, owned-only loadout selection, career stats, and **mission history**.
@@ -83,11 +88,12 @@ src/
   main.js          bootstrap, screen router wiring, input, game loop
   state.js         shared state + constants
   router.js        screen transitions
-  career.js        economy + localStorage save/load
+  career.js        economy, ownership, localStorage save/load
   audio.js         music controller
-  data/            loadouts, theme palette, control scheme
-  combat/          mission, simulation, weapons, systems, effects, renderer
-  screens/         starbase, evaluation
+  data/            loadouts, theme palette, control scheme, sectors
+  game/            warMap (war-state model + simulation)
+  combat/          mission, simulation, weapons, systems, effects, renderer, shipStats
+  screens/         warMap, starbase, evaluation
   ui/              hud
   utils.js         math + formatting helpers
 ```
@@ -99,7 +105,7 @@ See [`PLAN.md`](PLAN.md) for the full execution plan.
 - **M0** — Rebrand, modular architecture, ship-centred combat, audio + controls. ✅
 - **M1** — Stabilise + persistent career record. ✅
 - **M2** — Starbase & progression (armory, unlocks, mission history). ✅
-- **M3** — Galactic war map with sectors and dynamic war consequences.
+- **M3** — Galactic war map with sectors and dynamic war consequences. ✅
 - **M4** — Mission variety (convoy escort, starbase defence, patrol, rescue).
 - **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types.
 - **M6** — Campaign polish: ranks, war news, settings, audio/SFX.

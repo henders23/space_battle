@@ -5,6 +5,7 @@ import { clamp, formatCredits, formatTime } from "../utils.js";
 import { showScreen } from "../router.js";
 import { calculateRepairCost, currentReputation, saveCareer, betterGrade, recordMission } from "../career.js";
 import { hullRatio, shieldRatio } from "../combat/shipStats.js";
+import { applyMissionOutcome } from "../game/warMap.js";
 
 // After-action review: grade, captain's report, economy, statistics.
 
@@ -21,6 +22,7 @@ export function initEvaluation() {
   dom.evalStats = document.getElementById("eval-stats");
   dom.commendation = document.getElementById("eval-commendation");
   dom.careerLine = document.getElementById("eval-career");
+  dom.warUpdate = document.getElementById("eval-warupdate");
 }
 
 export function finishMission(result, reason) {
@@ -59,6 +61,12 @@ export function finishMission(result, reason) {
   });
 
   const commendation = pickCommendation(result, grade);
+
+  // Advance the war in the sector this mission was fought over.
+  let warUpdate = null;
+  if (state.activeSectorId) {
+    warUpdate = applyMissionOutcome(state.activeSectorId, result, grade, state.mission).news.text;
+  }
   saveCareer();
 
   state.evaluation = {
@@ -69,6 +77,7 @@ export function finishMission(result, reason) {
     repairCost,
     net,
     commendation,
+    warUpdate,
     report: buildCaptainReport(result, reason, grade)
   };
 
@@ -153,6 +162,14 @@ function updateEvaluation() {
       dom.commendation.classList.remove("hidden");
     } else {
       dom.commendation.classList.add("hidden");
+    }
+  }
+  if (dom.warUpdate) {
+    if (evaluation.warUpdate) {
+      dom.warUpdate.textContent = evaluation.warUpdate;
+      dom.warUpdate.classList.remove("hidden");
+    } else {
+      dom.warUpdate.classList.add("hidden");
     }
   }
   if (dom.careerLine) {

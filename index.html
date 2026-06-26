@@ -46,6 +46,35 @@
       </div>
     </section>
 
+    <!-- ============ GALACTIC WAR MAP ============ -->
+    <section id="warmap-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="warmap-shell">
+        <div class="warmap-header">
+          <div>
+            <p class="mono eyebrow">STRATEGIC COMMAND // HELION THEATRE</p>
+            <h2>Galactic War Map</h2>
+          </div>
+          <div class="warmap-cycle-box">
+            <span class="mono">WAR CYCLE</span>
+            <b id="warmap-cycle">1</b>
+          </div>
+        </div>
+        <div class="warmap-body">
+          <div class="warmap-stage">
+            <svg id="warmap-routes" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            <div id="warmap-nodes"></div>
+          </div>
+          <aside id="warmap-panel" class="card warmap-panel"></aside>
+        </div>
+        <div id="warmap-news" class="warmap-news"></div>
+        <div class="warmap-actions">
+          <button data-starbase class="primary">Starbase / Refit</button>
+          <button data-back-title class="ghost">Back to Title</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ============ STARBASE ============ -->
     <section id="starbase-screen" class="screen">
       <div class="vk-bg"></div>
@@ -79,10 +108,10 @@
           </div>
 
           <div class="card orders-block">
-            <h3 class="mono">▤ MISSION ORDER</h3>
+            <h3 class="mono">▤ STANDING ORDERS</h3>
             <p id="mission-preview">Assassinate a hostile flagship in a contested sector.</p>
             <div class="spacer"></div>
-            <button id="launch-mission" class="primary">Launch Mission</button>
+            <button data-warmap class="primary">To War Map</button>
             <button data-back-title class="ghost">Back to Title</button>
           </div>
         </div>
@@ -182,8 +211,9 @@
             <dl id="eval-stats"></dl>
           </div>
         </div>
+        <p id="eval-warupdate" class="warupdate hidden"></p>
         <p id="eval-career" class="mono career-line"></p>
-        <button id="continue-starbase" class="primary">Continue to Starbase</button>
+        <button data-warmap class="primary">Return to Command</button>
       </div>
     </section>
 

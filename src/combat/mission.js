@@ -24,7 +24,7 @@ export function createStars(count) {
   return stars;
 }
 
-export function generateMission() {
+export function generateMission(sector) {
   const sectorPrefixes = ["Kestrel", "Rime", "Acheron", "Helios", "Vesper", "Orison", "Cinder", "Icarus"];
   const sectorSuffixes = ["Reach", "Drift", "Basin", "Exclusion", "Corridor", "Wake", "Field", "Crown"];
   const flagshipTitles = ["Dreadnought", "Executor", "Praetor", "Iron Regent", "Black Lance", "Vigilant", "Red Monarch"];
@@ -41,20 +41,26 @@ export function generateMission() {
   // no escort screen — a winnable introduction.
   const firstCommand = state.career.record.missionsCompleted === 0;
 
-  const sectorName = `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
+  // Difficulty scales with the sector's enemy fleet strength and threat.
+  const enemyFleet = sector ? sector.enemyFleet : 60;
+  const threat = sector ? sector.threat : 60;
+  const sectorName = sector ? sector.name : `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
   const flagshipName = `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
-  const duration = firstCommand ? randomInt(280, 340) : randomInt(180, 300);
-  const reward = firstCommand ? Math.round(750 * randomRange(0.9, 1.1)) : Math.round(1250 * randomRange(0.8, 1.2));
-  const escortCount = firstCommand ? 0 : randomInt(1, 3);
+  const duration = firstCommand ? randomInt(280, 340) : randomInt(190, 300);
+  const reward = firstCommand
+    ? Math.round(750 * randomRange(0.9, 1.1))
+    : Math.round((850 + threat * 6) * randomRange(0.9, 1.1));
+  const escortCount = firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3);
   const flagshipHull = firstCommand
     ? Math.round(360 * randomRange(0.9, 1.1))
-    : Math.round(820 * randomRange(0.85, 1.15));
+    : Math.round((560 + enemyFleet * 3) * randomRange(0.9, 1.1));
   const hazard = firstCommand
     ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields are failing and its escorts have scattered. A clean opportunity for a first command."
     : pick(hazards);
   return {
     type: "assassinate_flagship",
     operationName: firstCommand ? "First Blood" : pick(operationNames),
+    sectorId: sector ? sector.id : null,
     sectorName,
     flagshipName,
     duration,
@@ -194,8 +200,8 @@ export function createStats() {
   };
 }
 
-export function setupMissionWorld() {
-  const mission = generateMission();
+export function setupMissionWorld(sector) {
+  const mission = generateMission(sector);
   state.mission = mission;
   state.player = createPlayerShip();
   state.enemies = [];
