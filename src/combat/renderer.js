@@ -548,34 +548,77 @@ function drawShieldEnvelope(ship, L, W, friendly) {
 }
 
 function drawProjectiles() {
-  for (const projectile of state.projectiles) {
-    ctx.strokeStyle = projectile.color;
-    ctx.lineWidth = projectile.torpedo ? 3 : 2;
-    ctx.globalAlpha = 0.45;
-    ctx.beginPath();
-    for (let i = 0; i < projectile.trail.length; i += 1) {
-      const point = projectile.trail[i];
-      if (i === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
+  const TAU = Math.PI * 2;
+  ctx.lineCap = "round";
+  for (const p of state.projectiles) {
+    // glowing tracer trail, brightening toward the head
+    const n = p.trail.length;
+    for (let i = 1; i < n; i += 1) {
+      const f = i / n;
+      ctx.globalAlpha = f * 0.55;
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = (p.torpedo ? 3.5 : 2.2) * f + 0.4;
+      ctx.beginPath();
+      ctx.moveTo(p.trail[i - 1].x, p.trail[i - 1].y);
+      ctx.lineTo(p.trail[i].x, p.trail[i].y);
+      ctx.stroke();
     }
-    ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.fillStyle = projectile.color;
+    // glowing head
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = p.torpedo ? 16 : 9;
+    ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, p.radius + 1, 0, TAU);
     ctx.fill();
+    // bright core
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(1, p.radius * 0.5), 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
+  ctx.lineCap = "butt";
 }
 
 function drawEffects() {
-  for (const effect of state.effects) {
-    const t = effect.life / effect.maxLife;
-    ctx.globalAlpha = t;
-    ctx.strokeStyle = effect.color;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(effect.x, effect.y, effect.radius * (1.4 - t), 0, Math.PI * 2);
-    ctx.stroke();
+  const TAU = Math.PI * 2;
+  for (const e of state.effects) {
+    const t = Math.max(0, e.life / e.maxLife);
+    if (e.kind === "ring") {
+      ctx.globalAlpha = t * 0.9;
+      ctx.strokeStyle = e.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.size * (1 + (1 - t) * (e.grow || 2.4)), 0, TAU);
+      ctx.stroke();
+    } else if (e.kind === "flash") {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = t;
+      ctx.fillStyle = e.color;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.size * (0.6 + 0.4 * t), 0, TAU);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    } else if (e.kind === "spark") {
+      ctx.globalAlpha = t;
+      ctx.strokeStyle = e.color;
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(e.x, e.y);
+      ctx.lineTo(e.x - e.vx * 0.03, e.y - e.vy * 0.03);
+      ctx.stroke();
+      ctx.lineCap = "butt";
+    } else if (e.kind === "smoke") {
+      ctx.globalAlpha = t * 0.3;
+      ctx.fillStyle = e.color;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.size * (1.2 - t * 0.4), 0, TAU);
+      ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
 }

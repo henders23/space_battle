@@ -11,7 +11,8 @@ import {
   lerpAngle,
   randomRange
 } from "../utils.js";
-import { addEffect, addShake } from "./effects.js";
+import { addFlash, addShake } from "./effects.js";
+import * as sfx from "../sfx.js";
 
 export function getSlotAngle(angle, slot) {
   if (slot === "port") return angle - Math.PI / 2;
@@ -81,6 +82,15 @@ export function firePlayerWeapon(slot, aimAngle) {
   if (weapon.torpedo || slot === "torpedo") state.stats.torpedoesFired += 1;
   // Recoil — heavy batteries kick the camera.
   addShake(weapon.torpedo ? 6 : weapon.shots >= 5 ? 7 : 3.5);
+  const kind =
+    weapon.torpedo || slot === "torpedo"
+      ? "torpedo"
+      : slot === "port" || slot === "starboard"
+      ? "broadside"
+      : weapon.damage >= 28
+      ? "heavy"
+      : "light";
+  sfx.gunFire(kind);
   return true;
 }
 
@@ -112,7 +122,11 @@ export function fireWeapon(ship, slot, weapon, owner, aimAngle) {
     });
   }
 
-  if (owner === "player") addEffect(ship.x, ship.y, weapon.color, 0.22);
+  if (owner === "player") {
+    // Muzzle flash at the firing battery.
+    const dir = getSlotAngle(ship.angle, slot === "torpedo" ? "forward" : slot);
+    addFlash(ship.x + Math.cos(dir) * ship.radius * 0.95, ship.y + Math.sin(dir) * ship.radius * 0.95, weapon.color, 0.12, 14);
+  }
 }
 
 export function enemyTryFire(ship, slot, target, weapon) {

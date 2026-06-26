@@ -99,8 +99,13 @@ fight. Combat rewards positioning and timing over twitch reflexes.
 - Career persistence via localStorage (credits, reputation, hull, loadout, owned items,
   record and history).
 - **Layered audio**: distinct music beds that crossfade between the menu, the mission
-  briefing (a low drone) and combat (a red-alert theme), plus an engine loop that rises
-  and falls with the ship's speed. Volume + mute persist between sessions.
+  briefing (a low drone) and combat (a red-alert theme); an engine loop that rises and
+  falls with the ship's speed; and procedural combat sound effects (gun reports, shield
+  and hull impacts, explosions, low-hull alarm) synthesised via Web Audio. Volume + mute
+  persist between sessions.
+- **Combat feedback ("juice")**: glowing tracer rounds with trails, muzzle flashes,
+  distinct shield-ripple vs hull-spark impacts, multi-stage explosions scaled to ship
+  size, and camera shake on firing, hits and kills.
 
 ## Project structure
 

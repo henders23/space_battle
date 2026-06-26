@@ -11,7 +11,8 @@ import {
 } from "../utils.js";
 import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
-import { addMessage, addEffect, addShake } from "./effects.js";
+import { addMessage, addEffect, addImpact, addExplosion, addShake } from "./effects.js";
+import * as sfx from "../sfx.js";
 import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
 import { updateObjective } from "./objectives.js";
 import { finishMission } from "../screens/evaluation.js";
@@ -338,13 +339,17 @@ function updateProjectiles(dt) {
 
     if (projectile.owner === "player") {
       for (const enemy of state.enemies) {
-        if (!enemy.alive) continue;
+        if (!enemy.spawned || !enemy.alive) continue;
         if (distance(projectile, enemy) <= projectile.radius + enemy.radius) {
           projectile.life = 0;
           const dealt = applyDamage(enemy, projectile.damage, "player", impactSide(enemy, projectile));
+          const shielded = dealt <= 0;
           state.stats.damageDealt += dealt;
           state.stats.shotsHit += 1;
-          addEffect(projectile.x, projectile.y, projectile.color, 0.28);
+          addImpact(projectile.x, projectile.y, projectile.color, shielded);
+          if (shielded) sfx.shieldHit();
+          else sfx.hullHit();
+          addShake(projectile.torpedo ? 4 : 2.2); // a kick when your shots land
           if (isDestroyed(enemy)) destroyEnemy(enemy);
           break;
         }
@@ -355,13 +360,23 @@ function updateProjectiles(dt) {
     ) {
       projectile.life = 0;
       const taken = applyDamage(state.player, projectile.damage, "enemy", impactSide(state.player, projectile));
+      const shielded = taken <= 0;
       state.stats.damageTaken += taken;
-      addEffect(projectile.x, projectile.y, projectile.color, 0.28);
-      addShake(Math.min(14, 3 + projectile.damage * 0.25));
-      if (hullTotal(state.player) < hullMaxTotal(state.player) * 0.25) state.stats.hullCritical = true;
+      addImpact(projectile.x, projectile.y, projectile.color, shielded);
+      if (shielded) sfx.shieldHit();
+      else sfx.hullHit();
+      addShake(Math.min(16, 4 + projectile.damage * 0.3));
+      const wasCritical = state.stats.hullCritical;
+      if (hullTotal(state.player) < hullMaxTotal(state.player) * 0.25) {
+        state.stats.hullCritical = true;
+        if (!wasCritical) sfx.alarm();
+      }
       if (isDestroyed(state.player)) {
         state.player.alive = false;
         state.stats.survived = false;
+        addExplosion(state.player.x, state.player.y, 1.7);
+        sfx.explosion(1.7);
+        addShake(30);
         finishMission("failed", "CWS Resolute was destroyed in action.");
       }
     } else {
@@ -370,12 +385,14 @@ function updateProjectiles(dt) {
         if (!ally.alive) continue;
         if (distance(projectile, ally) <= projectile.radius + ally.radius) {
           projectile.life = 0;
-          applyDamage(ally, projectile.damage, "enemy", impactSide(ally, projectile));
-          addEffect(projectile.x, projectile.y, projectile.color, 0.28);
+          const taken = applyDamage(ally, projectile.damage, "enemy", impactSide(ally, projectile));
+          addImpact(projectile.x, projectile.y, projectile.color, taken <= 0);
           if (isDestroyed(ally)) {
             ally.alive = false;
-            addEffect(ally.x, ally.y, "#ffb0a8", 0.6);
-            addShake(9);
+            const scale = Math.max(0.7, Math.min(1.9, ally.radius / 42));
+            addExplosion(ally.x, ally.y, scale);
+            sfx.explosion(scale);
+            addShake(10);
             addMessage(`${ally.name} has been destroyed.`);
           }
           break;
@@ -420,8 +437,10 @@ function maybeDamageSystem(ship, hullDamage, source) {
 function destroyEnemy(enemy) {
   enemy.alive = false;
   state.stats.tonnage += hullMaxTotal(enemy);
-  addEffect(enemy.x, enemy.y, enemy.type === "flagship" ? "#ffcc66" : "#ff917d", 0.65);
-  addShake(enemy.type === "flagship" ? 18 : 7);
+  const scale = Math.max(0.6, Math.min(1.9, enemy.radius / 40));
+  addExplosion(enemy.x, enemy.y, scale);
+  sfx.explosion(scale);
+  addShake(8 + scale * 7);
   if (enemy.type === "flagship") {
     state.stats.targetDestroyed = true;
     addMessage(`${enemy.name} destroyed. Objective complete.`);
@@ -440,6 +459,12 @@ function updateAsteroids(dt) {
 function updateEffects(dt) {
   for (const effect of state.effects) {
     effect.life -= dt;
+    if (effect.vx || effect.vy) {
+      effect.x += effect.vx * dt;
+      effect.y += effect.vy * dt;
+      effect.vx *= Math.pow(0.86, dt * 60);
+      effect.vy *= Math.pow(0.86, dt * 60);
+    }
   }
   state.effects = state.effects.filter((effect) => effect.life > 0);
 }
