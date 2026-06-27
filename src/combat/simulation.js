@@ -16,6 +16,7 @@ import * as sfx from "../sfx.js";
 import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
 import { updateObjective } from "./objectives.js";
 import { finishMission } from "../screens/evaluation.js";
+import { difficultyMods } from "../settings.js";
 
 // Per-frame world simulation: movement, enemy AI, projectiles, damage, objectives.
 
@@ -404,7 +405,8 @@ function updateProjectiles(dt) {
 }
 
 function applyDamage(ship, amount, source, side) {
-  let remaining = amount;
+  // Difficulty scales how hard incoming fire hits the player's hull/shields.
+  let remaining = ship.type === "player" ? amount * difficultyMods().playerDamage : amount;
   let hullDamage = 0;
   if (ship.shields[side] > 0) {
     const shieldHit = Math.min(ship.shields[side], remaining);

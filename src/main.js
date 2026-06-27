@@ -13,6 +13,8 @@ import {
   isMuted
 } from "./audio.js";
 import { loadCareer, newCampaign, hasSavedCareer } from "./career.js";
+import { loadSettings, getSettings, getSetting, setSetting, DIFFICULTIES } from "./settings.js";
+import { uiBeep } from "./sfx.js";
 import { CONTROLS, CONTROL_GROUPS } from "./data/controls.js";
 import { SECTORS } from "./data/sectors.js";
 import { fullSector } from "./game/warMap.js";
@@ -26,8 +28,10 @@ import { initStarbase, updateStarbase } from "./screens/starbase.js";
 import { initEvaluation } from "./screens/evaluation.js";
 import { initWarMap, renderWarMap } from "./screens/warMap.js";
 import { initBriefing, renderBriefing } from "./screens/briefing.js";
+import { initIntel, renderIntel } from "./screens/intel.js";
+import { initService, renderService } from "./screens/service.js";
 
-const SCREEN_NAMES = ["title", "intro", "warmap", "briefing", "starbase", "combat", "evaluation", "controls", "settings", "credits"];
+const SCREEN_NAMES = ["title", "setup", "intro", "warmap", "briefing", "starbase", "combat", "evaluation", "intel", "service", "controls", "settings", "credits"];
 
 let pauseBanner = null;
 let canvas = null;
@@ -128,12 +132,57 @@ function setupAudioControls() {
   reflectMute();
 }
 
+// Difficulty / shake / accessibility / SFX. Segmented controls write straight to
+// the persisted settings; difficulty options are generated from the data table.
+function setupSettingsControls() {
+  const diffWrap = document.getElementById("set-difficulty");
+  if (diffWrap) {
+    diffWrap.innerHTML = "";
+    for (const [key, def] of Object.entries(DIFFICULTIES)) {
+      const b = document.createElement("button");
+      b.dataset.value = key;
+      b.textContent = def.name;
+      diffWrap.appendChild(b);
+    }
+  }
+
+  const parseValue = (raw) => (raw === "true" ? true : raw === "false" ? false : raw);
+
+  document.querySelectorAll(".seg-control").forEach((group) => {
+    const setting = group.dataset.setting;
+    group.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setSetting(setting, parseValue(btn.dataset.value));
+        reflectSettings();
+      });
+    });
+  });
+
+  const sfx = document.getElementById("sfx-volume");
+  if (sfx) {
+    sfx.addEventListener("input", (e) => setSetting("sfxVolume", Number(e.target.value) / 100));
+  }
+
+  reflectSettings();
+}
+
+function reflectSettings() {
+  const settings = getSettings();
+  document.querySelectorAll(".seg-control").forEach((group) => {
+    const value = settings[group.dataset.setting];
+    group.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.value === String(value));
+    });
+  });
+  const sfx = document.getElementById("sfx-volume");
+  if (sfx) sfx.value = String(Math.round((settings.sfxVolume || 0) * 100));
+  const blurb = document.getElementById("difficulty-blurb");
+  if (blurb) blurb.textContent = (DIFFICULTIES[settings.difficulty] || {}).blurb || "";
+}
+
 function bindMenu() {
   const actions = {
-    "menu-new": () => {
-      newCampaign();
-      showScreen("intro");
-    },
+    "menu-new": () => showScreen("setup"),
     "menu-continue": () => {
       loadCareer();
       showScreen("warmap");
@@ -163,12 +212,60 @@ function bindMenu() {
   document.querySelectorAll("[data-starbase]").forEach((btn) =>
     btn.addEventListener("click", () => showScreen("starbase"))
   );
+  document.querySelectorAll("[data-intel]").forEach((btn) =>
+    btn.addEventListener("click", () => showScreen("intel"))
+  );
+  document.querySelectorAll("[data-service]").forEach((btn) =>
+    btn.addEventListener("click", () => showScreen("service"))
+  );
 
   const introBegin = document.getElementById("intro-begin");
   if (introBegin) introBegin.addEventListener("click", () => showScreen("warmap"));
 
   const briefLaunch = document.getElementById("brief-launch");
   if (briefLaunch) briefLaunch.addEventListener("click", launchFromBriefing);
+
+  // Soft interface blip on any button press (silent until audio is unlocked).
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (btn && !btn.disabled) uiBeep(btn.classList.contains("primary") ? "confirm" : "select");
+  });
+}
+
+// Campaign setup: captain name + difficulty, then into the intro.
+function buildSetupScreen() {
+  const diffWrap = document.getElementById("setup-difficulty");
+  const nameInput = document.getElementById("setup-name");
+  const begin = document.getElementById("setup-begin");
+  if (!diffWrap || !begin) return;
+
+  diffWrap.innerHTML = "";
+  for (const [key, def] of Object.entries(DIFFICULTIES)) {
+    const opt = document.createElement("button");
+    opt.type = "button";
+    opt.className = "setup-diff";
+    opt.dataset.value = key;
+    opt.innerHTML = `<b>${def.name}</b><span class="mono">${def.blurb}</span>`;
+    opt.addEventListener("click", () => {
+      setSetting("difficulty", key);
+      reflectSetupDifficulty();
+    });
+    diffWrap.appendChild(opt);
+  }
+  reflectSetupDifficulty();
+
+  begin.addEventListener("click", () => {
+    const name = (nameInput && nameInput.value.trim()) || "Halden";
+    newCampaign(name);
+    showScreen("intro");
+  });
+}
+
+function reflectSetupDifficulty() {
+  const current = getSetting("difficulty");
+  document.querySelectorAll("#setup-difficulty .setup-diff").forEach((b) => {
+    b.classList.toggle("active", b.dataset.value === current);
+  });
 }
 
 function handleKeyDown(event) {
@@ -252,15 +349,20 @@ function init() {
   pauseBanner = document.getElementById("pause-banner");
 
   initAudio();
+  loadSettings();
   initRenderer(canvas);
   initHud();
   initEvaluation();
   initStarbase();
   initBriefing();
+  initIntel();
+  initService();
 
   registerScreens(SCREEN_NAMES);
   buildControlsScreen();
+  buildSetupScreen();
   setupAudioControls();
+  setupSettingsControls();
   initWarMap(startMission);
   bindMenu();
 
@@ -278,6 +380,10 @@ function init() {
     if (name === "starbase") updateStarbase();
     if (name === "warmap") renderWarMap();
     if (name === "briefing") renderBriefing();
+    if (name === "intel") renderIntel();
+    if (name === "service") renderService();
+    if (name === "settings") reflectSettings();
+    if (name === "setup") reflectSetupDifficulty();
     // Music bed per screen: drone over the briefing, red alert in combat, the
     // theme everywhere else (so the menu song fades out the moment you deploy).
     setMusic(name === "briefing" ? "briefing" : name === "combat" ? "combat" : "menu");

@@ -4,6 +4,7 @@ import { state } from "../state.js";
 import { formatTime, formatCredits } from "../utils.js";
 import { MISSION_TYPES } from "../data/missionTypes.js";
 import { ADMIRALS } from "../data/admirals.js";
+import { currentRank } from "../career.js";
 
 // The same senior officer delivers every briefing.
 const BRIEFING_OFFICER = ADMIRALS[0];
@@ -49,7 +50,10 @@ export function renderBriefing() {
   dom.type.textContent = info.name.toUpperCase();
   dom.sector.textContent = m.sectorName.toUpperCase();
   dom.objective.textContent = info.objective;
-  dom.text.textContent = `${info.brief.replace("{sector}", m.sectorName)} ${m.hazard}`;
+  const rank = currentRank();
+  const salutation = `${rank.short} ${state.career.captainName}, `;
+  const body = info.brief.replace("{sector}", m.sectorName);
+  dom.text.textContent = `${salutation}${body.charAt(0).toLowerCase()}${body.slice(1)} ${m.hazard}`;
 
   dom.time.textContent = formatTime(m.duration);
   dom.reward.textContent = `${formatCredits(m.reward)} cr`;

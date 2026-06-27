@@ -5,7 +5,7 @@
 // ship's speed. Browsers block audible playback until the first user gesture, so
 // nothing actually sounds until startMusic() is called from that gesture.
 
-import { unlockSfx, setLevel as setSfxLevel } from "./sfx.js";
+import { unlockSfx } from "./sfx.js";
 
 const PREF_KEY = "valkyrie.audio.v1";
 const ENGINE_MAX = 0.6;
@@ -83,7 +83,6 @@ function applyMusic(ms = 800) {
 
 export function initAudio() {
   loadPrefs();
-  setSfxLevel(prefs.volume, prefs.muted);
 }
 
 // Called from the first user gesture; begins the currently-desired bed and the
@@ -92,7 +91,6 @@ export function startMusic() {
   if (started) return;
   started = true;
   unlockSfx();
-  setSfxLevel(prefs.volume, prefs.muted);
   applyMusic(400);
   engine.play().catch(() => {
     started = false;
@@ -118,7 +116,6 @@ export function setVolume(value) {
   prefs.volume = clamp01(value);
   if (prefs.volume > 0) prefs.muted = false;
   if (started) applyMusic(150);
-  setSfxLevel(prefs.volume, prefs.muted);
   savePrefs();
 }
 
@@ -130,7 +127,6 @@ export function toggleMute() {
   prefs.muted = !prefs.muted;
   if (started) applyMusic(150);
   if (prefs.muted) engine.volume = 0;
-  setSfxLevel(prefs.volume, prefs.muted);
   savePrefs();
   return prefs.muted;
 }

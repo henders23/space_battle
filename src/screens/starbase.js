@@ -7,6 +7,7 @@ import { HULLS, HULL_ORDER } from "../data/ships.js";
 import {
   calculateRepairCost,
   currentReputation,
+  currentRank,
   repairShip,
   saveCareer,
   isOwned,
@@ -46,6 +47,8 @@ export function initStarbase() {
   dom.portSelect = document.getElementById("port-select");
   dom.starboardSelect = document.getElementById("starboard-select");
   dom.utilitySelect = document.getElementById("utility-select");
+  dom.baseCaptain = document.getElementById("base-captain");
+  dom.baseRank = document.getElementById("base-rank");
   dom.baseCredits = document.getElementById("base-credits");
   dom.baseReputation = document.getElementById("base-reputation");
   dom.baseHull = document.getElementById("base-hull");
@@ -185,6 +188,8 @@ export function updateStarbase() {
   refreshSelects();
   const repairCost = calculateRepairCost();
   const record = state.career.record;
+  if (dom.baseCaptain) dom.baseCaptain.textContent = state.career.captainName;
+  if (dom.baseRank) dom.baseRank.textContent = currentRank().name;
   dom.baseCredits.textContent = formatCredits(state.career.credits);
   dom.baseReputation.textContent = currentReputation();
   dom.baseHull.textContent = `${Math.round(state.career.hull * 100)}%`;

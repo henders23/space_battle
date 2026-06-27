@@ -31,6 +31,8 @@ export function defaultRecord() {
     enemyTonnage: 0,
     timesHullCritical: 0,
     bestGrade: "—",
+    commendations: [], // earned medal ids (see data/commendations.js)
+    reprimands: [], // recorded reprimand ids
     history: []
   };
 }
@@ -46,6 +48,8 @@ export function defaultOwned() {
 
 export function defaultCareer() {
   return {
+    captainName: "Halden",
+    rankIndex: 0, // last-acknowledged rank, for detecting promotions
     credits: 1250,
     reputationScore: 0,
     hull: 1,
