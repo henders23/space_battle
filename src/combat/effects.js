@@ -2,6 +2,7 @@
 
 import { state } from "../state.js";
 import { randomRange } from "../utils.js";
+import { shakeScale } from "../settings.js";
 
 const TAU = Math.PI * 2;
 
@@ -17,7 +18,9 @@ export function addMessage(text) {
 // Camera recoil / impact jolt. Magnitude in pixels, capped; the renderer applies
 // and decays it each frame.
 export function addShake(magnitude) {
-  state.shake = Math.min(34, Math.max(state.shake || 0, magnitude));
+  const scaled = magnitude * shakeScale();
+  if (scaled <= 0) return;
+  state.shake = Math.min(34, Math.max(state.shake || 0, scaled));
 }
 
 function push(effect) {

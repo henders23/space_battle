@@ -48,6 +48,27 @@ export function fullSector(id) {
   return { ...sectorDef(id), ...sectorState(id) };
 }
 
+// A theatre-wide read of the war: how many sectors each side holds and an
+// overall front status derived from the balance.
+export function warSummary() {
+  ensureWar();
+  const counts = { commonwealth: 0, contested: 0, veyr: 0 };
+  let threat = 0;
+  for (const s of SECTORS) {
+    const sec = sectorState(s.id);
+    counts[sec.control] = (counts[sec.control] || 0) + 1;
+    threat += sec.threat;
+  }
+  const total = SECTORS.length;
+  const avgThreat = threat / total;
+  let status;
+  if (counts.veyr === 0 && counts.contested === 0) status = "Theatre Secured";
+  else if (counts.commonwealth > counts.veyr + 1) status = "Commonwealth Ascendant";
+  else if (counts.veyr > counts.commonwealth + 1) status = "Dominion Ascendant";
+  else status = "Contested";
+  return { counts, total, avgThreat, status, cycle: state.career.war.cycle };
+}
+
 export function applyMissionOutcome(id, result, grade, mission) {
   const sec = sectorState(id);
   const strong = grade === "S" || grade === "A";

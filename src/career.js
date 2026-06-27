@@ -1,11 +1,48 @@
 "use strict";
 
 import { state, defaultCareer, defaultRecord, defaultOwned, createSystems } from "./state.js";
+import { rankFor } from "./data/ranks.js";
 
 const GRADE_ORDER = ["—", "F", "D", "C", "B", "A", "S"];
 
 export function betterGrade(a, b) {
   return GRADE_ORDER.indexOf(a) >= GRADE_ORDER.indexOf(b) ? a : b;
+}
+
+// The captain's current rank, derived from the service record.
+export function currentRank() {
+  return rankFor(state.career);
+}
+
+// Record any newly-earned medals / reprimands, deduped, and return the ids that
+// were actually new so the after-action screen can highlight them.
+export function awardCommendations(commendationIds, reprimandIds) {
+  const rec = state.career.record;
+  if (!rec.commendations) rec.commendations = [];
+  if (!rec.reprimands) rec.reprimands = [];
+  const fresh = { commendations: [], reprimands: [] };
+  for (const id of commendationIds || []) {
+    if (!rec.commendations.includes(id)) {
+      rec.commendations.push(id);
+      fresh.commendations.push(id);
+    }
+  }
+  for (const id of reprimandIds || []) {
+    if (!rec.reprimands.includes(id)) {
+      rec.reprimands.push(id);
+      fresh.reprimands.push(id);
+    }
+  }
+  return fresh;
+}
+
+// Sync the stored rank to the current record; returns the new rank when it has
+// advanced since last acknowledged, otherwise null.
+export function reconcileRank() {
+  const rank = currentRank();
+  const previous = state.career.rankIndex || 0;
+  state.career.rankIndex = rank.index;
+  return rank.index > previous ? rank : null;
 }
 
 // Career economy + persistence. A light localStorage layer for M0; the full
@@ -106,6 +143,10 @@ export function loadCareer() {
     state.career.record = { ...rec, ...(parsed.record || {}) };
     state.career.record.grades = { ...rec.grades, ...((parsed.record && parsed.record.grades) || {}) };
     state.career.record.history = (parsed.record && parsed.record.history) || [];
+    state.career.record.commendations = (parsed.record && parsed.record.commendations) || [];
+    state.career.record.reprimands = (parsed.record && parsed.record.reprimands) || [];
+    state.career.captainName = parsed.captainName || defaultCareer().captainName;
+    state.career.rankIndex = parsed.rankIndex || 0;
     const owned = defaultOwned();
     const savedOwned = parsed.owned || {};
     for (const cat of Object.keys(owned)) {
@@ -129,7 +170,9 @@ export function hasSavedCareer() {
   }
 }
 
-export function newCampaign() {
+export function newCampaign(captainName) {
   state.career = defaultCareer();
+  const name = (captainName || "").trim();
+  if (name) state.career.captainName = name;
   saveCareer();
 }

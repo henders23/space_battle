@@ -40,6 +40,31 @@
       </div>
     </section>
 
+    <!-- ============ CAMPAIGN SETUP ============ -->
+    <section id="setup-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="scanlines"></div>
+      <div class="panel setup-panel">
+        <p class="mono eyebrow">COMMONWEALTH NAVY // COMMISSION OF COMMAND</p>
+        <h2>Assume Command</h2>
+        <p class="setup-sub">The Admiralty is assigning you a warship on the Greyward Line. Confirm your service record before you deploy.</p>
+        <div class="setup-form">
+          <label class="setup-field">
+            <span class="setup-label mono">CAPTAIN'S NAME</span>
+            <input type="text" id="setup-name" maxlength="22" placeholder="Halden" autocomplete="off">
+          </label>
+          <div class="setup-field">
+            <span class="setup-label mono">DIFFICULTY</span>
+            <div id="setup-difficulty" class="setup-options"></div>
+          </div>
+        </div>
+        <div class="setup-actions">
+          <button id="setup-begin" class="primary">Confirm Commission</button>
+          <button data-back-title class="ghost">Stand Down</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ============ CAMPAIGN INTRO ============ -->
     <section id="intro-screen" class="screen">
       <div class="vk-bg"></div>
@@ -84,6 +109,8 @@
         <div id="warmap-news" class="warmap-news"></div>
         <div class="warmap-actions">
           <button data-starbase class="primary">Starbase / Refit</button>
+          <button data-intel class="ghost">Intelligence</button>
+          <button data-service class="ghost">Service Record</button>
           <button data-back-title class="ghost">Back to Title</button>
         </div>
       </div>
@@ -102,6 +129,8 @@
           <div class="card status-block">
             <h3 class="mono">▣ CAREER</h3>
             <dl>
+              <div><dt>Captain</dt><dd id="base-captain">—</dd></div>
+              <div><dt>Rank</dt><dd id="base-rank">Lieutenant</dd></div>
               <div><dt>Credits</dt><dd id="base-credits">0</dd></div>
               <div><dt>Reputation</dt><dd id="base-reputation">Unproven</dd></div>
               <div><dt>Hull</dt><dd id="base-hull">100%</dd></div>
@@ -127,6 +156,7 @@
             <p id="mission-preview">Assassinate a hostile flagship in a contested sector.</p>
             <div class="spacer"></div>
             <button data-warmap class="primary">To War Map</button>
+            <button data-service class="ghost">Service Record</button>
             <button data-back-title class="ghost">Back to Title</button>
           </div>
         </div>
@@ -278,9 +308,68 @@
             <dl id="eval-stats"></dl>
           </div>
         </div>
+        <p id="eval-promotion" class="promotion hidden"></p>
         <p id="eval-warupdate" class="warupdate hidden"></p>
         <p id="eval-career" class="mono career-line"></p>
-        <button data-warmap class="primary">Return to Command</button>
+        <div class="evaluation-actions">
+          <button data-warmap class="primary">Return to Command</button>
+          <button data-service class="ghost">Service Record</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INTELLIGENCE / WAR NEWS ============ -->
+    <section id="intel-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="panel wide">
+        <div class="section-heading">
+          <p class="mono eyebrow">STRATEGIC INTELLIGENCE // HELION THEATRE</p>
+          <h2>War News</h2>
+        </div>
+        <div class="card intel-summary-card" id="intel-summary"></div>
+        <div class="intel-grid">
+          <div class="card intel-news-card">
+            <h3 class="mono">▤ FRONT BULLETINS</h3>
+            <div id="intel-news" class="intel-news"></div>
+          </div>
+          <div class="card intel-sectors-card">
+            <h3 class="mono">◈ SECTOR INTELLIGENCE</h3>
+            <div id="intel-sectors" class="intel-sectors"></div>
+          </div>
+        </div>
+        <div class="screen-actions">
+          <button data-warmap class="primary">Back to War Map</button>
+          <button data-back-title class="ghost">Back to Title</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SERVICE RECORD / CAPTAIN CAREER ============ -->
+    <section id="service-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="panel wide">
+        <div class="section-heading">
+          <p class="mono eyebrow">COMMONWEALTH NAVY // CAPTAIN CAREER</p>
+          <h2>Service Record</h2>
+        </div>
+        <div class="service-grid">
+          <div class="card service-id-card">
+            <div id="service-header"></div>
+            <div id="service-progress" class="service-progress"></div>
+          </div>
+          <div class="card service-awards-card">
+            <h3 class="mono">✦ COMMENDATIONS &amp; REPRIMANDS</h3>
+            <div id="service-awards" class="service-awards"></div>
+          </div>
+          <div class="card service-stats-card">
+            <h3 class="mono">▣ CAREER STATISTICS</h3>
+            <dl id="service-stats" class="service-stats"></dl>
+          </div>
+        </div>
+        <div class="screen-actions">
+          <button data-warmap class="primary">Back to War Map</button>
+          <button data-back-title class="ghost">Back to Title</button>
+        </div>
       </div>
     </section>
 
@@ -307,6 +396,7 @@
           <h2>Settings</h2>
         </div>
         <div class="card settings-card">
+          <h3 class="mono">♪ AUDIO</h3>
           <label class="setting-row">Music Volume
             <input type="range" id="music-volume" min="0" max="100" value="60">
           </label>
@@ -314,8 +404,47 @@
             <span>Music</span>
             <button class="audio-toggle" data-mute-toggle>♪ Music: On</button>
           </div>
-          <p class="note mono">More options (sound effects, screen shake, difficulty, accessibility) arrive in a later milestone.</p>
+          <label class="setting-row">Sound Effects
+            <input type="range" id="sfx-volume" min="0" max="100" value="60">
+          </label>
         </div>
+
+        <div class="card settings-card">
+          <h3 class="mono">⚔ COMBAT</h3>
+          <div class="setting-row">
+            <span>Difficulty</span>
+            <div id="set-difficulty" class="seg-control" data-setting="difficulty"></div>
+          </div>
+          <p id="difficulty-blurb" class="note mono"></p>
+          <div class="setting-row">
+            <span>Screen Shake</span>
+            <div class="seg-control" data-setting="shake">
+              <button data-value="full">Full</button>
+              <button data-value="reduced">Reduced</button>
+              <button data-value="off">Off</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card settings-card">
+          <h3 class="mono">◐ ACCESSIBILITY</h3>
+          <div class="setting-row">
+            <span>Text Size</span>
+            <div class="seg-control" data-setting="textSize">
+              <button data-value="normal">Normal</button>
+              <button data-value="large">Large</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span>Colour-Blind Mode</span>
+            <div class="seg-control" data-setting="colourBlind">
+              <button data-value="false">Off</button>
+              <button data-value="true">On</button>
+            </div>
+          </div>
+          <p class="note mono">Colour-blind mode shifts friendly contacts to blue and hostiles to amber for clearer separation.</p>
+        </div>
+
         <button data-back-title class="primary">Back to Title</button>
       </div>
     </section>

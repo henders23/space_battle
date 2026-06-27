@@ -5,6 +5,7 @@ import { clamp, pick, randomInt, randomRange } from "../utils.js";
 import { MISSION_TYPES, SECTOR_MISSION_POOL } from "../data/missionTypes.js";
 import { HULLS } from "../data/ships.js";
 import { ENEMY_TYPES, ENEMY_POOLS } from "../data/enemies.js";
+import { difficultyMods } from "../settings.js";
 
 const PLAYER_NAMES = { frigate: "CWS Resolute", cruiser: "CWS Vanguard", battleship: "CWS Asterion" };
 
@@ -43,13 +44,14 @@ export function generateMission(sector) {
   const firstCommand = state.career.record.missionsCompleted === 0;
   const type = firstCommand ? "assassinate_flagship" : (sector && sector.missionType) || pick(SECTOR_MISSION_POOL);
 
+  const diff = difficultyMods();
   const enemyFleet = sector ? sector.enemyFleet : 60;
   const threat = sector ? sector.threat : 60;
   const sectorName = sector ? sector.name : `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
   const flagshipName = `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
-  const reward = firstCommand
-    ? Math.round(750 * randomRange(0.9, 1.1))
-    : Math.round((780 + threat * 6) * randomRange(0.9, 1.1));
+  const reward = Math.round(
+    (firstCommand ? 750 * randomRange(0.9, 1.1) : (780 + threat * 6) * randomRange(0.9, 1.1)) * diff.reward
+  );
 
   const force = clamp(Math.round(enemyFleet / 26), 1, 5); // generic hostile count
   const duration = firstCommand ? randomInt(320, 380) : randomInt(240, 340);
@@ -72,9 +74,9 @@ export function generateMission(sector) {
       : pick(hazards),
     // type-specific sizing
     escortCount: firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3),
-    flagshipHull: firstCommand
-      ? Math.round(520 * randomRange(0.9, 1.1))
-      : Math.round((820 + enemyFleet * 4) * randomRange(0.9, 1.1)),
+    flagshipHull: Math.round(
+      (firstCommand ? 520 * randomRange(0.9, 1.1) : (820 + enemyFleet * 4) * randomRange(0.9, 1.1)) * diff.enemyHull
+    ),
     enemyCount: force,
     transportCount: randomInt(2, 4),
     waveCount: clamp(Math.round(enemyFleet / 30) + 1, 2, 4),
@@ -159,6 +161,7 @@ export function createEnemyShip(type, x, y, mission, index) {
     t.behavior === "broadside"
       ? { port: randomRange(0.2, 1.2), starboard: randomRange(0.5, 1.4), forward: randomRange(0.8, 1.6) }
       : { forward: randomRange(0.2, 1.2) };
+  const sideHull = Math.round(t.hullSide * difficultyMods().enemyHull);
   return {
     id: `${type}-${index}`,
     type,
@@ -170,8 +173,8 @@ export function createEnemyShip(type, x, y, mission, index) {
     vy: randomRange(-20, 20),
     angle: Math.PI,
     radius: t.radius,
-    hullMax: { port: t.hullSide, starboard: t.hullSide },
-    hull: { port: t.hullSide, starboard: t.hullSide },
+    hullMax: { port: sideHull, starboard: sideHull },
+    hull: { port: sideHull, starboard: sideHull },
     shieldsMax: { port: t.shieldSide, starboard: t.shieldSide },
     shields: { port: t.shieldSide, starboard: t.shieldSide },
     shieldDelay: { port: 0, starboard: 0 },

@@ -148,6 +148,23 @@ export function explosion(scale = 1) {
   o.stop(t() + dur);
 }
 
+// A short, clean interface blip for menu / button interactions.
+export function uiBeep(kind = "select") {
+  if (!ctx) return;
+  const freq = kind === "confirm" ? 660 : kind === "back" ? 300 : 480;
+  const o = tone("triangle", freq);
+  if (kind === "confirm") o.frequency.exponentialRampToValueAtTime(freq * 1.5, t() + 0.08);
+  const hp = ctx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 200;
+  const g = env(0.002, 0.07, 0.12);
+  o.connect(hp);
+  hp.connect(g);
+  g.connect(master);
+  o.start();
+  o.stop(t() + 0.1);
+}
+
 export function alarm() {
   if (!ctx) return;
   [[0, 680], [0.2, 520]].forEach(([offset, freq]) => {

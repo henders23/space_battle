@@ -96,8 +96,23 @@ fight. Combat rewards positioning and timing over twitch reflexes.
   credits, owned-only loadout selection, career stats, and **mission history**.
 - Procedural after-action evaluation: grade, captain's report, commendations/reprimands,
   career impact, statistics, and a running service record.
-- Career persistence via localStorage (credits, reputation, hull, loadout, owned items,
-  record and history).
+- **Campaign & captain identity**: a New Campaign sets up your captain (name +
+  difficulty) before the opening orders. Sustained command earns **rank
+  progression** (Lieutenant → Rear Admiral), and the Admiralty awards permanent
+  **commendations** (or records **reprimands**) for notable — or failed — actions;
+  promotions and medals surface in the after-action review and on a dedicated
+  **Service Record** screen with your rank, progress to the next, awards and
+  lifetime stats.
+- **War News / Intelligence screen**: a theatre-wide read of the war — overall
+  front status, the full bulletin log, and per-sector intelligence (control,
+  threat, stability, enemy fleet).
+- **Full Settings**: music + independent **sound-effects** volume, **difficulty**
+  (Recruit / Officer / Veteran, scaling enemy toughness, incoming fire and pay),
+  **screen-shake** intensity, and accessibility options (**large text**,
+  **colour-blind** palette that separates friendly blue from hostile amber).
+  Settings persist between sessions.
+- Career persistence via localStorage (captain, rank, credits, reputation, hull,
+  loadout, owned items, commendations, record and history).
 - **Layered audio**: distinct music beds that crossfade between the menu, the mission
   briefing (a low drone) and combat (a red-alert theme); an engine loop that rises and
   falls with the ship's speed; and procedural combat sound effects (gun reports, shield
@@ -115,12 +130,13 @@ src/
   main.js          bootstrap, screen router wiring, input, game loop
   state.js         shared state + constants
   router.js        screen transitions
-  career.js        economy, ownership, localStorage save/load
-  audio.js         music controller
-  data/            loadouts, theme palette, control scheme, sectors
+  career.js        economy, ownership, rank, commendations, save/load
+  settings.js      difficulty + accessibility + audio settings (persisted)
+  audio.js         music controller   sfx.js  procedural sound effects
+  data/            loadouts, theme, controls, sectors, ranks, commendations
   game/            warMap (war-state model + simulation)
   combat/          mission, simulation, weapons, systems, effects, renderer, shipStats
-  screens/         warMap, starbase, evaluation
+  screens/         warMap, starbase, briefing, evaluation, intel, service
   ui/              hud
   utils.js         math + formatting helpers
 ```
@@ -135,7 +151,8 @@ See [`PLAN.md`](PLAN.md) for the full execution plan.
 - **M3** — Galactic war map with sectors and dynamic war consequences. ✅
 - **M4** — Mission variety (patrol, convoy escort, starbase defence, rescue). ✅
 - **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types. ✅
-- **M6** — Campaign polish: ranks, war news, settings, audio/SFX.
+- **M6** — Campaign polish: captain naming, rank progression, commendations,
+  War News / Intelligence and Service Record screens, full Settings. ✅
 - **M7** — Procedural story layer: recurring named enemy ships, operation chains,
   officer voice-lines, battle scars.
 
@@ -143,8 +160,9 @@ See [`PLAN.md`](PLAN.md) for the full execution plan.
 
 - Must be served over HTTP (ES modules); `file://` will not work.
 - Audio waits for a user gesture before playing (browser autoplay policy).
-- One mission type so far (flagship assassination); variety arrives in M4.
-- The save system is intentionally light in M0 and expands in later milestones.
+- The title's **Continue** option enables once a save exists on page load; a
+  campaign started in the same session is available from the war map immediately
+  and as **Continue** on the next load.
 
 ## Design pillars
 

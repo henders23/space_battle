@@ -3,10 +3,20 @@
 import { state } from "../state.js";
 import { formatCredits, formatTime } from "../utils.js";
 import { showScreen } from "../router.js";
-import { calculateRepairCost, currentReputation, saveCareer, betterGrade, recordMission } from "../career.js";
+import {
+  calculateRepairCost,
+  currentReputation,
+  saveCareer,
+  betterGrade,
+  recordMission,
+  awardCommendations,
+  reconcileRank,
+  currentRank
+} from "../career.js";
 import { hullRatio } from "../combat/shipStats.js";
 import { gradeMission, reportText } from "../combat/objectives.js";
 import { applyMissionOutcome } from "../game/warMap.js";
+import { evaluateAwards, COMMENDATIONS, REPRIMANDS } from "../data/commendations.js";
 
 // After-action review: grade, captain's report, economy, statistics.
 
@@ -22,6 +32,7 @@ export function initEvaluation() {
   dom.evalReputation = document.getElementById("eval-reputation");
   dom.evalStats = document.getElementById("eval-stats");
   dom.commendation = document.getElementById("eval-commendation");
+  dom.promotion = document.getElementById("eval-promotion");
   dom.careerLine = document.getElementById("eval-career");
   dom.warUpdate = document.getElementById("eval-warupdate");
 }
@@ -61,7 +72,14 @@ export function finishMission(result, reason) {
     target: state.mission.flagshipName
   });
 
-  const commendation = pickCommendation(result, grade);
+  // Award medals / reprimands (deduped against the permanent record) and pick the
+  // single most notable fresh one to headline the after-action review.
+  const earned = evaluateAwards(state.stats, result, grade);
+  const fresh = awardCommendations(earned.commendations, earned.reprimands);
+  const commendation = headlineAward(fresh);
+
+  // A promotion can fall out of the records this mission updated.
+  const promotion = reconcileRank();
 
   // Advance the war in the sector this mission was fought over.
   let warUpdate = null;
@@ -78,6 +96,7 @@ export function finishMission(result, reason) {
     repairCost,
     net,
     commendation,
+    promotion,
     warUpdate,
     report: buildCaptainReport(result, reason, grade)
   };
@@ -86,17 +105,15 @@ export function finishMission(result, reason) {
   showScreen("evaluation");
 }
 
-// A light commendation/reprimand layer; the full medal system arrives later.
-function pickCommendation(result, grade) {
-  if (result === "success" && state.stats.targetDestroyed && state.stats.hullCritical && grade !== "F") {
-    return { kind: "commendation", text: "Linebreaker Citation — flagship destroyed with the hull in critical condition." };
+// Pick the most significant freshly-earned award to display on the eval screen.
+function headlineAward(fresh) {
+  if (fresh.commendations.length) {
+    const def = COMMENDATIONS[fresh.commendations[0]];
+    return { kind: "commendation", text: `${def.name} — ${def.text}` };
   }
-  if (grade === "S") return { kind: "commendation", text: "Cold Command Star — exemplary, efficient command action." };
-  if (result !== "success" && state.stats.retreated) {
-    return { kind: "reprimand", text: "Withdrawal noted — the objective was abandoned under fire." };
-  }
-  if (result !== "success") {
-    return { kind: "reprimand", text: "Mission failure recorded against your service file." };
+  if (fresh.reprimands.length) {
+    const def = REPRIMANDS[fresh.reprimands[0]];
+    return { kind: "reprimand", text: `${def.name} — ${def.text}` };
   }
   return null;
 }
@@ -134,6 +151,14 @@ function updateEvaluation() {
       dom.commendation.classList.add("hidden");
     }
   }
+  if (dom.promotion) {
+    if (evaluation.promotion) {
+      dom.promotion.textContent = `PROMOTED — you are advanced to ${evaluation.promotion.name}.`;
+      dom.promotion.classList.remove("hidden");
+    } else {
+      dom.promotion.classList.add("hidden");
+    }
+  }
   if (dom.warUpdate) {
     if (evaluation.warUpdate) {
       dom.warUpdate.textContent = evaluation.warUpdate;
@@ -144,9 +169,11 @@ function updateEvaluation() {
   }
   if (dom.careerLine) {
     const r = state.career.record;
+    const rank = currentRank();
     dom.careerLine.textContent =
-      `SERVICE RECORD — ${r.missionsCompleted} completed · ${r.missionsFailed} failed · ` +
-      `best ${r.bestGrade} · ${r.flagshipsDestroyed} flagships · ${r.enemyTonnage.toLocaleString()} t destroyed`;
+      `${rank.short} ${state.career.captainName} · SERVICE RECORD — ${r.missionsCompleted} completed · ` +
+      `${r.missionsFailed} failed · best ${r.bestGrade} · ${r.flagshipsDestroyed} flagships · ` +
+      `${r.enemyTonnage.toLocaleString()} t destroyed`;
   }
 
   dom.evalStats.innerHTML = "";
