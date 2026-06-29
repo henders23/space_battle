@@ -15,13 +15,14 @@ import { addMessage, addEffect, addImpact, addExplosion, addShake } from "./effe
 import * as sfx from "../sfx.js";
 import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
 import { updateObjective } from "./objectives.js";
+import { updateBoardingAvailability, boardingActive } from "./boarding.js";
 import { finishMission } from "../screens/evaluation.js";
 import { difficultyMods } from "../settings.js";
 
 // Per-frame world simulation: movement, enemy AI, projectiles, damage, objectives.
 
 export function update(dt) {
-  if (state.screen !== "combat" || state.paused || !state.player) return;
+  if (state.screen !== "combat" || state.paused || boardingActive() || !state.player) return;
   updatePlayer(dt);
   updateEnemies(dt);
   updateAllies(dt);
@@ -30,6 +31,7 @@ export function update(dt) {
   updateEffects(dt);
   const resolution = updateObjective(dt);
   if (resolution) finishMission(resolution.result, resolution.reason);
+  updateBoardingAvailability();
 }
 
 // Nearest live thing an enemy will engage — the player or any allied asset.
@@ -472,7 +474,7 @@ function updateEffects(dt) {
 }
 
 export function retreatToStarbase() {
-  if (state.screen !== "combat" || state.paused) return;
+  if (state.screen !== "combat" || state.paused || boardingActive()) return;
   state.stats.retreated = true;
   finishMission("failed", "CWS Resolute withdrew before completing the operation.");
 }

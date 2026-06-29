@@ -7,8 +7,11 @@ import { getSensorRange } from "../combat/systems.js";
 import { sideRatioShield, sideRatioHull } from "../combat/shipStats.js";
 import { OFFICERS, SYSTEM_ORDER } from "../data/officers.js";
 import { objectiveHudText } from "../combat/objectives.js";
+import { updateBoardingHud } from "../combat/boarding.js";
 
 const dom = {};
+const RACK_SLOTS = ["forward", "port", "starboard", "torpedo"];
+const rack = {};
 const officerRows = {};
 const plan = {};
 
@@ -32,6 +35,17 @@ export function initHud() {
   dom.weaponList = document.getElementById("weapon-list");
   dom.targetInfo = document.getElementById("target-info");
   dom.messageLog = document.getElementById("message-log");
+
+  // Bottom weapon rack (charge bars + key labels).
+  for (const slot of RACK_SLOTS) {
+    const btn = document.querySelector(`.weapon-rack [data-fire="${slot}"]`);
+    rack[slot] = {
+      btn,
+      charge: document.getElementById(`charge-${slot}`),
+      name: document.getElementById(`rack-${slot}-name`),
+      state: document.getElementById(`rack-${slot}-state`)
+    };
+  }
 
   // Ship damage schematic nodes
   plan.port = document.getElementById("plan-port");
@@ -151,7 +165,7 @@ export function updateHud() {
 
   const weapons = playerWeaponDefinitions();
   dom.weaponList.innerHTML = "";
-  for (const slot of ["forward", "port", "starboard", "torpedo"]) {
+  for (const slot of RACK_SLOTS) {
     const item = document.createElement("li");
     const cooldown = player.cooldowns[slot];
     const ready = cooldown <= 0;
@@ -159,6 +173,22 @@ export function updateHud() {
     item.innerHTML = `<span>${weapons[slot].name}</span><b>${ready ? "READY" : cooldown.toFixed(1)}</b>`;
     dom.weaponList.appendChild(item);
   }
+
+  // Bottom weapon rack: charge bars fill as each battery reloads.
+  for (const slot of RACK_SLOTS) {
+    const refs = rack[slot];
+    if (!refs || !refs.charge) continue;
+    const cooldown = player.cooldowns[slot];
+    const max = (player.cooldownMax && player.cooldownMax[slot]) || weapons[slot].cooldown || 1;
+    const ratio = cooldown <= 0 ? 1 : Math.max(0, Math.min(1, 1 - cooldown / max));
+    const ready = cooldown <= 0;
+    refs.charge.style.width = `${ratio * 100}%`;
+    if (refs.btn) refs.btn.dataset.ready = ready;
+    if (refs.name) refs.name.textContent = weapons[slot].name;
+    if (refs.state) refs.state.textContent = ready ? "Ready" : `${cooldown.toFixed(1)}s`;
+  }
+
+  updateBoardingHud();
 
   const target = nearestVisibleTarget();
   if (target) {

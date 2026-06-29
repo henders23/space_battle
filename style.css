@@ -325,7 +325,7 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 @media (max-width: 1100px) { .shipyard-list { grid-template-columns: 1fr; } }
 
 /* ============ COMBAT ============ */
-#combat-screen.screen-active { display: block; padding: 0; }
+#combat-screen.screen-active { display: block; padding: 0; position: relative; }
 .combat-topbar {
   display: flex; align-items: center; gap: 28px; height: 64px; padding: 0 28px;
   background: linear-gradient(180deg, rgba(6, 16, 22, 0.95), rgba(6, 16, 22, 0));
@@ -405,6 +405,72 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 .log-card { overflow: hidden; }
 #message-log { max-height: 100%; overflow: auto; color: var(--muted); font-family: var(--mono); font-size: 0.76rem; }
 #message-log li { margin-bottom: 7px; line-height: 1.4; }
+
+/* ---- bottom weapon rack (charge bars) ---- */
+.weapon-rack {
+  position: absolute; left: 16px; right: 372px; bottom: 18px; z-index: 5;
+  display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)) 150px; gap: 10px;
+  pointer-events: none;
+}
+.weapon-rack > * { pointer-events: auto; }
+.weapon, .board-command {
+  min-height: 66px; border: 1px solid var(--line); border-radius: 3px;
+  background: linear-gradient(180deg, rgba(7, 18, 23, 0.92), rgba(4, 9, 12, 0.96));
+  color: var(--text); cursor: pointer; text-align: left; padding: 9px 11px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); backdrop-filter: blur(6px);
+}
+.weapon:hover, .board-command:hover:not(:disabled) { border-color: var(--accent); }
+.weapon:disabled { cursor: default; opacity: 0.7; }
+.weapon-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; font-family: var(--display); text-transform: uppercase; }
+.weapon-top b { font-size: 0.86rem; letter-spacing: 1px; }
+.weapon-top span {
+  display: inline-grid; place-items: center; min-width: 34px; height: 22px;
+  border: 1px solid rgba(69, 224, 240, 0.36); color: var(--accent);
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 1px;
+}
+.charge { height: 6px; background: rgba(69, 224, 240, 0.12); overflow: hidden; }
+.charge i { display: block; width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 14px var(--accent); transition: width 80ms linear; }
+.weapon[data-ready="false"] .charge i { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+.weapon small { display: block; margin-top: 7px; color: var(--muted); font-family: var(--mono); font-size: 0.64rem; letter-spacing: 1px; text-transform: uppercase; }
+.board-command {
+  display: grid; place-items: center; text-align: center; text-transform: uppercase;
+  border-color: rgba(255, 83, 71, 0.5); color: var(--danger-soft);
+  font-family: var(--display); font-weight: 700; letter-spacing: 2px; line-height: 1.2;
+}
+.board-command small { color: var(--muted); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 1px; }
+.board-command.ready { background: rgba(255, 83, 71, 0.12); color: #ffd2c7; box-shadow: 0 0 24px rgba(255, 83, 71, 0.24); }
+.board-command:disabled { cursor: default; opacity: 0.5; }
+
+/* ---- boarding-available callout ---- */
+.boarding-callout {
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: 100px; z-index: 6;
+  display: none; min-width: 460px; padding: 11px 22px;
+  border: 1px solid rgba(255, 83, 71, 0.7); border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255, 83, 71, 0.16), rgba(5, 13, 17, 0.94), rgba(255, 83, 71, 0.14));
+  color: #ffd2c7; cursor: pointer; text-align: center; text-transform: uppercase;
+  box-shadow: 0 0 32px rgba(255, 83, 71, 0.22); font-family: var(--mono);
+  animation: vk-boardpulse 900ms ease-in-out infinite alternate;
+}
+.boarding-callout.visible { display: block; }
+.boarding-callout b { display: block; color: var(--danger); font-family: var(--display); font-size: 1.1rem; letter-spacing: 2px; }
+.boarding-callout small { display: block; margin-top: 2px; color: var(--muted); font-size: 0.66rem; letter-spacing: 1px; }
+@keyframes vk-boardpulse { from { border-color: rgba(255, 83, 71, 0.4); } to { border-color: rgba(255, 184, 120, 0.85); } }
+
+/* ---- boarding minigame overlay (paused combat) ---- */
+.boarding-overlay {
+  position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column;
+  background: rgba(2, 5, 8, 0.92);
+}
+.boarding-overlay.hidden { display: none; }
+.boarding-frame-head {
+  display: flex; align-items: center; gap: 20px; padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 83, 71, 0.3);
+  background: linear-gradient(180deg, rgba(8, 16, 22, 0.96), rgba(6, 12, 18, 0.9));
+}
+.boarding-frame-title { display: flex; flex-direction: column; gap: 2px; }
+.boarding-frame-title b { font-family: var(--display); font-size: 1.2rem; letter-spacing: 2px; color: #ffd2c7; text-transform: uppercase; }
+.boarding-frame-status { flex: 1; color: var(--amber); font-size: 0.74rem; letter-spacing: 2px; text-transform: uppercase; }
+#boarding-frame { flex: 1; width: 100%; border: 0; background: #04080b; }
 
 .pause-banner {
   position: fixed; inset: 0; display: grid; place-items: center;
@@ -611,6 +677,10 @@ kbd {
   .combat-layout { grid-template-columns: 1fr; height: auto; }
   .hud { grid-template-rows: none; }
   #game-canvas { min-height: 60vh; }
+  /* Stacked layout: float the rack over the bottom of the viewport. */
+  .weapon-rack { position: fixed; left: 8px; right: 8px; bottom: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)) 104px; gap: 6px; }
+  .weapon-top b { font-size: 0.72rem; }
+  .boarding-callout { bottom: 92px; min-width: 0; left: 8px; right: 8px; transform: none; }
   #eval-stats { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
   .report-card { grid-row: auto; }
 }

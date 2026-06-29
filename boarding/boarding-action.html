@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+@font-face{font-family:'JetBrains Mono';font-weight:400;font-display:swap;src:url('../assets/fonts/JetBrainsMono-latin.woff2') format('woff2');}
+@font-face{font-family:'Saira';font-weight:400;font-display:swap;src:url('../assets/fonts/Saira-latin.woff2') format('woff2');}
+@font-face{font-family:'Saira Condensed';font-weight:400;font-display:swap;src:url('../assets/fonts/SairaCondensed-400-latin.woff2') format('woff2');}
+@font-face{font-family:'Saira Condensed';font-weight:500;font-display:swap;src:url('../assets/fonts/SairaCondensed-500-latin.woff2') format('woff2');}
+@font-face{font-family:'Saira Condensed';font-weight:600;font-display:swap;src:url('../assets/fonts/SairaCondensed-600-latin.woff2') format('woff2');}
+@font-face{font-family:'Saira Condensed';font-weight:700;font-display:swap;src:url('../assets/fonts/SairaCondensed-700-latin.woff2') format('woff2');}
+@font-face{font-family:'Saira Condensed';font-weight:800;font-display:swap;src:url('../assets/fonts/SairaCondensed-800-latin.woff2') format('woff2');}
+html,body{margin:0;height:100%;background:#04080b;}</style>
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="dc-runtime.js"></script>
+</head><body>
+<x-dc>
+<helmet>
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#04080b}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:#04080b}
+::-webkit-scrollbar-thumb{background:rgba(70,160,180,0.25);border:2px solid #04080b}
+::-webkit-scrollbar-thumb:hover{background:rgba(70,160,180,0.5)}
+@keyframes vk-blink{0%,100%{opacity:1}50%{opacity:0.25}}
+@keyframes vk-glow{0%,100%{opacity:0.5}50%{opacity:1}}
+@keyframes vk-rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes vk-blip{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+@keyframes vk-pulseC{0%,100%{box-shadow:0 0 0 1px rgba(69,224,240,0.4) inset}50%{box-shadow:0 0 16px rgba(69,224,240,0.4),0 0 0 1px #45e0f0 inset}}
+@keyframes vk-pulseR{0%,100%{box-shadow:0 0 0 1px rgba(255,83,71,0.4) inset}50%{box-shadow:0 0 18px rgba(255,83,71,0.5),0 0 0 1px #ff5347 inset}}
+</style>
+</helmet>
+
+<div style="position:relative;width:1600px;height:900px;margin:0 auto;background:radial-gradient(ellipse 100% 100% at 50% 40%,#061119 0%,#040a0f 60%,#02060a 100%);color:#cfe2e8;font-family:'Saira',sans-serif;overflow:hidden;user-select:none;">
+
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(70,160,180,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(70,160,180,0.05) 1px,transparent 1px);background-size:64px 64px;"></div>
+  <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,0,0,0.16) 3px,rgba(0,0,0,0) 4px);opacity:0.5;z-index:60;"></div>
+  <div style="position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 240px rgba(255,60,40,0.10);z-index:61;"></div>
+
+  <!-- HEADER -->
+  <div style="position:relative;z-index:10;height:78px;display:flex;align-items:center;gap:26px;padding:0 30px;border-bottom:1px solid rgba(70,160,180,0.25);background:linear-gradient(180deg,rgba(6,16,22,0.95),rgba(6,16,22,0));">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:10px;height:10px;background:#ff5347;border-radius:50%;animation:vk-blink 1.1s steps(1) infinite;"></div>
+      <div>
+        <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px;letter-spacing:4px;color:#ff6b60;line-height:1;">BOARDING ENGAGED</div>
+        <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:2px;color:#5f8794;margin-top:4px;">OPERATION IRON TIDE ▸ {{ enemyShip }}</div>
+      </div>
+    </div>
+    <div style="flex:1;"></div>
+    <div style="text-align:center;">
+      <div style="font-family:'JetBrains Mono';font-size:11px;color:#5f8794;letter-spacing:2px;">OBJECTIVE</div>
+      <div style="font-family:'Saira Condensed';font-weight:600;font-size:18px;letter-spacing:2px;color:#eaf6f9;">SEIZE THE BRIDGE</div>
+    </div>
+    <div style="width:1px;height:38px;background:rgba(70,160,180,0.3);"></div>
+    <div style="text-align:center;min-width:60px;">
+      <div style="font-family:'JetBrains Mono';font-size:10px;color:#5f8794;letter-spacing:1px;">SECURED</div>
+      <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px;color:#5fd17a;line-height:1.1;">{{ securedLabel }}</div>
+    </div>
+    <div style="text-align:center;min-width:60px;">
+      <div style="font-family:'JetBrains Mono';font-size:10px;color:#5f8794;letter-spacing:1px;">MARINES</div>
+      <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px;color:#eaf6f9;line-height:1.1;">{{ marines }}</div>
+    </div>
+    <div style="width:1px;height:38px;background:rgba(70,160,180,0.3);"></div>
+    <div style="min-width:150px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-family:'JetBrains Mono';font-size:10px;color:#7fb3c0;letter-spacing:1px;">MOMENTUM</span><span style="{{ momNumStyle }}">{{ momentum }}</span></div>
+      <div style="height:8px;background:rgba(70,160,180,0.15);margin-top:4px;overflow:hidden;"><div style="{{ momFillStyle }}"></div></div>
+    </div>
+    <div style="min-width:150px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-family:'JetBrains Mono';font-size:10px;color:#7fb3c0;letter-spacing:1px;">ENEMY MORALE</span><span style="{{ emNumStyle }}">{{ enemyMorale }}</span></div>
+      <div style="height:8px;background:rgba(255,80,60,0.15);margin-top:4px;overflow:hidden;"><div style="{{ emFillStyle }}"></div></div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div style="position:relative;z-index:5;display:flex;height:821px;">
+
+    <!-- ROSTER -->
+    <div style="width:300px;flex:0 0 300px;border-right:1px solid rgba(70,160,180,0.2);background:linear-gradient(180deg,rgba(10,22,28,0.6),rgba(6,14,18,0.6));padding:14px 14px 0;overflow-y:auto;">
+      <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:3px;color:#5f8794;border-bottom:1px solid rgba(70,160,180,0.18);padding-bottom:9px;margin-bottom:12px;">▤ BOARDING PARTY — 4 SQUADS</div>
+      <sc-for list="{{ squads }}" as="sq" hint-placeholder-count="4">
+        <div style="{{ sq.cardStyle }}">
+          <div style="{{ sq.portStyle }}"><span style="{{ sq.initStyle }}">{{ sq.initials }}</span><span style="position:absolute;bottom:2px;right:3px;font-family:'JetBrains Mono';font-size:8px;color:#6f939e;">{{ sq.idc }}</span></div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;">
+              <span style="font-family:'Saira Condensed';font-weight:700;font-size:18px;letter-spacing:1px;color:#eaf6f9;">{{ sq.name }}</span>
+              <span style="{{ sq.statusStyle }}">{{ sq.statusLabel }}</span>
+            </div>
+            <div style="font-family:'JetBrains Mono';font-size:10px;line-height:1.3;margin-top:2px;color:#7fb3c0;">{{ sq.leader }} • {{ sq.codename }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:7px;">
+              <div style="display:flex;align-items:baseline;gap:3px;"><span style="font-family:'Saira Condensed';font-weight:700;font-size:17px;color:#eaf6f9;">{{ sq.troops }}</span><span style="font-family:'JetBrains Mono';font-size:8px;color:#5f8794;">MARINES</span></div>
+              <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;"><span style="font-family:'JetBrains Mono';font-size:8px;color:#5f8794;">MORALE</span><span style="{{ sq.moraleNumStyle }}">{{ sq.morale }}</span></div>
+                <div style="height:6px;background:rgba(70,160,180,0.15);margin-top:2px;overflow:hidden;"><div style="{{ sq.moraleFillStyle }}"></div></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+              <sc-for list="{{ sq.traitsD }}" as="tr" hint-placeholder-count="2">
+                <span title="{{ tr.desc }}" style="font-family:'JetBrains Mono';font-size:9px;color:#7fb3c0;border:1px solid rgba(70,160,180,0.3);background:rgba(69,224,240,0.04);padding:1px 5px;cursor:help;">{{ tr.name }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- CENTER / MAP -->
+    <div style="flex:1;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid rgba(70,160,180,0.2);background:rgba(4,12,16,0.5);">
+        <span style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:3px;color:#5f8794;">▤ DECK SCHEMATIC ▸ {{ enemyShip }}</span>
+        <span style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:1px;color:#45e0f0;">MISSION CLOCK <b style="color:#eaf6f9;">{{ clockLabel }}</b></span>
+      </div>
+
+      <div style="position:absolute;left:9px;top:58px;width:942px;height:600px;">
+        <svg width="942" height="600" style="position:absolute;left:0;top:0;overflow:visible;pointer-events:none;">
+          <sc-for list="{{ connectors }}" as="c" hint-placeholder-count="0">
+            <line x1="{{ c.x1 }}" y1="{{ c.y1 }}" x2="{{ c.x2 }}" y2="{{ c.y2 }}" stroke="{{ c.color }}" stroke-width="{{ c.w }}" stroke-dasharray="{{ c.dash }}"></line>
+          </sc-for>
+        </svg>
+        <sc-for list="{{ mapRooms }}" as="room" hint-placeholder-count="12">
+          <div style="{{ room.style }}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px;">
+              <span style="{{ room.nameStyle }}">{{ room.name }}</span>
+              <span style="{{ room.specialStyle }}">{{ room.special }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:4px;">
+              <div style="display:flex;gap:3px;flex-wrap:wrap;">
+                <sc-for list="{{ room.tokens }}" as="tk" hint-placeholder-count="0">
+                  <span style="{{ tk.style }}">{{ tk.initials }}</span>
+                </sc-for>
+              </div>
+              <span style="{{ room.statusStyle }}">{{ room.statusLabel }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- PRESSURE STRIP -->
+      <div style="position:absolute;left:9px;right:9px;bottom:12px;display:flex;gap:10px;align-items:stretch;">
+        <sc-for list="{{ pressures }}" as="p" hint-placeholder-count="2">
+          <div style="{{ p.cardStyle }}">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-family:'JetBrains Mono';font-size:10px;letter-spacing:1px;color:#7fb3c0;">{{ p.label }}</span><span style="{{ p.valStyle }}">{{ p.val }}</span></div>
+            <div style="height:6px;background:rgba(70,160,180,0.12);margin-top:6px;overflow:hidden;"><div style="{{ p.fillStyle }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- RIGHT / RADIO -->
+    <div style="width:344px;flex:0 0 344px;border-left:1px solid rgba(70,160,180,0.2);background:linear-gradient(180deg,rgba(10,22,28,0.6),rgba(6,14,18,0.6));display:flex;flex-direction:column;">
+      <div style="padding:14px;border-bottom:1px solid rgba(70,160,180,0.18);">
+        <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:3px;color:#5f8794;margin-bottom:10px;">▤ ASSAULT STATUS</div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;background:rgba(4,12,16,0.6);border:1px solid rgba(70,160,180,0.2);border-left:3px solid #45e0f0;padding:9px 11px;">
+            <div style="font-family:'JetBrains Mono';font-size:9px;color:#5f8794;letter-spacing:1px;">MOMENTUM</div>
+            <div style="{{ momBigStyle }}">{{ momBand }}</div>
+          </div>
+          <div style="flex:1;background:rgba(4,12,16,0.6);border:1px solid rgba(255,80,60,0.25);border-left:3px solid #ff5347;padding:9px 11px;">
+            <div style="font-family:'JetBrains Mono';font-size:9px;color:#5f8794;letter-spacing:1px;">ENEMY WILL</div>
+            <div style="{{ emBigStyle }}">{{ emBand }}</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:3px;color:#5f8794;padding:13px 14px 8px;">▤ RADIO CHATTER</div>
+      <div style="flex:1;overflow-y:auto;padding:0 14px 16px;">
+        <sc-for list="{{ log }}" as="l" hint-placeholder-count="5">
+          <div style="font-family:'JetBrains Mono';font-size:12px;line-height:1.5;margin-bottom:9px;padding:7px 10px;background:rgba(4,12,16,0.5);border-left:2px solid {{ l.bar }};animation:vk-blip .3s ease-out;"><span style="color:{{ l.color }};font-weight:500;">{{ l.who }}</span> <span style="color:#93b2bc;">{{ l.text }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- CRISIS MODAL -->
+  <sc-if value="{{ hasCrisis }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:70;background:rgba(2,6,10,0.78);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);">
+      <div style="{{ crisis.panelStyle }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid rgba(70,160,180,0.2);background:rgba(4,12,16,0.6);">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <span style="{{ crisis.tagStyle }}">{{ crisis.tag }}</span>
+            <span style="font-family:'Saira Condensed';font-weight:700;font-size:22px;letter-spacing:2px;color:{{ crisis.speakerColor }};">{{ crisis.speaker }}</span>
+          </div>
+          <sc-if value="{{ crisis.hasCountdown }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align:right;"><div style="font-family:'JetBrains Mono';font-size:10px;color:#5f8794;letter-spacing:1px;">{{ crisis.cdLabel }}</div><div style="font-family:'JetBrains Mono';font-weight:700;font-size:24px;color:{{ crisis.cdColor }};">{{ crisis.cdTime }}</div></div>
+          </sc-if>
+        </div>
+        <div style="padding:22px 24px;">
+          <div style="{{ crisis.lineStyle }}">{{ crisis.line }}</div>
+
+          <sc-if value="{{ crisis.stageChoices }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
+              <sc-for list="{{ crisis.choices }}" as="ch" hint-placeholder-count="4">
+                <div onclick="{{ ch.onChoose }}" style="{{ ch.btnStyle }}" style-hover="border-color:{{ ch.hoverBorder }};background:{{ ch.hoverBg }};">
+                  <div style="font-family:'Saira Condensed';font-weight:700;font-size:18px;letter-spacing:0.5px;color:{{ ch.titleColor }};">{{ ch.label }}</div>
+                  <div style="font-family:'Saira';font-size:14px;line-height:1.4;color:#93b2bc;margin-top:5px;min-height:38px;">{{ ch.sub }}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;">
+                    <sc-for list="{{ ch.tagsD }}" as="t" hint-placeholder-count="2">
+                      <span style="{{ t.style }}">{{ t.label }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ crisis.stageResult }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:18px;border-top:1px solid rgba(70,160,180,0.2);padding-top:18px;">
+              <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:2px;color:#45e0f0;margin-bottom:8px;">▸ {{ crisis.resultPick }}</div>
+              <div style="font-family:'Saira';font-size:17px;line-height:1.55;color:#cfe2e8;min-height:60px;">{{ crisis.resultText }}</div>
+              <div onclick="{{ crisis.onContinue }}" style="margin-top:18px;text-align:center;font-family:'Saira Condensed';font-weight:700;font-size:18px;letter-spacing:4px;color:#04080b;background:#45e0f0;padding:13px;cursor:pointer;">{{ crisis.continueLabel }} ▸</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- BRIEFING -->
+  <sc-if value="{{ isBriefing }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;inset:0;z-index:80;background:radial-gradient(ellipse 90% 90% at 30% 20%,#08131c,#050b10 60%,#02060a);overflow-y:auto;padding:48px 70px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="font-family:'JetBrains Mono';font-size:12px;color:#ff5347;border:1px solid #ff5347;padding:3px 9px;letter-spacing:2px;">PRIORITY OPERATION</div>
+        <div style="font-family:'JetBrains Mono';font-size:13px;letter-spacing:4px;color:#5f8794;">BOARD &amp; SEIZE ▸ GREYWARD LINE</div>
+      </div>
+      <div style="font-family:'Saira Condensed';font-weight:800;font-size:74px;letter-spacing:1px;color:#eaf6f9;line-height:1;margin:10px 0 4px;">OPERATION IRON TIDE</div>
+      <div style="font-family:'Saira';font-size:18px;color:#87a7b1;max-width:960px;line-height:1.55;">The Veyr cruiser <b style="color:#ff7a70;">{{ enemyShip }}</b> floats crippled in the debris of the Greyward Line, drives dead. Your boarding tube is sealed to her flank and four squads are stacked at the airlock. This is no dice game — the assault runs in real time, and when a crisis breaks, the deck pauses for your order. Take the bridge before she scuttles, and she is a prize.</div>
+      <div style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;color:#5f8794;margin:30px 0 14px;border-bottom:1px solid rgba(70,160,180,0.2);padding-bottom:9px;">YOUR SQUAD LEADERS</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:1160px;">
+        <sc-for list="{{ leaders }}" as="ld" hint-placeholder-count="4">
+          <div style="{{ ld.cardStyle }}">
+            <div style="{{ ld.portStyle }}"><span style="{{ ld.initStyle }}">{{ ld.initials }}</span><span style="position:absolute;bottom:3px;right:4px;font-family:'JetBrains Mono';font-size:9px;color:#6f939e;">{{ ld.idc }}</span></div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-family:'Saira Condensed';font-weight:700;font-size:20px;color:#eaf6f9;letter-spacing:1px;">{{ ld.name }}</span><span style="{{ ld.codeStyle }}">«{{ ld.codename }}»</span></div>
+              <div style="font-family:'JetBrains Mono';font-size:10px;color:#6f939e;">{{ ld.rank }} • {{ ld.leader }}</div>
+              <div style="font-family:'Saira';font-size:14px;color:#9dc5d0;line-height:1.45;margin:7px 0 9px;">{{ ld.bio }}</div>
+              <div style="display:flex;gap:6px;">
+                <sc-for list="{{ ld.traitsD }}" as="tr" hint-placeholder-count="2">
+                  <span style="font-family:'JetBrains Mono';font-size:10px;color:#7fb3c0;border:1px solid rgba(70,160,180,0.3);background:rgba(69,224,240,0.04);padding:2px 7px;">{{ tr.name }} · {{ tr.desc }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div onclick="{{ onStart }}" style="display:inline-block;margin-top:30px;font-family:'Saira Condensed';font-weight:700;font-size:22px;letter-spacing:4px;color:#04080b;background:#45e0f0;padding:15px 46px;cursor:pointer;box-shadow:0 0 40px rgba(69,224,240,0.3);">BEGIN BOARDING ▸</div>
+    </div>
+  </sc-if>
+
+  <!-- EVALUATION -->
+  <sc-if value="{{ isOver }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:80;background:radial-gradient(ellipse 80% 90% at 50% 0%,#08131c,#050b10 55%,#02060a);overflow-y:auto;">
+      <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0) 4px);opacity:0.4;"></div>
+      <div style="position:relative;text-align:center;padding-top:34px;"><div style="font-family:'JetBrains Mono';font-size:13px;letter-spacing:6px;color:#5f8794;">COMMAND PERFORMANCE ASSESSMENT — OP. IRON TIDE</div></div>
+      <div style="position:relative;display:flex;gap:24px;padding:26px 56px 56px;align-items:stretch;">
+        <div style="width:360px;flex:0 0 360px;">
+          <div style="border:1px solid rgba(70,160,180,0.3);background:linear-gradient(180deg,rgba(10,22,28,0.9),rgba(6,14,18,0.9));padding:28px;text-align:center;">
+            <div style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:4px;color:#5f8794;">ASSESSMENT</div>
+            <div style="{{ outcome.gradeStyle }}">{{ outcome.grade }}</div>
+            <div style="{{ outcome.bandStyle }}">{{ outcome.band }}</div>
+            <div style="font-family:'Saira Condensed';font-weight:500;font-size:18px;letter-spacing:2px;color:#9dc5d0;margin-top:4px;">{{ outcome.title }}</div>
+          </div>
+          <div style="margin-top:16px;background:linear-gradient(180deg,rgba(10,22,28,0.9),rgba(6,14,18,0.9));border:1px solid rgba(70,160,180,0.25);padding:18px 22px;">
+            <sc-for list="{{ outcome.stats }}" as="st" hint-placeholder-count="5">
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(70,160,180,0.1);"><span style="font-family:'JetBrains Mono';font-size:12px;color:#7fb3c0;letter-spacing:1px;">{{ st.k }}</span><span style="font-family:'Saira Condensed';font-weight:600;font-size:16px;color:{{ st.c }};">{{ st.v }}</span></div>
+            </sc-for>
+          </div>
+          <div onclick="{{ onRestart }}" style="margin-top:16px;text-align:center;font-family:'Saira Condensed';font-weight:700;font-size:18px;letter-spacing:3px;color:#04080b;background:#45e0f0;padding:14px;cursor:pointer;">RUN IT AGAIN ▸</div>
+        </div>
+        <div style="flex:1;background:linear-gradient(180deg,rgba(10,22,28,0.85),rgba(6,14,18,0.85));border:1px solid rgba(70,160,180,0.25);padding:30px 36px;">
+          <div style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;color:#45e0f0;margin-bottom:4px;">FROM: HELION FLEET ADMIRALTY — TO: COMMANDER, OPERATION IRON TIDE</div>
+          <div style="height:1px;background:rgba(70,160,180,0.25);margin:16px 0 22px;"></div>
+          <sc-for list="{{ outcome.report }}" as="r" hint-placeholder-count="3">
+            <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px;letter-spacing:1px;color:{{ r.c }};margin-bottom:6px;">{{ r.h }}</div>
+            <div style="font-family:'Saira';font-size:18px;line-height:1.6;color:#b8d2da;margin-bottom:22px;">{{ r.text }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:900},&quot;pace&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Slow&quot;,&quot;Normal&quot;,&quot;Tense&quot;],&quot;default&quot;:&quot;Normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Gameplay&quot;},&quot;startTroops&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:3,&quot;max&quot;:8,&quot;unit&quot;:&quot;marines&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Gameplay&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.C={cyan:'#45e0f0',amber:'#f0a93d',green:'#5fd17a',red:'#ff5347',red2:'#ff7a70',purple:'#b86bff',bright:'#eaf6f9',dim:'#7fb3c0',dim2:'#5f8794'};
+    this.ENEMY='VRS COLD MERIDIAN';
+    this.LAYOUT=[
+      {id:0,name:'Breach Airlock',x:24,y:250,w:150,h:110,type:'breach',conns:[3]},
+      {id:1,name:'Cargo Hold',x:210,y:36,w:150,h:110,conns:[3,4]},
+      {id:2,name:'Crew Quarters',x:210,y:464,w:150,h:110,conns:[3,6]},
+      {id:3,name:'Corridor Jct',x:210,y:250,w:150,h:110,conns:[0,1,2,5]},
+      {id:4,name:'Mess Hall',x:396,y:36,w:150,h:110,conns:[1,5,7]},
+      {id:5,name:'Med Bay',x:396,y:250,w:150,h:110,special:'MED',conns:[3,4,6,8]},
+      {id:6,name:'Engineering',x:396,y:464,w:150,h:110,conns:[2,5,9]},
+      {id:7,name:'Armory',x:582,y:36,w:150,h:110,special:'ARMS',conns:[4,8,10]},
+      {id:8,name:'Security Stn',x:582,y:250,w:150,h:110,special:'SEC',conns:[5,7,9,11]},
+      {id:9,name:'Reactor Ctrl',x:582,y:464,w:150,h:110,special:'RX',conns:[6,8,11]},
+      {id:10,name:'Comms Relay',x:768,y:36,w:150,h:110,special:'COMMS',conns:[7,11]},
+      {id:11,name:'BRIDGE',x:768,y:250,w:150,h:110,type:'bridge',conns:[8,9,10]}
+    ];
+    this.ORDER=[3,1,2,5,4,6,8,7,9,10];
+    this.SQUADCFG=[
+      {id:0,name:'ALPHA',leader:'Lt. Venn',codename:'WRAITH',rank:'Lieutenant',color:'#45e0f0',initials:'AV',idc:'A-01',portrait:'../assets/squads/leader_03.png',traits:['Vanguard','Cold'],bio:'First through every hatch. Venn feels nothing when the breach blows \u2014 which is why command sends Alpha first.'},
+      {id:1,name:'BRAVO',leader:'Cpl. Okonkwo',codename:'SAINT',rank:'Corporal',color:'#f0a93d',initials:'MO',idc:'B-02',portrait:'../assets/squads/leader_02.png',traits:['Breacher','Reckless'],bio:'A trauma medic before she picked up a cutting torch. Carves through bulkheads and dares the enemy to follow.'},
+      {id:2,name:'CHARLIE',leader:'Lt. Reyes',codename:'CIPHER',rank:'Lieutenant',color:'#5fd17a',initials:'DR',idc:'C-03',portrait:'../assets/squads/leader_09.png',traits:['Tactician','Veteran'],bio:'Reads a deck plan like a chessboard. Never takes the door the enemy is watching.'},
+      {id:3,name:'DELTA',leader:'Sgt. Chen',codename:'SPARROW',rank:'Sergeant',color:'#b86bff',initials:'IC',idc:'D-04',portrait:'../assets/squads/leader_16.png',traits:['Recon','Quiet'],bio:'Ghost by temperament. You never hear Sparrow until the deck is already theirs.'}
+    ];
+    this.TRAITDESC={Vanguard:'leads breaches',Cold:'steady nerves',Breacher:'cuts bulkheads',Reckless:'all-in',Tactician:'reads angles',Veteran:'seen it all',Recon:'scouts ahead',Quiet:'moves unseen'};
+    this.CHATTER=[
+      {who:'ALPHA:',text:'Contact front \u2014 pushing through.',tone:'cyan'},
+      {who:'BRAVO:',text:'We are cutting through the bulkhead.',tone:'amber'},
+      {who:'ENGINEERING:',text:'Reactor spike detected aft.',tone:'amber'},
+      {who:'XO:',text:'Enemy captain is buying time.',tone:'cyan'},
+      {who:'MEDIC:',text:'Wounded in the breach compartment.',tone:'red'},
+      {who:'CHARLIE:',text:'Junction clear. Moving up the spine.',tone:'green'},
+      {who:'SENSORS:',text:'Movement on the lower decks.',tone:'amber'},
+      {who:'DELTA:',text:'Holding the flank. Quiet here.',tone:'purple'}
+    ];
+    this.CRISES=[
+      {id:'breach',at:null,tag:'ENTRY',speaker:'BREACH CONTROL',
+       line:'The Cold Meridian floats dead in the debris. Four squads are stacked at the tube. Choose how the marines make entry.',
+       choices:[
+        {label:'ASSAULT PODS \u2014 PORT BREACH',sub:'Fast and loud into the outer gunnery deck.',tags:['+Momentum','Casualty risk'],kind:'cyan',
+         result:'Alpha punches through the port breach into the gunnery deck. Resistance is heavier than expected \u2014 but you are moving.',eff:{start:1,momentum:12,enemyMorale:-5,cas:1}},
+        {label:'CUTTING CHARGES \u2014 LOWER HULL',sub:'Slower, but you choose where you arrive.',tags:['+Momentum','Low losses'],kind:'cyan',
+         result:'Bravo burns a hole through the lower hull and the squads slip in clean below the defenders. A measured start.',eff:{start:1,momentum:8,enemyMorale:-3}},
+        {label:'STEALTH \u2014 AIRLOCK INFILTRATION',sub:'Quiet entry. Long odds, no noise.',tags:['Enemy unaware','Slow'],kind:'green',
+         result:'Sparrow walks Delta through a dark airlock. No alarm yet \u2014 but the deck is wide and the clock is running.',eff:{start:1,momentum:4,enemyMorale:-10}},
+        {label:'HARD DOCK \u2014 GUNNERY DECK',sub:'Ram the tube home and storm straight in.',tags:['++Momentum','High losses'],kind:'red',
+         result:'You ram the tube home and the marines pour in under fire. Brutal pace \u2014 and Alpha is already taking hits.',eff:{start:1,momentum:18,enemyMorale:-4,cas:2}}
+       ]},
+      {id:'armoury',at:24,tag:'DECISION',speaker:'LT. VENN',cdLabel:'BULKHEAD LOCKDOWN',cdSecs:45,cdColor:'#f0a93d',
+       line:'We can push to the armoury before they seal the bulkheads, Captain. Your call \u2014 fast or careful.',
+       choices:[
+        {label:'PUSH IMMEDIATELY',sub:'Take the armoury now. Accept the cost.',tags:['+Momentum','-Enemy will','Casualties'],kind:'cyan',
+         result:'Momentum surges. Alpha takes the armoury but bleeds for it \u2014 fresh weapons in hand and the enemy line cracking.',eff:{momentum:14,enemyMorale:-12,cas:1}},
+        {label:'HOLD AND SCAN',sub:'Slow, careful, no losses.',tags:['-Momentum','+Intel'],kind:'green',
+         result:'The squads hold and map the deck. Safe \u2014 but the enemy seals the armoury bulkhead before you reach it.',eff:{momentum:-8,intel:1}},
+        {label:'SEND BRAVO \u2014 MAINTENANCE DUCT',sub:'Flank through the ducts and open it from within.',tags:['+Momentum','Bravo risk'],kind:'cyan',
+         result:'Bravo slips the duct and cracks the armoury from inside. Clever \u2014 and the ducts cost her two marines.',eff:{momentum:8,enemyMorale:-6,bravoRisk:1}},
+        {label:'VENT THE COMPARTMENT',sub:'Open it to vacuum. Effective. Brutal.',tags:['--Enemy will','Prize damage'],kind:'red',
+         result:'You blow the compartment to space. The defenders die on the open channel \u2014 the whole crew hears it. Their will buckles.',eff:{enemyMorale:-22,brutal:1,hullDamage:1}}
+       ]},
+      {id:'scuttle',at:55,tag:'CRISIS',speaker:'CHIEF SAYE',cdLabel:'SCUTTLE SEQUENCE',cdSecs:60,cdColor:'#ff5347',
+       line:'Scuttle sequence detected. Reactor room or the bridge, Captain \u2014 we do not have time for both.',
+       choices:[
+        {label:'SEND BRAVO TO REACTOR',sub:'Peel a squad off to kill the scuttle.',tags:['Stops scuttle','-Momentum'],kind:'cyan',
+         result:'Bravo peels off for the reactor and rips the scuttle charges loose with seconds to spare. The bridge will have to wait.',eff:{scuttleStopped:1,momentum:-4,moveBravo:9}},
+        {label:'ALL TEAMS TO THE BRIDGE',sub:'Ignore the reactor. Race for the command deck.',tags:['++Momentum','Scuttle risk'],kind:'red',
+         result:'Every squad drives for the command deck. Fast \u2014 but the reactor is left to burn, and the timer keeps falling.',eff:{momentum:14,scuttleStopped:0}},
+        {label:'EMP PULSE',sub:'Stun every system \u2014 theirs and yours.',tags:['Stuns scuttle','-Momentum'],kind:'amber',
+         result:'The pulse freezes the scuttle sequence cold \u2014 and half of your own gear with it. Messy, but the prize survives.',eff:{scuttleStopped:1,momentum:-10,enemyMorale:-4}},
+        {label:'ABORT BOARDING',sub:'Pull the marines back to the tube.',tags:['End mission'],kind:'amber',
+         result:'You call it. The marines fall back through the breach and blow the tube. The prize is lost \u2014 but your people live.',eff:{abort:1}}
+       ]},
+      {id:'surrender',at:86,tag:'TRANSMISSION',speaker:'ENEMY CAPTAIN',enemy:1,
+       line:'This is the master of the Cold Meridian. We will discuss terms \u2014 hold your marines and we can end this clean.',
+       choices:[
+        {label:'ACCEPT SURRENDER',sub:'Take the ship intact. End the bloodshed.',tags:['Clean prize'],kind:'green',
+         result:'You accept. The defenders lay down arms and the bridge opens its hatches. The Cold Meridian is taken intact.',eff:{accept:'clean'}},
+        {label:'DEMAND UNCONDITIONAL',sub:'No terms. Depends on their will to fight.',tags:['Risky'],kind:'cyan',
+         result:null,eff:{accept:'demand'}},
+        {label:'IGNORE \u2014 STORM THE BRIDGE',sub:'No talk. Take it by force.',tags:['Casualties','Damaged prize'],kind:'red',
+         result:'You cut the channel. Alpha storms the bridge through the captain\u2019s guard \u2014 it is close, ugly work, and it costs you.',eff:{accept:'storm',cas:1,enemyMorale:-10}},
+        {label:'STALL FOR TIME',sub:'Keep him talking while the squads move.',tags:['+Momentum'],kind:'amber',
+         result:'You keep the captain talking while the squads slide into position around the command deck. The lull is yours.',eff:{accept:'stall',momentum:10}}
+       ]}
+    ];
+    this.pace=this.props.pace ?? 'Normal';
+    this.startTroops=this.props.startTroops ?? 5;
+    this.state=this.freshGame();
+  }
+  freshGame(){
+    return {phase:'briefing',momentum:55,enemyMorale:72,progress:0,clock:0,reinf:90,reinfMax:90,running:false,
+      squads:this.SQUADCFG.map(s=>({...s,troops:this.startTroops,morale:72,status:'Fit',fixedRoom:null})),
+      log:[{id:1,who:'OPS:',text:'Tube sealed to the enemy hull. Squads stacked and ready, Commander.',tone:'cyan'}],
+      fired:[],activeCrisis:null,crisisStage:'choices',pending:null,flags:{hullDamage:0,brutal:0,intel:0,scuttleStopped:null,captainEscaped:0,casualtiesTotal:0,accept:null},outcome:null,cdShow:0};
+  }
+  componentDidMount(){ this.timer=setInterval(()=>this.tick(),1000); }
+  componentWillUnmount(){ if(this.timer)clearInterval(this.timer); }
+  clamp(v){ return Math.max(0,Math.min(100,Math.round(v))); }
+  mk(who,text,tone){ return {id:Date.now()+Math.random(),who,text,tone}; }
+  tick(){
+    const st=this.state;
+    if(st.phase!=='playing'||!st.running||st.activeCrisis) return;
+    this.setState(prev=>{
+      let {progress,clock,reinf,reinfMax,momentum,enemyMorale}=prev;
+      const log=prev.log.slice(); const flags={...prev.flags};
+      clock+=1;
+      const mul={Slow:0.7,Normal:1,Tense:1.5}[this.pace]||1;
+      progress=Math.min(99,progress+(0.6+(momentum/100)*1.4)*mul);
+      reinf-=1;
+      if(reinf<=0){ enemyMorale=this.clamp(enemyMorale+8); momentum=this.clamp(momentum-4); log.unshift(this.mk('VEYR FORCES:','A fresh enemy wave reaches the deck.','red')); reinf=80; reinfMax=80; }
+      if(clock%4===0){ const c=this.CHATTER[Math.floor(Math.random()*this.CHATTER.length)]; log.unshift(this.mk(c.who,c.text,c.tone)); }
+      let activeCrisis=prev.activeCrisis, crisisStage=prev.crisisStage, running=prev.running, cdShow=prev.cdShow;
+      const next=this.CRISES.find(c=>!prev.fired.includes(c.id)&&c.at!=null&&progress>=c.at);
+      if(next){ activeCrisis=next; crisisStage='choices'; running=false; cdShow=next.cdSecs||0; }
+      return {progress,clock,reinf,reinfMax,momentum,enemyMorale,log:log.slice(0,30),flags,activeCrisis,crisisStage,running,cdShow};
+    });
+  }
+  startGame(){ this.setState({phase:'playing',activeCrisis:this.CRISES[0],crisisStage:'choices',running:false}); }
+  restart(){ this.setState(this.freshGame()); }
+  chooseCrisis(i){
+    const st=this.state; const cr=st.activeCrisis; const ch=cr.choices[i];
+    let result=ch.result, eff={...ch.eff};
+    if(cr.id==='surrender'&&ch.eff.accept==='demand'){
+      if(st.enemyMorale<=38){ result='Faced with no escape and a broken crew, the enemy captain orders his people to stand down. The bridge is yours, clean.'; eff={accept:'fold',enemyMorale:-20}; }
+      else { result='The captain spits your terms back and bolts for the escape pods. Alpha storms the bridge \u2014 but he is gone into the dark before they reach the command chair.'; eff={accept:'refuse',cas:1,captainEscaped:1}; }
+    }
+    this.setState({crisisStage:'result',pending:{result,eff,choice:ch}});
+  }
+  continueCrisis(){
+    const cr=this.state.activeCrisis; const pend=this.state.pending;
+    this.setState(prev=>{
+      let momentum=prev.momentum, enemyMorale=prev.enemyMorale, reinf=prev.reinf, reinfMax=prev.reinfMax, running=prev.running;
+      const squads=prev.squads.map(s=>({...s})); const log=prev.log.slice(); const flags={...prev.flags}; const eff=pend.eff;
+      const fired=prev.fired.concat(cr.id);
+      if(eff.momentum) momentum=this.clamp(momentum+eff.momentum);
+      if(eff.enemyMorale) enemyMorale=this.clamp(enemyMorale+eff.enemyMorale);
+      if(eff.cas){ const a=squads[0]; const d=Math.min(a.troops,1+(eff.cas)); a.troops-=d; flags.casualtiesTotal+=d; a.morale=this.clamp(a.morale-12); if(a.troops<=2)a.status='Wounded'; }
+      if(eff.bravoRisk){ const b=squads[1]; const d=Math.min(b.troops,2); b.troops-=d; flags.casualtiesTotal+=d; b.morale=this.clamp(b.morale-10); if(b.troops<=2)b.status='Wounded'; }
+      if(eff.hullDamage) flags.hullDamage+=eff.hullDamage;
+      if(eff.brutal){ flags.brutal+=eff.brutal; squads.forEach(s=>s.morale=this.clamp(s.morale-4)); }
+      if(eff.intel) flags.intel=1;
+      if(eff.scuttleStopped!=null) flags.scuttleStopped=eff.scuttleStopped;
+      if(eff.captainEscaped) flags.captainEscaped=1;
+      if(eff.moveBravo!=null) squads[1].fixedRoom=eff.moveBravo;
+      if(eff.accept) flags.accept=eff.accept;
+      log.unshift(this.mk(cr.speaker+':',pend.result,cr.enemy?'red':'cyan'));
+      let phase=prev.phase, outcome=prev.outcome;
+      if(eff.start){ running=true; reinf=90; reinfMax=90; momentum=this.clamp(momentum); log.unshift(this.mk('OPS:','Boarding underway. Marines advancing on the bridge.','green')); }
+      else if(eff.abort){ phase='over'; outcome=this.computeOutcome({...flags,aborted:1},momentum,enemyMorale,squads); }
+      else if(cr.id==='surrender'){ phase='over'; outcome=this.computeOutcome(flags,momentum,enemyMorale,squads); }
+      else { running=true; }
+      return {momentum,enemyMorale,reinf,reinfMax,running,squads,log:log.slice(0,30),flags,fired,phase,outcome,activeCrisis:null,crisisStage:'choices',pending:null,cdShow:0};
+    });
+  }
+  computeOutcome(flags,momentum,enemyMorale,squads){
+    const cas=flags.casualtiesTotal; const C=this.C;
+    let band,grade,color,title,prize;
+    if(flags.aborted){ band='BOARDING ABORTED';grade='C';color=C.amber;title='MARINES RECOVERED';prize='ABANDONED'; }
+    else if(flags.scuttleStopped===0){ band='TARGET SCUTTLED';grade='D';color=C.red;title='PRIZE LOST TO FIRE';prize='DESTROYED'; }
+    else if(flags.accept==='clean'||flags.accept==='fold'){
+      if(cas<=2&&!flags.hullDamage&&!flags.brutal){ band='CLEAN CAPTURE';grade='A';color=C.cyan;title='PRIZE SECURED INTACT';prize='INTACT'; }
+      else { band='COSTLY SUCCESS';grade='B';color=C.amber;title='PRIZE SECURED';prize='INTACT'; }
+    }
+    else if(flags.brutal||flags.hullDamage){ band='DAMAGED PRIZE';grade='B';color=C.amber;title='PRIZE TAKEN \u2014 HULL SCARRED';prize='HULL DAMAGED'; }
+    else if(flags.captainEscaped){ band='CAPTAIN ESCAPED';grade='B';color=C.amber;title='BRIDGE SECURED';prize='CAPTAIN AT LARGE'; }
+    else if(cas>=4){ band='COSTLY SUCCESS';grade='B';color=C.amber;title='PRIZE SECURED';prize='INTACT'; }
+    else { band='DECISIVE CAPTURE';grade='A';color=C.cyan;title='BRIDGE SECURED';prize='INTACT'; }
+    const marines=squads.reduce((a,s)=>a+s.troops,0);
+    let tac,casr,note;
+    if(flags.aborted) tac='You broke contact before the scuttle could trap your people on a dying hull. No prize \u2014 but a boarding party pulled back intact is a boarding party that fights again.';
+    else if(prize==='DESTROYED') tac='The command vessel was captured in name only \u2014 the reactor went critical with your marines aboard. Admiralty notes the bridge was reached, but the failure to halt the scuttle cost the prize.';
+    else tac='The Cold Meridian was carried compartment by compartment and the bridge taken before she could rally. Admiralty notes decisive command of the assault tempo and a controlled read of the enemy line.';
+    casr=cas===0?'Boarding party returned without a single casualty \u2014 an exceptional result against a defended hull.':(cas<=3?'Casualties among the boarding party were light and within acceptable limits. The wounded are stable aboard the Resolute.':'Casualties were severe, concentrated in Alpha Team. Medical requisitions have been forwarded to Starbase Theron.');
+    if(flags.brutal) note='Admiralty records the decision to vent a crewed compartment to vacuum. The objective was met; the method is noted for review. Command is judgement as much as effectiveness.';
+    else if(flags.captainEscaped) note='The enemy master slipped the net in an escape pod and remains at large. A capable adversary returned to the war \u2014 the Greyward Line has not heard the last of him.';
+    else if(prize==='DESTROYED') note='A prize hull lost is a prize the Commonwealth will not crew this cycle. The lesson of the reactor room will be entered into the record.';
+    else note='A prize cruiser dragged home in chains shifts the balance of the Greyward Line. Reputation and salvage credited to your service file.';
+    try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'vk-boarding-result',prize,grade,band},'*');}catch(e){} return {band,grade,color,title,prize,momentum,enemyMorale,marines,cas,
+      report:[{h:'TACTICAL ASSESSMENT',c:C.cyan,text:tac},{h:'CASUALTY REPORT',c:C.amber,text:casr},{h:'ADMIRALTY NOTE',c:C.green,text:note}]};
+  }
+  portStyle(color,portrait){ const __b={width:'54px',height:'62px',flex:'0 0 54px',border:'1px solid '+color+'66',background:'repeating-linear-gradient(135deg,rgba(8,18,24,0.9),rgba(8,18,24,0.9) 5px,rgba(14,28,34,0.9) 5px,rgba(14,28,34,0.9) 10px)',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}; if(portrait){__b.backgroundImage="url('"+portrait+"')";__b.backgroundSize='cover';__b.backgroundPosition='center 18%';__b.backgroundRepeat='no-repeat';} return __b; }
+  initStyle(color,portrait){ if(portrait) return {display:'none'}; return {fontFamily:"'Saira Condensed'",fontWeight:800,fontSize:'22px',color:color,textShadow:'0 0 10px '+color+'88'}; }
+  toneColor(t){ const C=this.C; return ({cyan:C.cyan,amber:C.amber,green:C.green,red:C.red2,purple:C.purple})[t]||C.dim; }
+  band(v,hi,lo){ return v>=hi?'STRONG':(v<=lo?'BROKEN':'HOLDING'); }
+  renderVals(){
+    const st=this.state; const C=this.C;
+    const securedCount=Math.round(st.progress/100*this.ORDER.length);
+    const secured=new Set(this.ORDER.slice(0,securedCount)); secured.add(0);
+    const won=st.phase==='over'&&st.outcome&&['CLEAN CAPTURE','DECISIVE CAPTURE','COSTLY SUCCESS','DAMAGED PRIZE','CAPTAIN ESCAPED'].includes(st.outcome.band);
+    if(won) secured.add(11);
+    const frontIdx=Math.max(0,securedCount-1);
+    const squadRoom=(sq,offset)=>{ if(sq.fixedRoom!=null) return sq.fixedRoom; if(securedCount===0) return 0; return this.ORDER[Math.max(0,frontIdx-offset)]; };
+    const roomOf={0:squadRoom(st.squads[0],0),2:squadRoom(st.squads[2],1),3:squadRoom(st.squads[3],2),1:squadRoom(st.squads[1],1)};
+    const tokensByRoom={};
+    st.squads.forEach((sq,i)=>{ const r=won?11:squadRoom(sq,i===0?0:i===1?1:i===2?1:2); (tokensByRoom[r]=tokensByRoom[r]||[]).push({initials:sq.initials,color:sq.color}); });
+    const mapRooms=this.LAYOUT.map(r=>{
+      const isSec=secured.has(r.id); const isBridge=r.type==='bridge'; const isFront=!isSec&&r.conns.some(c=>secured.has(c));
+      let bg,border,nameColor,statusColor,anim='none';
+      if(isSec){ bg='linear-gradient(160deg,rgba(20,40,40,0.9),rgba(12,26,26,0.9))';border='rgba(95,209,122,0.5)';nameColor=C.green;statusColor=C.green; }
+      else if(isBridge){ bg='linear-gradient(160deg,rgba(40,16,16,0.9),rgba(24,10,10,0.9))';border=isFront?'#ff5347':'rgba(255,80,60,0.4)';nameColor='#ff8a80';statusColor='#ff8a80'; if(isFront&&st.running)anim='vk-pulseR 1.6s infinite'; }
+      else if(isFront){ bg='linear-gradient(160deg,rgba(36,28,14,0.9),rgba(22,18,10,0.9))';border='rgba(240,169,61,0.5)';nameColor=C.amber;statusColor=C.amber; if(st.running)anim='vk-pulseC 1.8s infinite'; }
+      else { bg='linear-gradient(160deg,rgba(10,18,22,0.7),rgba(8,14,18,0.7))';border='rgba(70,160,180,0.18)';nameColor='#4d6e78';statusColor='#4d6e78'; }
+      return {id:r.id,name:r.name,
+        style:{position:'absolute',left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px',background:bg,border:'1px solid '+border,padding:'8px 9px',animation:anim,display:'flex',flexDirection:'column',justifyContent:'space-between',clipPath:'polygon(0 0,100% 0,100% 100%,10px 100%,0 calc(100% - 10px))'},
+        nameStyle:{fontFamily:"'Saira Condensed'",fontWeight:700,fontSize:isBridge?'16px':'13px',letterSpacing:'0.5px',lineHeight:1,color:nameColor,textTransform:'uppercase'},
+        special:r.special||'',specialStyle:{fontFamily:"'JetBrains Mono'",fontSize:'8px',color:'#7fb3c0',border:'1px solid rgba(70,160,180,0.3)',padding:'0 3px',display:r.special?'block':'none'},
+        statusLabel:isSec?'SECURED':(isFront?'FRONT':'LOCKED'),statusStyle:{fontFamily:"'JetBrains Mono'",fontSize:'10px',color:statusColor},
+        tokens:(tokensByRoom[r.id]||[]).map(tk=>({initials:tk.initials,style:{fontFamily:"'JetBrains Mono'",fontSize:'9px',fontWeight:700,color:'#04080b',background:tk.color,padding:'0 4px',lineHeight:'14px'}}))};
+    });
+    const center=id=>{const r=this.LAYOUT[id];return {x:r.x+r.w/2,y:r.y+r.h/2};};
+    const seen=new Set(); const connectors=[];
+    this.LAYOUT.forEach(r=>{ r.conns.forEach(c=>{ const k=Math.min(r.id,c)+'-'+Math.max(r.id,c); if(seen.has(k))return; seen.add(k); const a=center(r.id),b=center(c); const both=secured.has(r.id)&&secured.has(c); connectors.push({x1:a.x,y1:a.y,x2:b.x,y2:b.y,color:both?'rgba(95,209,122,0.5)':'rgba(70,160,180,0.2)',w:both?3:1.5,dash:both?'0':'4 5'}); }); });
+    const squads=st.squads.map(sq=>{
+      const mc=sq.morale>=60?C.green:sq.morale>=30?C.amber:C.red; const sc=sq.status==='Fit'?C.green:sq.status==='Wounded'?C.amber:C.red;
+      return {...sq,
+        cardStyle:{background:'linear-gradient(180deg,rgba(10,22,28,0.9),rgba(6,14,18,0.9))',border:'1px solid rgba(70,160,180,0.2)',borderLeft:'3px solid '+sq.color,padding:'11px',marginBottom:'10px',display:'flex',gap:'10px'},
+        portStyle:this.portStyle(sq.color,sq.portrait),initStyle:this.initStyle(sq.color,sq.portrait),
+        statusLabel:sq.status.toUpperCase(),statusStyle:{fontFamily:"'JetBrains Mono'",fontSize:'10px',color:sc,letterSpacing:'0.5px',whiteSpace:'nowrap'},
+        moraleNumStyle:{fontFamily:"'JetBrains Mono'",fontSize:'9px',color:mc},
+        moraleFillStyle:{width:sq.morale+'%',height:'100%',background:mc,transition:'width .3s'},
+        traitsD:sq.traits.map(t=>({name:t,desc:this.TRAITDESC[t]}))};
+    });
+    const leaders=this.SQUADCFG.map(s=>({...s,
+      cardStyle:{background:'linear-gradient(180deg,rgba(10,22,28,0.9),rgba(6,14,18,0.9))',border:'1px solid rgba(70,160,180,0.2)',borderLeft:'3px solid '+s.color,padding:'14px',display:'flex',gap:'14px'},
+      portStyle:this.portStyle(s.color,s.portrait),initStyle:this.initStyle(s.color,s.portrait),
+      codeStyle:{fontFamily:"'JetBrains Mono'",fontSize:'12px',color:s.color},
+      traitsD:s.traits.map(t=>({name:t,desc:this.TRAITDESC[t]}))}));
+    // crisis
+    let crisis=null;
+    if(st.activeCrisis){
+      const cr=st.activeCrisis; const sc=cr.enemy?C.red2:C.cyan;
+      const tagColor=cr.enemy?C.red:C.cyan;
+      const kindColor={cyan:C.cyan,green:C.green,amber:C.amber,red:C.red};
+      const cdSecs=cr.cdSecs?st.cdShow:0; const mm=Math.floor(cdSecs/60), ss=String(cdSecs%60).padStart(2,'0');
+      crisis={tag:cr.tag,speaker:cr.speaker,line:cr.line,speakerColor:sc,
+        panelStyle:{width:'720px',background:'linear-gradient(180deg,rgba(10,22,28,0.97),rgba(6,14,18,0.97))',border:'1px solid '+(cr.enemy?'rgba(255,80,60,0.4)':'rgba(70,160,180,0.35)'),clipPath:'polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))',boxShadow:'0 30px 90px rgba(0,0,0,0.7)',animation:'vk-rise .22s ease-out'},
+        tagStyle:{fontFamily:"'JetBrains Mono'",fontSize:'11px',letterSpacing:'2px',color:tagColor,border:'1px solid '+tagColor,padding:'3px 9px'},
+        lineStyle:{fontFamily:"'Saira'",fontSize:'19px',lineHeight:1.5,color:cr.enemy?'#ffd9d4':'#cfe2e8',fontStyle:cr.enemy?'italic':'normal'},
+        hasCountdown:!!cr.cdSecs,cdLabel:cr.cdLabel||'',cdColor:cr.cdColor||C.amber,cdTime:mm+':'+ss,
+        stageChoices:st.crisisStage==='choices',stageResult:st.crisisStage==='result',
+        resultPick:st.pending?st.pending.choice.label:'',resultText:st.pending?st.pending.result:'',
+        continueLabel:(cr.id==='surrender'||(st.pending&&st.pending.eff.abort))?'CONCLUDE':'RESUME ASSAULT',
+        onContinue:()=>this.continueCrisis(),
+        choices:cr.choices.map((ch,i)=>{ const kc=kindColor[ch.kind]||C.cyan; return {label:ch.label,sub:ch.sub,titleColor:ch.kind==='red'?'#ff8a80':'#eaf6f9',
+          hoverBorder:kc,hoverBg:'rgba(69,224,240,0.06)',
+          btnStyle:{background:'rgba(4,12,16,0.6)',border:'1px solid '+(ch.kind==='red'?'rgba(255,80,60,0.3)':'rgba(70,160,180,0.25)'),padding:'13px 15px',cursor:'pointer',transition:'all .12s'},
+          tagsD:(ch.tags||[]).map(t=>({label:t,style:{fontFamily:"'JetBrains Mono'",fontSize:'10px',letterSpacing:'0.5px',color:kc,border:'1px solid '+kc+'55',padding:'1px 6px'}})),
+          onChoose:()=>this.chooseCrisis(i)}; })};
+    }
+    const marines=st.squads.reduce((a,s)=>a+s.troops,0);
+    const securedReal=[...secured].filter(id=>id!==0&&id!==11||id===11&&won).length;
+    const mc=st.momentum>=60?C.green:st.momentum>=35?C.amber:C.red;
+    const em=st.enemyMorale>=60?C.red:st.enemyMorale>=35?C.amber:C.green;
+    const cm=Math.floor(st.clock/60), cs=String(st.clock%60).padStart(2,'0');
+    const reinfPct=Math.max(0,st.reinf/st.reinfMax*100);
+    const pressures=[
+      {label:'ENEMY REINFORCEMENTS',val:Math.max(0,st.reinf)+'s',
+        cardStyle:{flex:'1',background:'rgba(4,12,16,0.7)',border:'1px solid rgba(255,80,60,0.25)',padding:'9px 12px'},
+        valStyle:{fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:'13px',color:reinfPct<33?C.red:C.amber},
+        fillStyle:{width:reinfPct+'%',height:'100%',background:reinfPct<33?C.red:C.amber,transition:'width .9s linear'}},
+      {label:'ASSAULT PROGRESS',val:Math.round(st.progress)+'%',
+        cardStyle:{flex:'1',background:'rgba(4,12,16,0.7)',border:'1px solid rgba(70,160,180,0.25)',padding:'9px 12px'},
+        valStyle:{fontFamily:"'JetBrains Mono'",fontWeight:700,fontSize:'13px',color:C.cyan},
+        fillStyle:{width:st.progress+'%',height:'100%',background:'linear-gradient(90deg,#2a7d8a,#45e0f0)',transition:'width .9s linear'}}
+    ];
+    let outcome=null;
+    if(st.outcome){ const o=st.outcome; outcome={...o,
+      gradeStyle:{fontFamily:"'Saira Condensed'",fontWeight:800,fontSize:'150px',lineHeight:0.9,color:o.color,textShadow:'0 0 50px '+o.color+'66'},
+      bandStyle:{fontFamily:"'Saira Condensed'",fontWeight:700,fontSize:'26px',letterSpacing:'2px',color:'#eaf6f9'},
+      stats:[{k:'FINAL MOMENTUM',v:o.momentum,c:mc},{k:'ENEMY WILL',v:o.enemyMorale,c:em},{k:'MARINES RECOVERED',v:o.marines+' / 20',c:o.marines>=14?C.green:C.amber},{k:'CASUALTIES',v:o.cas,c:o.cas<=3?C.green:C.red},{k:'PRIZE CONDITION',v:o.prize,c:o.prize==='INTACT'?C.green:o.prize==='DESTROYED'?C.red:C.amber}]};
+    }
+    return {
+      isBriefing:st.phase==='briefing', isOver:st.phase==='over',
+      enemyShip:this.ENEMY, mapRooms, connectors, squads, leaders,
+      securedLabel:securedReal+'/11', marines, clockLabel:cm+':'+cs,
+      momentum:st.momentum, enemyMorale:st.enemyMorale,
+      momNumStyle:{fontFamily:"'JetBrains Mono'",fontSize:'12px',color:mc}, emNumStyle:{fontFamily:"'JetBrains Mono'",fontSize:'12px',color:em},
+      momFillStyle:{width:st.momentum+'%',height:'100%',background:mc,transition:'width .4s'}, emFillStyle:{width:st.enemyMorale+'%',height:'100%',background:em,transition:'width .4s'},
+      momBand:this.band(st.momentum,60,35), emBand:this.band(st.enemyMorale,60,35),
+      momBigStyle:{fontFamily:"'Saira Condensed'",fontWeight:700,fontSize:'20px',letterSpacing:'1px',color:mc}, emBigStyle:{fontFamily:"'Saira Condensed'",fontWeight:700,fontSize:'20px',letterSpacing:'1px',color:em},
+      pressures,
+      log:st.log.map(l=>({id:l.id,who:l.who,text:l.text,color:this.toneColor(l.tone),bar:this.toneColor(l.tone)})),
+      hasCrisis:!!crisis, crisis,
+      outcome, onStart:()=>this.startGame(), onRestart:()=>this.restart()
+    };
+  }
+}
+</script>
+</body></html>

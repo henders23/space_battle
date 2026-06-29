@@ -82,6 +82,7 @@ export const state = {
   enemies: [],
   allies: [],
   objective: null,
+  boarding: { active: false, available: false, calloutVisible: false, targetId: null },
   projectiles: [],
   asteroids: [],
   effects: [],

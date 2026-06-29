@@ -30,29 +30,49 @@ toggle it from the title screen or **Settings**.
 | `W` | Throttle up (stop → slow → moderate → full) |
 | `S` | Throttle down |
 | `A` / `D` | Rotate left / right |
-| Mouse | Aim — shots travel toward the cursor |
-| Left click | Fire whichever battery's arc the cursor falls in |
-| Right click | Fire torpedo (cursor in the forward arc) |
-| Hold a button | Keep firing that weapon as it reloads |
+| `Space` | Fire the forward lance (auto-aimed within its arc) |
+| `Q` / `E` | Fire the port / starboard broadside |
+| `F` | Fire the siege torpedo |
+| Hold a key | Keep firing that battery as its charge bar refills |
+| Mouse | Aim + click also fires the bearing battery / torpedo |
+| `B` | Board a crippled ship when your hull is alongside it |
 | `R` | Retreat (forfeits the mission) |
 | `Esc` | Pause |
 
-You fire with the **mouse**: aim where you want the shots to go, and the battery
-whose arc contains the cursor (port, starboard, or forward) is the one that fires —
-the bearing battery's arc lights up so you can see what bears. A full reference is on
-the in-game **Controls** screen.
+Each battery has a **charge bar in the rack along the bottom of the screen**; press
+its key (or click the rack button) to loose a volley, and the bar refills before it
+can fire again. Keys auto-aim at the best target inside the battery's arc; the mouse
+still works for manual aiming. A full reference is on the in-game **Controls** screen.
 
 ## Combat model
 
-Your ship is fixed at the **centre of the screen, pointing up**; the world — enemies,
-asteroids, projectiles, range rings — rotates around it. Your **forward gun cone faces
-up, the port broadside arc is always to the left, and the starboard arc to the right**,
-so you read your firing envelopes at a glance and fight by *turning* the ship to bring a
-broadside to bear. Ships are heavy: you set a **throttle** (stop / slow / moderate /
-full) rather than free-thrusting, turns are wide, and momentum bleeds off slowly.
-Every ship has independent port and starboard hull — **breach either flank and the ship
-is lost** — so protecting a wounded side while working the enemy's is the heart of the
+The battlefield is drawn **north-up**: your ship moves through a fixed world and the
+camera follows you but **leads toward the engagement**, so your hull sits off-centre with
+the enemy in view rather than pinned dead-centre. You fight by *turning* to bring a
+broadside to bear — the forward lance fires ahead, the port/starboard broadsides to each
+flank — and loose each battery from the **charge-bar rack along the bottom of the screen**
+(`Space` / `Q` / `E` / `F`). Ships are heavy: you set a **throttle** (stop / slow /
+moderate / full) rather than free-thrusting, turns are wide, and momentum bleeds off
+slowly. Every ship has independent port and starboard hull — **breach either flank and the
+ship is lost** — so protecting a wounded side while working the enemy's is the heart of the
 fight. Combat rewards positioning and timing over twitch reflexes.
+
+### Boarding actions
+
+Once a hostile is battered to **30% hull or less** a *Board Ship Available* prompt
+appears. Bring your hull **alongside** the crippled ship and press `B` (or the rack's
+**Board Ship** button) to send your marines across. Ship-to-ship combat **pauses** while
+you fight the **boarding action minigame** — a real-time deck assault led by four named
+squad leaders shown with portraits — and the prize you take (or the withdrawal you call)
+is carried back into the battle when you return.
+
+## Art
+
+Capital-ship hulls are drawn from faction sheets — **Commonwealth Navy** for the player
+and allies, **Veyr Collective** and **United Front** for the Dominion — and weapons fire
+**projectile sprites** (particle lances, cannon shells, torpedoes) from the projectile
+pack. Squad-leader portraits in the boarding minigame are sliced from the squad-leader
+sheet.
 
 ## Current features
 
@@ -61,12 +81,19 @@ fight. Combat rewards positioning and timing over twitch reflexes.
   tactical chrome. Fonts are bundled locally — no network required.
 - Title screen with a numbered menu (New Campaign / Continue / **Controls** / Settings /
   Credits) and live war-status footer.
-- **Ship-centred broadside combat**: your ship is fixed at screen centre and the world
-  rotates around it, with screen-fixed weapon arcs, range rings, a tactical HUD and an
-  off-screen target indicator.
-- **Mouse-aimed firing**: shots travel toward the cursor; the battery whose arc contains
-  the cursor fires (left click = the bearing battery, right click = torpedo), and the
-  active arc highlights.
+- **Broadside combat with a leading camera**: a north-up battlefield where the camera
+  follows your ship but leads toward the enemy, so you fight off-centre with the engagement
+  in view — weapon arcs, range rings, a tactical HUD and an off-screen target indicator
+  included.
+- **Charge-bar batteries fired by key**: a rack of charge bars along the bottom of the
+  screen — forward lance (`Space`), port/starboard broadsides (`Q`/`E`) and siege torpedo
+  (`F`) — each auto-aimed within its arc and refilling between volleys, with mouse aiming
+  still available.
+- **Boarding actions**: crippled hostiles (≤30% hull) can be boarded once you're alongside,
+  pausing the ship duel for a squad-led boarding minigame whose outcome feeds back into the
+  battle.
+- **Sprite art**: faction ship sheets (Commonwealth / Veyr / United Front), projectile-pack
+  rounds, and squad-leader portraits in the boarding action.
 - **Three player hull classes** — Frigate (fast, fragile), Cruiser (the balanced
   workhorse), and Battleship (slow, devastating broadsides) — each with distinct hull,
   shields, turn rate, speed and firepower, bought at the shipyard and gated by reputation

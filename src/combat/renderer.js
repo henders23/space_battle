@@ -7,23 +7,48 @@ import { getSlotAngle, playerWeaponDefinitions, slotForPrimaryAim } from "./weap
 import { getSensorRange } from "./systems.js";
 import { hullRatio, sideRatioShield } from "./shipStats.js";
 import { focusPoint } from "./objectives.js";
+import { initSprites, drawShipSprite, drawProjectileSprite } from "./sprites.js";
 
-// Ship-centred tactical renderer. The player ship is fixed at the centre of the
-// canvas, pointing "up"; the world (stars, enemies, asteroids, projectiles) is
-// rotated and translated around it. Broadside arcs, drawn in world space around
-// the player, therefore become screen-fixed wedges — port to the left, starboard
-// to the right, forward cone up — exactly as in the design mockup.
+// North-up tactical renderer. The world keeps a fixed orientation; the camera
+// follows the player but leads toward the action, so the player hull is no
+// longer pinned to screen centre. Broadside arcs are drawn in world space around
+// the player and so turn with the ship.
 
 let canvas = null;
 let ctx = null;
-let rot = 0; // current world rotation applied for the ship-up frame
+let rot = 0; // retained for math symmetry; the world frame is north-up (rot = 0)
 
-let playerSprite = null; // offscreen canvas of the player ship art, white keyed out
+// Smoothed camera centre (world coords) and the player it is tracking, so a new
+// mission snaps the camera onto the fresh ship.
+let cam = null;
+let camPlayer = null;
+
+let playerSprite = null; // offscreen canvas of the legacy player ship art (fallback)
 
 export function initRenderer(canvasEl) {
   canvas = canvasEl;
   ctx = canvas.getContext("2d");
+  initSprites();
   loadPlayerSprite();
+}
+
+// Lead the camera from the player toward the nearest hostile / objective so the
+// player sits off-centre with the engagement in view; recentre when alone.
+function updateCamera(player) {
+  if (!cam || camPlayer !== player) {
+    cam = { x: player.x, y: player.y };
+    camPlayer = player;
+  }
+  const focus = focusPoint();
+  const maxLead = 280;
+  let tx = player.x;
+  let ty = player.y;
+  if (focus) {
+    tx = player.x + clamp(focus.x - player.x, -maxLead, maxLead) * 0.5;
+    ty = player.y + clamp(focus.y - player.y, -maxLead, maxLead) * 0.5;
+  }
+  cam.x += (tx - cam.x) * 0.06;
+  cam.y += (ty - cam.y) * 0.06;
 }
 
 // A background pixel: either near-white or the bright green/yellow studio
@@ -102,14 +127,9 @@ function resizeCanvasToDisplay() {
 }
 
 function worldToScreen(p) {
-  const player = state.player;
-  const dx = p.x - player.x;
-  const dy = p.y - player.y;
-  const cos = Math.cos(rot);
-  const sin = Math.sin(rot);
   return {
-    x: canvas.width / 2 + dx * cos - dy * sin,
-    y: canvas.height / 2 + dx * sin + dy * cos
+    x: canvas.width / 2 + (p.x - cam.x),
+    y: canvas.height / 2 + (p.y - cam.y)
   };
 }
 
@@ -127,11 +147,9 @@ export function eventToScreen(e) {
 // up, a fixed cursor keeps the same bearing relative to the ship as it turns.
 export function aimFromScreen(sx, sy) {
   const player = state.player;
-  if (!player) return null;
-  const dx = sx - canvas.width / 2;
-  const dy = sy - canvas.height / 2;
-  const wx = player.x + Math.cos(rot) * dx + Math.sin(rot) * dy;
-  const wy = player.y - Math.sin(rot) * dx + Math.cos(rot) * dy;
+  if (!player || !cam) return null;
+  const wx = cam.x + (sx - canvas.width / 2);
+  const wy = cam.y + (sy - canvas.height / 2);
   return { x: wx, y: wy, angle: Math.atan2(wy - player.y, wx - player.x) };
 }
 
@@ -139,7 +157,8 @@ export function draw() {
   if (state.screen !== "combat" || !state.player) return;
   resizeCanvasToDisplay();
   const player = state.player;
-  rot = -player.angle - Math.PI / 2; // align heading to screen-up
+  rot = 0; // north-up world frame
+  updateCamera(player);
 
   const aim = state.mouseScreen ? aimFromScreen(state.mouseScreen.x, state.mouseScreen.y) : null;
   const aimSlot = aim ? slotForPrimaryAim(player, aim.angle) : null;
@@ -149,7 +168,7 @@ export function draw() {
 
   // Distant parallax starfield — moves slower than the foreground, so the ship
   // reads as an enormous, slow object gliding through depth.
-  drawFarStars(player);
+  drawFarStars();
 
   // Screen shake offset (recoil / impacts) applied to the whole world frame.
   let shx = 0;
@@ -161,10 +180,9 @@ export function draw() {
 
   ctx.save();
   ctx.translate(canvas.width / 2 + shx, canvas.height / 2 + shy);
-  ctx.rotate(rot);
-  ctx.translate(-player.x, -player.y);
+  ctx.translate(-cam.x, -cam.y);
 
-  drawSpace(player);
+  drawSpace();
   drawAsteroids();
   drawWeaponArcs(player, aimSlot);
   for (const ally of state.allies) {
@@ -238,38 +256,37 @@ function drawStarLayer(stars, refX, refY) {
 }
 
 // Parallax background drawn in its own transform at a reduced translation factor.
-function drawFarStars(player) {
+function drawFarStars() {
   ensureStars();
   const p = 0.4;
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.rotate(rot);
-  ctx.translate(-player.x * p, -player.y * p);
-  drawStarLayer(farStars, player.x * p, player.y * p);
+  ctx.translate(-cam.x * p, -cam.y * p);
+  drawStarLayer(farStars, cam.x * p, cam.y * p);
   ctx.restore();
 }
 
-function drawSpace(player) {
+function drawSpace() {
   ensureStars();
-  drawStarLayer(nearStars, player.x, player.y);
+  drawStarLayer(nearStars, cam.x, cam.y);
 
   // Endless tactical grid: only the lines around the camera are drawn.
   const R = Math.hypot(canvas.width, canvas.height);
   const step = 320;
-  const x0 = Math.floor((player.x - R) / step) * step;
-  const y0 = Math.floor((player.y - R) / step) * step;
+  const x0 = Math.floor((cam.x - R) / step) * step;
+  const y0 = Math.floor((cam.y - R) / step) * step;
   ctx.strokeStyle = PALETTE.grid;
   ctx.lineWidth = 1;
-  for (let x = x0; x <= player.x + R; x += step) {
+  for (let x = x0; x <= cam.x + R; x += step) {
     ctx.beginPath();
-    ctx.moveTo(x, player.y - R);
-    ctx.lineTo(x, player.y + R);
+    ctx.moveTo(x, cam.y - R);
+    ctx.lineTo(x, cam.y + R);
     ctx.stroke();
   }
-  for (let y = y0; y <= player.y + R; y += step) {
+  for (let y = y0; y <= cam.y + R; y += step) {
     ctx.beginPath();
-    ctx.moveTo(player.x - R, y);
-    ctx.lineTo(player.x + R, y);
+    ctx.moveTo(cam.x - R, y);
+    ctx.lineTo(cam.x + R, y);
     ctx.stroke();
   }
 }
@@ -411,6 +428,28 @@ function drawEngines(spec, sternX, spanW, flare) {
   }
 }
 
+// Faction sheet sprite drawn in world space, with a live engine flare behind the
+// player's stern and a per-side shield bubble. Returns false if the sprite art
+// for this hull hasn't loaded yet (so the vector fallback can run).
+function drawSheetShip(ship, spec, flare, friendly) {
+  const isPlayer = ship.type === "player";
+  // engine exhaust behind the sprite stern (the player's pulses with throttle)
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(ship.angle);
+  drawEngines(spec, -ship.radius * 1.55, ship.radius * 1.3, flare * (isPlayer ? 1 : 0.8));
+  ctx.restore();
+
+  if (!drawShipSprite(ctx, ship)) return false;
+
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(ship.angle);
+  drawShieldEnvelope(ship, ship.radius * 2.6, ship.radius * 1.5, friendly);
+  ctx.restore();
+  return true;
+}
+
 function drawShipBody(ship) {
   const spec = SHIP_SPECS[ship.type];
   const L = spec.length;
@@ -419,14 +458,17 @@ function drawShipBody(ship) {
   const isEscort = ship.type === "escort" || ship.type === "raider";
   const friendly = ship.team === "player" || ship.team === "ally";
 
-  ctx.save();
-  ctx.translate(ship.x, ship.y);
-  ctx.rotate(ship.angle);
-
   // engine exhaust (behind hull); the player's scales with throttle setting
   const flare = isPlayer
     ? (0.5 + (ship.throttle || 0) * 0.45) * (0.92 + Math.random() * 0.16)
     : 0.85 + Math.random() * 0.15;
+
+  // Prefer the faction sheet sprite; fall back to the legacy photo / vector hull.
+  if (drawSheetShip(ship, spec, flare, friendly)) return;
+
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(ship.angle);
 
   // Player ship uses the photographic sprite when available; the bow in the art
   // points right (+x), matching the ship's local heading, so no extra rotation.
@@ -564,7 +606,11 @@ function drawProjectiles() {
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    // glowing head
+    // Pack sprite for the round; fall back to a procedural glowing head.
+    if (drawProjectileSprite(ctx, p)) {
+      ctx.shadowBlur = 0;
+      continue;
+    }
     ctx.shadowColor = p.color;
     ctx.shadowBlur = p.torpedo ? 16 : 9;
     ctx.fillStyle = p.color;
@@ -624,8 +670,9 @@ function drawEffects() {
 }
 
 function drawRangeRings() {
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+  const ps = worldToScreen(state.player);
+  const cx = ps.x;
+  const cy = ps.y;
   const sensor = getSensorRange();
   ctx.save();
   ctx.strokeStyle = "rgba(70, 160, 180, 0.18)";
@@ -662,13 +709,12 @@ function drawShipLabel(ship) {
 }
 
 function drawPlayerLabel() {
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+  const ps = worldToScreen(state.player);
   ctx.fillStyle = PALETTE.accent;
   ctx.font = "11px 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
   const name = (state.player && state.player.name) || "CWS Vanguard";
-  ctx.fillText(`${name.toUpperCase()} ◆ YOU`, cx, cy + 104);
+  ctx.fillText(`${name.toUpperCase()} ◆ YOU`, ps.x, ps.y + state.player.radius + 26);
 }
 
 function drawOffscreenTarget() {
@@ -698,8 +744,9 @@ function drawOffscreenTarget() {
 function drawAimReticle(aimSlot) {
   if (!state.mouseScreen) return;
   const { x, y } = state.mouseScreen;
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+  const ps = worldToScreen(state.player);
+  const cx = ps.x;
+  const cy = ps.y;
   const color = aimSlot === "forward" ? PALETTE.amber : aimSlot ? PALETTE.accent : PALETTE.muted;
 
   // faint firing line from the ship toward the cursor

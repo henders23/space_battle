@@ -11,11 +11,14 @@ export const CONTROLS = [
   { keys: ["A"], action: "Rotate left", group: "Manoeuvre" },
   { keys: ["D"], action: "Rotate right", group: "Manoeuvre" },
 
-  { keys: ["Mouse"], action: "Aim — shots travel toward the cursor", group: "Weapons" },
-  { keys: ["L-Click"], action: "Fire the battery whose arc the cursor is in", group: "Weapons" },
-  { keys: ["R-Click"], action: "Fire torpedo (cursor in the forward arc)", group: "Weapons" },
-  { keys: ["Hold"], action: "Hold a button to keep firing as it reloads", group: "Weapons" },
+  { keys: ["Space"], action: "Fire forward lance (auto-aimed in its arc)", group: "Weapons" },
+  { keys: ["Q"], action: "Fire port broadside", group: "Weapons" },
+  { keys: ["E"], action: "Fire starboard broadside", group: "Weapons" },
+  { keys: ["F"], action: "Fire siege torpedo", group: "Weapons" },
+  { keys: ["Hold"], action: "Hold a key to keep firing as the charge bar refills", group: "Weapons" },
+  { keys: ["Mouse"], action: "Aim + click also fires the bearing battery / torpedo", group: "Weapons" },
 
+  { keys: ["B"], action: "Board a crippled ship when alongside it", group: "Command" },
   { keys: ["R"], action: "Retreat if available", group: "Command" },
   { keys: ["Esc"], action: "Pause", group: "Command" }
 ];
