@@ -12,6 +12,7 @@ import {
   randomRange
 } from "../utils.js";
 import { addFlash, addShake } from "./effects.js";
+import { projectileSpriteFor } from "./sprites.js";
 import * as sfx from "../sfx.js";
 
 export function getSlotAngle(angle, slot) {
@@ -77,7 +78,10 @@ export function firePlayerWeapon(slot, aimAngle) {
   if (!weapon || ship.cooldowns[slot] > 0) return false;
 
   fireWeapon(ship, slot, weapon, "player", aimAngle);
-  ship.cooldowns[slot] = weapon.cooldown * getSystemMultiplier(ship, "weapons");
+  const cd = weapon.cooldown * getSystemMultiplier(ship, "weapons");
+  ship.cooldowns[slot] = cd;
+  ship.cooldownMax = ship.cooldownMax || {};
+  ship.cooldownMax[slot] = cd;
   state.stats.shotsFired += weapon.shots;
   if (weapon.torpedo || slot === "torpedo") state.stats.torpedoesFired += 1;
   // Recoil — heavy batteries kick the camera.
@@ -99,6 +103,7 @@ export function fireWeapon(ship, slot, weapon, owner, aimAngle) {
   const sideAngle = ship.angle + Math.PI / 2;
   const shotCount = weapon.shots || 1;
   const spread = degToRad(weapon.spread || 0);
+  const sprite = projectileSpriteFor(owner, slot, weapon);
 
   for (let i = 0; i < shotCount; i += 1) {
     const t = shotCount === 1 ? 0.5 : i / (shotCount - 1);
@@ -118,6 +123,7 @@ export function fireWeapon(ship, slot, weapon, owner, aimAngle) {
       life: weapon.range / weapon.speed,
       color: weapon.color,
       torpedo: Boolean(weapon.torpedo),
+      sprite,
       trail: []
     });
   }
@@ -127,6 +133,39 @@ export function fireWeapon(ship, slot, weapon, owner, aimAngle) {
     const dir = getSlotAngle(ship.angle, slot === "torpedo" ? "forward" : slot);
     addFlash(ship.x + Math.cos(dir) * ship.radius * 0.95, ship.y + Math.sin(dir) * ship.radius * 0.95, weapon.color, 0.12, 14);
   }
+}
+
+// Best bearing for a battery fired by key: the nearest live hostile inside the
+// battery's arc (clamped to the arc edge), or the arc centre if nothing bears.
+export function autoAimAngle(ship, slot) {
+  const weapons = playerWeaponDefinitions();
+  const weapon = weapons[slot];
+  const center = getSlotAngle(ship.angle, slot);
+  const halfArc = degToRad(weapon.arc) / 2;
+  let best = null;
+  let bestD = Infinity;
+  for (const enemy of state.enemies) {
+    if (!enemy.spawned || !enemy.alive) continue;
+    const d = distance(ship, enemy);
+    if (d > weapon.range * 1.15) continue;
+    const off = angleWrap(angleTo(ship, enemy) - center);
+    if (Math.abs(off) > halfArc) continue;
+    if (d < bestD) {
+      bestD = d;
+      best = enemy;
+    }
+  }
+  if (!best) return center;
+  const off = angleWrap(angleTo(ship, best) - center);
+  return center + Math.max(-halfArc, Math.min(halfArc, off));
+}
+
+// Fire a battery from a keypress / rack button: auto-aimed, gated on cooldown.
+export function fireBatteryKey(slot) {
+  const ship = state.player;
+  if (!ship || !ship.alive) return false;
+  if (ship.cooldowns[slot] > 0) return false;
+  return firePlayerWeapon(slot, autoAimAngle(ship, slot));
 }
 
 export function enemyTryFire(ship, slot, target, weapon) {

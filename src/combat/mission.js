@@ -267,6 +267,7 @@ export function setupMissionWorld(sector) {
   state.enemies = [];
   state.allies = [];
   state.objective = {};
+  state.boarding = { active: false, available: false, calloutVisible: false, targetId: null };
   state.projectiles = [];
   state.asteroids = createAsteroids();
   state.effects = [];

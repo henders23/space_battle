@@ -273,7 +273,48 @@
           </div>
         </aside>
       </div>
+
+      <button class="boarding-callout" id="boarding-callout">
+        <span><b>Board Ship Available</b><small>Press B or click — bring your hull alongside a crippled ship</small></span>
+      </button>
+
+      <div class="weapon-rack" id="weapon-rack">
+        <button class="weapon" data-fire="forward">
+          <span class="weapon-top"><b id="rack-forward-name">Forward Lance</b><span>SPC</span></span>
+          <span class="charge"><i id="charge-forward"></i></span>
+          <small id="rack-forward-state">Ready</small>
+        </button>
+        <button class="weapon" data-fire="port">
+          <span class="weapon-top"><b id="rack-port-name">Port Broadside</b><span>Q</span></span>
+          <span class="charge"><i id="charge-port"></i></span>
+          <small id="rack-port-state">Ready</small>
+        </button>
+        <button class="weapon" data-fire="starboard">
+          <span class="weapon-top"><b id="rack-starboard-name">Stbd Broadside</b><span>E</span></span>
+          <span class="charge"><i id="charge-starboard"></i></span>
+          <small id="rack-starboard-state">Ready</small>
+        </button>
+        <button class="weapon" data-fire="torpedo">
+          <span class="weapon-top"><b id="rack-torpedo-name">Siege Torpedo</b><span>F</span></span>
+          <span class="charge"><i id="charge-torpedo"></i></span>
+          <small id="rack-torpedo-state">Ready</small>
+        </button>
+        <button class="board-command" id="board-ship" disabled>Board Ship<br><small id="board-state">No target</small></button>
+      </div>
+
       <div id="pause-banner" class="pause-banner hidden">PAUSED</div>
+
+      <section class="boarding-overlay hidden" id="boarding-overlay" aria-label="Boarding action">
+        <div class="boarding-frame-head">
+          <div class="boarding-frame-title">
+            <span class="mono eyebrow">BOARDING ACTION // MARINE ASSAULT</span>
+            <b id="boarding-frame-target">Enemy Ship</b>
+          </div>
+          <div class="boarding-frame-status mono" id="boarding-frame-status">Ship-to-ship combat paused</div>
+          <button class="primary" id="boarding-return">Return to Combat</button>
+        </div>
+        <iframe id="boarding-frame" title="Boarding Action" allow="autoplay"></iframe>
+      </section>
     </section>
 
     <!-- ============ EVALUATION ============ -->

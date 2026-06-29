@@ -21,7 +21,8 @@ import { fullSector } from "./game/warMap.js";
 import { setupMissionWorld } from "./combat/mission.js";
 import { addMessage } from "./combat/effects.js";
 import { update, retreatToStarbase } from "./combat/simulation.js";
-import { firePlayerWeapon, slotForPrimaryAim, aimInTorpedoArc } from "./combat/weapons.js";
+import { firePlayerWeapon, slotForPrimaryAim, aimInTorpedoArc, fireBatteryKey } from "./combat/weapons.js";
+import { initBoarding, startBoarding, boardingActive } from "./combat/boarding.js";
 import { initRenderer, draw, eventToScreen, aimFromScreen } from "./combat/renderer.js";
 import { initHud, updateHud } from "./ui/hud.js";
 import { initStarbase, updateStarbase } from "./screens/starbase.js";
@@ -58,8 +59,11 @@ function fireTorpedo(aimAngle, explicit) {
 }
 
 function combatReady() {
-  return state.screen === "combat" && !state.paused && state.player && state.player.alive;
+  return state.screen === "combat" && !state.paused && !boardingActive() && state.player && state.player.alive;
 }
+
+// Map the prototype's firing keys to the four batteries (auto-aimed within arc).
+const KEY_BATTERY = { Space: "forward", KeyQ: "port", KeyE: "starboard", KeyF: "torpedo" };
 
 function startMission(sectorId) {
   state.activeSectorId = sectorId || null;
@@ -285,6 +289,8 @@ function handleKeyDown(event) {
   if (event.code === "KeyW" && state.player) state.player.throttle = Math.min(3, (state.player.throttle || 0) + 1);
   if (event.code === "KeyS" && state.player) state.player.throttle = Math.max(0, (state.player.throttle || 0) - 1);
   if (event.code === "KeyR") retreatToStarbase();
+  // B launches a boarding action when alongside a crippled hostile.
+  if (event.code === "KeyB" && state.boarding && state.boarding.available) startBoarding();
 }
 
 function handleKeyUp(event) {
@@ -330,6 +336,13 @@ function loop(timestamp) {
     }
   }
 
+  // Held firing keys (Space / Q / E / F) auto-repeat each battery on its charge.
+  if (combatReady()) {
+    for (const [code, slot] of Object.entries(KEY_BATTERY)) {
+      if (state.keys[code]) fireBatteryKey(slot);
+    }
+  }
+
   // Engine loop rises with the ship's speed; silent when stopped or out of combat.
   if (state.screen === "combat" && state.player && state.player.alive) {
     const p = state.player;
@@ -352,6 +365,7 @@ function init() {
   loadSettings();
   initRenderer(canvas);
   initHud();
+  initBoarding();
   initEvaluation();
   initStarbase();
   initBriefing();
@@ -375,6 +389,12 @@ function init() {
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
   bindMouse();
+  // Clicking a rack battery fires it auto-aimed, mirroring its hotkey.
+  document.querySelectorAll(".weapon-rack [data-fire]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      if (combatReady()) fireBatteryKey(btn.dataset.fire);
+    })
+  );
   window.addEventListener("screen:enter", (e) => {
     const name = e.detail.name;
     if (name === "starbase") updateStarbase();
@@ -388,6 +408,9 @@ function init() {
     // theme everywhere else (so the menu song fades out the moment you deploy).
     setMusic(name === "briefing" ? "briefing" : name === "combat" ? "combat" : "menu");
   });
+
+  // Lightweight debug handle (single-player browser game; no security surface).
+  window.__vk = { state };
 
   showScreen("title");
   requestAnimationFrame(loop);
