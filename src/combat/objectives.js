@@ -4,6 +4,7 @@ import { state } from "../state.js";
 import { clamp } from "../utils.js";
 import { addMessage, addEffect, addShake } from "./effects.js";
 import { hullRatio, shieldRatio } from "./shipStats.js";
+import * as voicelines from "./voicelines.js";
 
 // Per-mission-type objective logic: win/lose checks, HUD text, grading and the
 // after-action report language. updateObjective returns a resolution object the
@@ -25,7 +26,10 @@ function spawnNextWave(obj) {
     e.spawned = true;
     e.alive = true;
   }
-  if (next.length) addMessage("Sensors: new Dominion wave inbound.");
+  if (next.length) {
+    addMessage("Sensors: new Dominion wave inbound.");
+    voicelines.say("waveInbound");
+  }
 }
 
 // Returns { result, reason } when the mission resolves, otherwise null.
@@ -197,31 +201,42 @@ export function gradeMission(result) {
   return scoreToGrade(score);
 }
 
-export function reportText(result, reason, grade) {
+// The single-sentence summary of how the objective played out. Shared by the
+// short report and the procedural command dispatch (game/dispatch.js).
+export function engagementSummary(result, reason) {
   const m = state.mission;
   const o = state.objective || {};
   const s = state.stats;
   const time = `${Math.floor(s.timeTaken / 60)}:${String(Math.floor(s.timeTaken % 60)).padStart(2, "0")}`;
+
+  if (result !== "success") return reason;
+
+  if (m.type === "assassinate_flagship") {
+    return `${m.flagshipName} was destroyed in ${time}, with ${s.escortsDestroyed} escort${s.escortsDestroyed === 1 ? "" : "s"} broken in the action.`;
+  }
+  if (m.type === "patrol") {
+    return `The sector was swept clean in ${time}; every hostile contact was hunted down.`;
+  }
+  if (m.type === "convoy_escort") {
+    const lost = (o.total || 0) - (o.saved || 0);
+    return `${o.saved}/${o.total} transports reached the jump point${lost === 0 ? " — not a hull lost" : `, with ${lost} lost en route`}.`;
+  }
+  if (m.type === "starbase_defence") {
+    return `The starbase held against every wave; it came through at ${Math.round((o.station ? hullRatio(o.station) : 0) * 100)}% structural integrity.`;
+  }
+  if (m.type === "rescue_disabled") {
+    return `The crippled Meridian was held and jumped clear at ${Math.round((o.disabled ? hullRatio(o.disabled) : 0) * 100)}% hull.`;
+  }
+  return reason;
+}
+
+export function reportText(result, reason, grade) {
+  const m = state.mission;
+  const s = state.stats;
   const head = `${m.typeName} over ${m.sectorName}, operation ${m.operationName}.`;
 
   if (result !== "success") {
     return `${head} ${reason} Command assigns grade ${grade}; the objective was not achieved. Damage control logged ${s.systemsDamaged} system incident${s.systemsDamaged === 1 ? "" : "s"}.`;
   }
-
-  let body;
-  if (m.type === "assassinate_flagship") {
-    body = `${m.flagshipName} was destroyed in ${time}, with ${s.escortsDestroyed} escort${s.escortsDestroyed === 1 ? "" : "s"} broken in the action.`;
-  } else if (m.type === "patrol") {
-    body = `The sector was swept clean in ${time}; every hostile contact was hunted down.`;
-  } else if (m.type === "convoy_escort") {
-    const lost = (o.total || 0) - (o.saved || 0);
-    body = `${o.saved}/${o.total} transports reached the jump point${lost === 0 ? " — not a hull lost" : `, with ${lost} lost en route`}.`;
-  } else if (m.type === "starbase_defence") {
-    body = `The starbase held against every wave; it came through at ${Math.round((o.station ? hullRatio(o.station) : 0) * 100)}% structural integrity.`;
-  } else if (m.type === "rescue_disabled") {
-    body = `The crippled Meridian was held and jumped clear at ${Math.round((o.disabled ? hullRatio(o.disabled) : 0) * 100)}% hull.`;
-  } else {
-    body = reason;
-  }
-  return `${head} ${body} Final grade ${grade} reflects ship preservation, accuracy, time on station and objective discipline.`;
+  return `${head} ${engagementSummary(result, reason)} Final grade ${grade} reflects ship preservation, accuracy, time on station and objective discipline.`;
 }

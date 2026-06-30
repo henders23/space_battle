@@ -14,8 +14,10 @@ import {
   currentRank
 } from "../career.js";
 import { hullRatio } from "../combat/shipStats.js";
-import { gradeMission, reportText } from "../combat/objectives.js";
+import { gradeMission } from "../combat/objectives.js";
 import { applyMissionOutcome } from "../game/warMap.js";
+import { recordOutcome } from "../game/nemesis.js";
+import { commandDispatch } from "../game/dispatch.js";
 import { evaluateAwards, COMMENDATIONS, REPRIMANDS } from "../data/commendations.js";
 
 // After-action review: grade, captain's report, economy, statistics.
@@ -86,6 +88,16 @@ export function finishMission(result, reason) {
   if (state.activeSectorId) {
     warUpdate = applyMissionOutcome(state.activeSectorId, result, grade, state.mission).news.text;
   }
+
+  // Record the fate of a flagship target (escaped → becomes/escalates a nemesis;
+  // destroyed or captured → retired). The callout feeds the dispatch report.
+  let nemesisCallout = null;
+  if (state.mission.type === "assassinate_flagship") {
+    const fs = state.enemies.find((e) => e.type === "flagship");
+    const neutralized = Boolean(fs && !fs.alive);
+    nemesisCallout = recordOutcome(state.mission, neutralized);
+  }
+
   saveCareer();
 
   state.evaluation = {
@@ -98,7 +110,7 @@ export function finishMission(result, reason) {
     commendation,
     promotion,
     warUpdate,
-    report: buildCaptainReport(result, reason, grade)
+    report: commandDispatch(result, reason, grade, nemesisCallout)
   };
 
   updateEvaluation();
@@ -125,10 +137,6 @@ function calculateMissionGrade(result) {
 function reputationDelta(grade, result) {
   if (result !== "success") return -1;
   return { S: 3, A: 2, B: 1, C: 1, D: 0, F: -1 }[grade] || 0;
-}
-
-function buildCaptainReport(result, reason, grade) {
-  return reportText(result, reason, grade);
 }
 
 function updateEvaluation() {

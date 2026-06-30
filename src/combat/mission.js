@@ -6,6 +6,8 @@ import { MISSION_TYPES, SECTOR_MISSION_POOL } from "../data/missionTypes.js";
 import { HULLS } from "../data/ships.js";
 import { ENEMY_TYPES, ENEMY_POOLS } from "../data/enemies.js";
 import { difficultyMods } from "../settings.js";
+import { flagshipForMission, escalation } from "../game/nemesis.js";
+import * as voicelines from "./voicelines.js";
 
 const PLAYER_NAMES = { frigate: "CWS Resolute", cruiser: "CWS Vanguard", battleship: "CWS Asterion" };
 
@@ -48,7 +50,12 @@ export function generateMission(sector) {
   const enemyFleet = sector ? sector.enemyFleet : 60;
   const threat = sector ? sector.threat : 60;
   const sectorName = sector ? sector.name : `${pick(sectorPrefixes)} ${pick(sectorSuffixes)}`;
-  const flagshipName = `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
+
+  // For assassinations, the target may be a recurring nemesis returning for
+  // another round; otherwise it's a freshly-named command ship.
+  const target = type === "assassinate_flagship" ? flagshipForMission(sector) : null;
+  const flagshipName = target ? target.shipName : `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
+  const nemesisHullMult = target ? escalation(target.escapes).hullMult : 1;
   const reward = Math.round(
     (firstCommand ? 750 * randomRange(0.9, 1.1) : (780 + threat * 6) * randomRange(0.9, 1.1)) * diff.reward
   );
@@ -69,13 +76,18 @@ export function generateMission(sector) {
     threat,
     enemyFleet,
     damaged: firstCommand,
+    nemesisId: target ? target.nemesisId : null,
+    nemesisReturning: target ? target.returning : false,
+    nemesisEscapes: target ? target.escapes : 0,
+    nemesisCommander: target ? target.commander : null,
+    nemesisCommanderRank: target ? target.commanderRank : null,
     hazard: firstCommand
       ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields failing, escorts scattered. A clean opportunity for a first command."
       : pick(hazards),
     // type-specific sizing
     escortCount: firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3),
     flagshipHull: Math.round(
-      (firstCommand ? 520 * randomRange(0.9, 1.1) : (820 + enemyFleet * 4) * randomRange(0.9, 1.1)) * diff.enemyHull
+      (firstCommand ? 520 * randomRange(0.9, 1.1) : (820 + enemyFleet * 4) * randomRange(0.9, 1.1)) * diff.enemyHull * nemesisHullMult
     ),
     enemyCount: force,
     transportCount: randomInt(2, 4),
@@ -128,13 +140,15 @@ export function createPlayerShip() {
 
 export function createEnemyShip(type, x, y, mission, index) {
   if (type === "flagship") {
-    const sideShield = mission.damaged ? 90 : 200;
+    const esc = escalation(mission.nemesisEscapes || 0);
+    const sideShield = (mission.damaged ? 90 : 200) * esc.shieldMult;
     const systems = mission.damaged ? { engines: 2, weapons: 1, sensors: 1, shields: 1 } : createSystems();
     return {
       id: "flagship",
       type,
       team: "enemy",
       name: mission.flagshipName,
+      nemesisId: mission.nemesisId || null,
       x,
       y,
       vx: 0,
@@ -146,7 +160,7 @@ export function createEnemyShip(type, x, y, mission, index) {
       shieldsMax: { port: sideShield, starboard: sideShield },
       shields: { port: sideShield, starboard: sideShield },
       shieldDelay: { port: 0, starboard: 0 },
-      shieldRegen: mission.damaged ? 3 : 6,
+      shieldRegen: (mission.damaged ? 3 : 6) + esc.regenBonus,
       systems,
       cooldowns: { port: randomRange(0.2, 1.2), starboard: randomRange(0.5, 1.4), forward: randomRange(0.8, 1.8) },
       escaping: false,
@@ -350,6 +364,9 @@ export function setupMissionWorld(sector) {
     }
     state.objective = { disabled, rescueTime: mission.rescueTime, rescueLeft: mission.rescueTime };
   }
+
+  voicelines.reset();
+  voicelines.say("missionStart");
 
   return mission;
 }

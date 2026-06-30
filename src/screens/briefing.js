@@ -53,7 +53,12 @@ export function renderBriefing() {
   const rank = currentRank();
   const salutation = `${rank.short} ${state.career.captainName}, `;
   const body = info.brief.replace("{sector}", m.sectorName);
-  dom.text.textContent = `${salutation}${body.charAt(0).toLowerCase()}${body.slice(1)} ${m.hazard}`;
+  let text = `${salutation}${body.charAt(0).toLowerCase()}${body.slice(1)} ${m.hazard}`;
+  if (m.nemesisReturning) {
+    const who = `${m.nemesisCommanderRank} ${m.nemesisCommander}`;
+    text += ` RETURNING TARGET: intelligence confirms ${m.flagshipName} under ${who}, who has slipped our intercepts ${m.nemesisEscapes} time${m.nemesisEscapes === 1 ? "" : "s"}. Expect a reinforced ship. Finish it this time.`;
+  }
+  dom.text.textContent = text;
 
   dom.time.textContent = formatTime(m.duration);
   dom.reward.textContent = `${formatCredits(m.reward)} cr`;

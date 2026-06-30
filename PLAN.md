@@ -8,11 +8,13 @@ game. This plan adapts the original `/goal` brief and folds in four required twe
 1. **Rename to "Valkyrie".** Delete every "Broadside Command" reference. The game is
    *Valkyrie*. ("Broadside Command" may survive only as a small subtitle/tagline where
    the mockup uses it stylistically — see §2 — never as the product name.)
-2. **Ship-centred combat.** The player ship is **static, dead-centre** of the combat
-   view. The world, enemies, projectiles, range rings and broadside arcs **rotate and
-   translate around it** — exactly as the design mockup's Combat HUD is built
-   (player at `left:50%, top:52%`, range rings + conic-gradient broadside wedges
-   centred on the ship). This replaces the prototype's scrolling-camera model.
+2. **Ship-centred combat.** *(Superseded — see note below.)* The original intent was a
+   **static, dead-centre** player ship with the world rotating around it. In practice the
+   prototype's **north-up leading camera** (the camera follows the ship but leads toward
+   the engagement, so the player fights off-centre with the enemy in view) proved more
+   readable and was kept by design decision. The combat renderer therefore uses the
+   leading camera, not a ship-centred transform; §4 below is retained for historical
+   context only.
 3. **Adopt the mockup's visual identity** (`Valkyrie mockup screens.html`) as the
    visual system for every screen (tokens in §2).
 4. **Music + Controls button.** `Silent Armada (1).mp3` plays on start (looped, with a
@@ -162,6 +164,12 @@ Each milestone ends with the brief's testing checklist passing and a clean conso
   return if they escape, officer voice-lines in combat, operation chains, battle
   scars / veteran-ship identity, captain's log.
 - *Acceptance:* the campaign generates memorable, retellable stories.
+- **First pass (done):** recurring **nemesis** command ships (escaped flagships return
+  named, escalated and personal — `src/game/nemesis.js`), throttled **officer
+  voice-lines** in combat (`src/combat/voicelines.js`), and **procedural command
+  dispatches** in the after-action review (`src/game/dispatch.js`).
+- **Deferred to a later pass:** operation chains, battle scars / veteran-ship identity,
+  and the captain's log screen.
 
 ## 6. Controls (Controls screen + input.js)
 

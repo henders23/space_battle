@@ -155,6 +155,7 @@ export function loadCareer() {
     }
     state.career.ship = parsed.ship || "frigate";
     state.career.ownedShips = Array.from(new Set(["frigate", ...(parsed.ownedShips || [])]));
+    state.career.nemeses = Array.isArray(parsed.nemeses) ? parsed.nemeses : [];
     state.hasSave = true;
     return true;
   } catch (err) {
