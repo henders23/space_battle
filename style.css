@@ -613,6 +613,8 @@ kbd {
 
 .warupdate { margin: 0 0 12px; padding: 12px 16px; font-size: 0.88rem; line-height: 1.5; color: var(--text-2); border-left: 2px solid var(--accent); background: rgba(69, 224, 240, 0.06); }
 .promotion { margin: 0 0 12px; padding: 12px 16px; font-family: var(--display); font-weight: 700; letter-spacing: 1px; font-size: 0.95rem; color: var(--amber); border-left: 2px solid var(--amber); background: rgba(240, 169, 61, 0.08); }
+.operation-line { margin: 0 0 12px; padding: 12px 16px; font-family: var(--display); font-weight: 700; letter-spacing: 1px; font-size: 0.92rem; color: var(--violet); border-left: 2px solid var(--violet); background: rgba(184, 107, 255, 0.08); }
+.scar-line { margin: 0 0 12px; padding: 10px 16px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 1px; color: var(--text-2); border-left: 2px solid var(--amber); background: rgba(240, 169, 61, 0.05); }
 .evaluation-actions, .screen-actions { display: flex; gap: 12px; }
 .evaluation-actions .primary, .screen-actions .primary { flex: 2; }
 .evaluation-actions .ghost, .screen-actions .ghost { flex: 1; }
@@ -688,6 +690,19 @@ kbd {
 .award-name { font-family: var(--display); font-weight: 600; font-size: 1rem; letter-spacing: 1px; }
 .award-text { font-size: 0.66rem; color: var(--muted-2); line-height: 1.4; }
 .service-stats dt { font-size: 0.9rem; }
+.service-ship { display: grid; gap: 8px; max-height: 320px; overflow: auto; }
+.service-ship-name { margin: 4px 0 2px; font-family: var(--display); font-weight: 700; font-size: 1.4rem; letter-spacing: 1px; color: var(--accent); }
+
+/* ============ captain's log ============ */
+.log-entries { display: grid; gap: 10px; max-height: calc(100vh - 220px); overflow: auto; margin-bottom: 20px; }
+.log-entry { padding: 12px 16px; border-left: 2px solid var(--line); background: rgba(8, 18, 24, 0.5); }
+.log-meta { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; font-size: 0.66rem; letter-spacing: 1px; }
+.log-cycle { color: var(--accent); }
+.log-where { color: var(--muted-2); }
+.log-grade { margin-left: auto; font-family: var(--display); font-weight: 800; font-size: 0.95rem; letter-spacing: 1px; }
+.log-grade[data-tone="success"] { color: var(--success); }
+.log-grade[data-tone="danger"] { color: var(--danger-soft); }
+.log-text { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--text-2); }
 
 /* ============ animations ============ */
 @keyframes vk-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }

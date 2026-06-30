@@ -64,7 +64,10 @@ export function defaultCareer() {
     ownedShips: ["frigate"],
     owned: defaultOwned(),
     record: defaultRecord(),
-    nemeses: [] // recurring enemy command ships (see game/nemesis.js)
+    nemeses: [], // recurring enemy command ships (see game/nemesis.js)
+    operation: null, // active multi-mission operation chain (see game/operations.js)
+    shipIdentity: null, // veteran identity of the ship in service (see career.js)
+    log: [] // captain's log entries, newest-first (see game/dispatch.js)
   };
 }
 

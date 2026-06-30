@@ -115,6 +115,7 @@
           <button data-starbase class="primary">Starbase / Refit</button>
           <button data-intel class="ghost">Intelligence</button>
           <button data-service class="ghost">Service Record</button>
+          <button data-log class="ghost">Captain's Log</button>
           <button data-back-title class="ghost">Back to Title</button>
         </div>
       </div>
@@ -354,11 +355,14 @@
           </div>
         </div>
         <p id="eval-promotion" class="promotion hidden"></p>
+        <p id="eval-operation" class="operation-line hidden"></p>
+        <p id="eval-scar" class="scar-line hidden"></p>
         <p id="eval-warupdate" class="warupdate hidden"></p>
         <p id="eval-career" class="mono career-line"></p>
         <div class="evaluation-actions">
           <button data-warmap class="primary">Return to Command</button>
           <button data-service class="ghost">Service Record</button>
+          <button data-log class="ghost">Captain's Log</button>
         </div>
       </div>
     </section>
@@ -402,6 +406,9 @@
             <div id="service-header"></div>
             <div id="service-progress" class="service-progress"></div>
           </div>
+          <div class="card service-ship-card">
+            <div id="service-ship" class="service-ship"></div>
+          </div>
           <div class="card service-awards-card">
             <h3 class="mono">✦ COMMENDATIONS &amp; REPRIMANDS</h3>
             <div id="service-awards" class="service-awards"></div>
@@ -411,6 +418,22 @@
             <dl id="service-stats" class="service-stats"></dl>
           </div>
         </div>
+        <div class="screen-actions">
+          <button data-warmap class="primary">Back to War Map</button>
+          <button data-back-title class="ghost">Back to Title</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CAPTAIN'S LOG ============ -->
+    <section id="log-screen" class="screen">
+      <div class="vk-bg"></div>
+      <div class="panel wide">
+        <div class="section-heading">
+          <p class="mono eyebrow">COMMONWEALTH NAVY // CAPTAIN'S LOG</p>
+          <h2>Captain's Log</h2>
+        </div>
+        <div id="log-entries" class="log-entries"></div>
         <div class="screen-actions">
           <button data-warmap class="primary">Back to War Map</button>
           <button data-back-title class="ghost">Back to Title</button>

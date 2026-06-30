@@ -2,6 +2,7 @@
 
 import { state, defaultCareer, defaultRecord, defaultOwned, createSystems } from "./state.js";
 import { rankFor } from "./data/ranks.js";
+import { PLAYER_NAMES } from "./data/ships.js";
 
 const GRADE_ORDER = ["—", "F", "D", "C", "B", "A", "S"];
 
@@ -94,6 +95,7 @@ export function buyShip(key, cost) {
   state.career.ownedShips.push(key);
   state.career.ship = key;
   state.career.hull = 1; // a fresh hull arrives at full integrity
+  resetShipIdentity(key); // a newly commissioned hull carries no scars yet
   saveCareer();
   return true;
 }
@@ -101,8 +103,60 @@ export function buyShip(key, cost) {
 export function equipShip(key) {
   if (!ownsShip(key)) return false;
   state.career.ship = key;
+  ensureShipIdentity();
   saveCareer();
   return true;
+}
+
+// ---- veteran-ship identity ----
+
+// The identity record always tracks the ship currently in service; switching to
+// a different hull starts a fresh record for it.
+export function ensureShipIdentity() {
+  const id = state.career.shipIdentity;
+  if (!id || id.shipKey !== state.career.ship) resetShipIdentity(state.career.ship);
+  return state.career.shipIdentity;
+}
+
+export function resetShipIdentity(shipKey) {
+  state.career.shipIdentity = {
+    shipKey,
+    name: PLAYER_NAMES[shipKey] || "CWS Vanguard",
+    commissioned: state.career.war ? state.career.war.cycle : 1,
+    battles: 0,
+    scars: [],
+    honours: []
+  };
+  return state.career.shipIdentity;
+}
+
+// Record this action against the ship in service: count the battle and append any
+// scar/honour it earned. Returns the single freshest mark for the after-action
+// callout + log, or null.
+export function recordShipAction(stats, result, grade, sectorName) {
+  const id = ensureShipIdentity();
+  const cycle = state.career.war ? state.career.war.cycle : 1;
+  id.battles += 1;
+
+  let fresh = null;
+  const addScar = (label) => {
+    id.scars.unshift({ label, sector: sectorName, cycle });
+    id.scars = id.scars.slice(0, 8);
+    fresh = { kind: "scar", label };
+  };
+  const addHonour = (label) => {
+    if (!id.honours.includes(label)) id.honours.push(label);
+    fresh = { kind: "honour", label };
+  };
+
+  if (result === "success" && (grade === "S" || grade === "A")) {
+    addHonour(`Decorated action over ${sectorName} (grade ${grade})`);
+  }
+  if (stats.targetDestroyed) addHonour(`Command ship slain over ${sectorName}`);
+  if (stats.hullCritical) addScar(`Hull breach sealed over ${sectorName}`);
+  if (result !== "success") addScar(`Repulsed over ${sectorName}`);
+
+  return fresh;
 }
 
 export function recordMission(entry) {
@@ -156,6 +210,9 @@ export function loadCareer() {
     state.career.ship = parsed.ship || "frigate";
     state.career.ownedShips = Array.from(new Set(["frigate", ...(parsed.ownedShips || [])]));
     state.career.nemeses = Array.isArray(parsed.nemeses) ? parsed.nemeses : [];
+    state.career.operation = parsed.operation || null;
+    state.career.shipIdentity = parsed.shipIdentity || null;
+    state.career.log = Array.isArray(parsed.log) ? parsed.log : [];
     state.hasSave = true;
     return true;
   } catch (err) {

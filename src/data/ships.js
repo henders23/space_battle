@@ -56,3 +56,7 @@ export const HULLS = {
 };
 
 export const HULL_ORDER = ["frigate", "cruiser", "battleship"];
+
+// The name carried by the player's ship of each class. Shared by mission setup
+// (combat/mission.js) and the veteran-ship identity record (career.js).
+export const PLAYER_NAMES = { frigate: "CWS Resolute", cruiser: "CWS Vanguard", battleship: "CWS Asterion" };

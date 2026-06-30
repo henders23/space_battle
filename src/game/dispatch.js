@@ -69,6 +69,20 @@ function nemesisLine(callout) {
   return null;
 }
 
+function operationLine(callout) {
+  if (!callout) return null;
+  if (callout.kind === "phase") {
+    return `Operation ${callout.name} advances — phase ${callout.stage} of ${callout.count} now: ${callout.nextLabel.toLowerCase()}.`;
+  }
+  if (callout.kind === "complete") {
+    return `Operation ${callout.name} is complete; the Admiralty releases a bonus of ${callout.reward.toLocaleString()} cr to this command.`;
+  }
+  if (callout.kind === "failed") {
+    return `Operation ${callout.name} has collapsed — the arc is abandoned and the initiative passes to the enemy.`;
+  }
+  return null;
+}
+
 function closing(result, grade) {
   const rank = currentRank();
   const name = state.career.captainName;
@@ -86,12 +100,62 @@ function closing(result, grade) {
   ]);
 }
 
-export function commandDispatch(result, reason, grade, nemesisCallout) {
+export function commandDispatch(result, reason, grade, nemesisCallout, opCallout) {
   const parts = [opening(), engagementSummary(result, reason)];
   const fl = flourish(result);
   if (fl) parts.push(fl);
+  const op = operationLine(opCallout);
+  if (op) parts.push(op);
   const nem = nemesisLine(nemesisCallout);
   if (nem) parts.push(nem);
   parts.push(closing(result, grade));
   return parts.join(" ");
+}
+
+// A short, first-person captain's-log entry for the running chronicle. Draws on
+// the same mission/nemesis/operation/ship context but in the captain's own voice.
+export function captainLogEntry(result, grade, context = {}) {
+  const { nemesisCallout, opCallout, shipMark } = context;
+  const m = state.mission;
+  const ship = state.career.shipIdentity ? state.career.shipIdentity.name : "the ship";
+  const lines = [];
+
+  lines.push(
+    result === "success"
+      ? pick([
+          `We carried the action over ${m.sectorName} — grade ${grade}.`,
+          `${m.sectorName} went our way today; the Admiralty marked it ${grade}.`,
+          `Orders fulfilled over ${m.sectorName}. Grade ${grade}.`
+        ])
+      : pick([
+          `We were thrown back over ${m.sectorName}. Grade ${grade}, and deserved.`,
+          `${m.sectorName} did not go our way; the objective slipped us. Grade ${grade}.`,
+          `A hard day over ${m.sectorName} — grade ${grade}.`
+        ])
+  );
+
+  if (opCallout) {
+    if (opCallout.kind === "complete") lines.push(`That closes Operation ${opCallout.name}.`);
+    else if (opCallout.kind === "phase") lines.push(`Operation ${opCallout.name} moves to its next phase.`);
+    else if (opCallout.kind === "failed") lines.push(`Operation ${opCallout.name} is finished — we couldn't hold it together.`);
+  }
+
+  if (nemesisCallout) {
+    const who = nemesisCallout.commander;
+    if (nemesisCallout.kind === "escaped") {
+      lines.push(nemesisCallout.escapes > 1 ? `${who} ran from me again aboard ${nemesisCallout.shipName}. I'll have that ship.` : `${who} slipped me aboard ${nemesisCallout.shipName}.`);
+    } else if (nemesisCallout.kind === "defeated") {
+      lines.push(`We finally finished ${who} and ${nemesisCallout.shipName}.`);
+    }
+  }
+
+  if (shipMark) {
+    lines.push(
+      shipMark.kind === "honour"
+        ? `A proud day for ${ship}: ${shipMark.label.toLowerCase()}.`
+        : `${ship} carries a new scar — ${shipMark.label.toLowerCase()}.`
+    );
+  }
+
+  return lines.join(" ");
 }
