@@ -166,7 +166,24 @@ select {
 }
 
 /* ============ TITLE ============ */
-.title-layout { width: min(1180px, 100%); }
+.title-layout {
+  width: min(1180px, 100%);
+  display: flex; align-items: center; gap: 56px;
+}
+.title-content { flex: 1 1 auto; min-width: 0; }
+.title-art {
+  flex: 0 1 44%; margin: 0; max-width: 600px;
+}
+.title-art img {
+  width: 100%; height: auto; display: block;
+  border: 1px solid rgba(70, 160, 180, 0.3);
+  box-shadow: 0 0 70px rgba(69, 224, 240, 0.18);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 26px), calc(100% - 26px) 100%, 0 100%);
+}
+@media (max-width: 920px) {
+  .title-layout { flex-direction: column; align-items: stretch; gap: 32px; }
+  .title-art { order: -1; flex: none; max-width: 100%; align-self: center; }
+}
 .fleet-tag { display: flex; align-items: center; gap: 16px; margin-bottom: 60px; }
 .fleet-tag .mono { font-size: 0.8rem; letter-spacing: 4px; color: var(--muted); }
 .sigil {
@@ -562,6 +579,11 @@ kbd {
 .warmap-node:hover .node-dot { transform: scale(1.15); }
 .warmap-node.selected .node-dot { box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 0 16px var(--node-color); }
 .warmap-node.selected .node-label { color: #fff; }
+.warmap-node.locked .node-dot {
+  opacity: 0.32; box-shadow: none; border-style: dashed;
+  background: transparent; border-color: var(--node-color);
+}
+.warmap-node.locked .node-label { opacity: 0.5; }
 
 .warmap-panel { align-self: start; }
 .wm-head { margin-bottom: 14px; }
@@ -578,6 +600,7 @@ kbd {
 .wm-brief { color: var(--muted); font-size: 0.86rem; line-height: 1.5; margin: 4px 0 14px; }
 .wm-order button { width: 100%; }
 .wm-secured { margin-top: 16px; color: var(--success); font-size: 0.78rem; letter-spacing: 1px; }
+.wm-locked { margin-top: 6px; color: var(--muted-2); font-size: 0.72rem; letter-spacing: 1px; line-height: 1.5; border: 1px dashed var(--line); padding: 8px 10px; }
 
 .warmap-news { border: 1px solid var(--line); background: rgba(8, 18, 26, 0.5); padding: 12px 16px; min-height: 48px; }
 .news-line { display: flex; gap: 12px; align-items: baseline; padding: 4px 0; }

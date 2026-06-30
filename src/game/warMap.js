@@ -1,7 +1,7 @@
 "use strict";
 
 import { state } from "../state.js";
-import { SECTORS, CONTROL_BASE, CONTROL_INFO } from "../data/sectors.js";
+import { SECTORS, EDGES, CONTROL_BASE, CONTROL_INFO } from "../data/sectors.js";
 import { SECTOR_MISSION_POOL } from "../data/missionTypes.js";
 import { clamp, pick, randomInt } from "../utils.js";
 import { saveCareer } from "../career.js";
@@ -37,6 +37,29 @@ export function sectorDef(id) {
 // presence there (anything not yet fully Commonwealth-secured).
 export function sectorHasMission(id) {
   return sectorState(id).control !== "commonwealth";
+}
+
+// Adjacency lookup, derived once from the static travel routes.
+const NEIGHBORS = (() => {
+  const map = {};
+  for (const [a, b] of EDGES) {
+    (map[a] = map[a] || []).push(b);
+    (map[b] = map[b] || []).push(a);
+  }
+  return map;
+})();
+
+export function sectorNeighbors(id) {
+  return NEIGHBORS[id] || [];
+}
+
+// The captain may only deploy along the front line: into Commonwealth space or
+// a sector that directly borders a Commonwealth-held one. As sectors are
+// liberated the reachable frontier advances. Uses live war-state control.
+export function sectorReachable(id) {
+  ensureWar();
+  if (sectorState(id).control === "commonwealth") return true;
+  return sectorNeighbors(id).some((n) => sectorState(n).control === "commonwealth");
 }
 
 export function controlInfo(control) {
