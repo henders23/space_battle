@@ -63,7 +63,8 @@ export function defaultCareer() {
     ship: "frigate",
     ownedShips: ["frigate"],
     owned: defaultOwned(),
-    record: defaultRecord()
+    record: defaultRecord(),
+    nemeses: [] // recurring enemy command ships (see game/nemesis.js)
   };
 }
 

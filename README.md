@@ -123,6 +123,17 @@ sheet.
   credits, owned-only loadout selection, career stats, and **mission history**.
 - Procedural after-action evaluation: grade, captain's report, commendations/reprimands,
   career impact, statistics, and a running service record.
+- **Recurring nemeses**: an enemy flagship that escapes your intercept (the window
+  closes, or you retreat with it alive) is remembered as a named command ship under a
+  named commander. It returns in later assassinations — reinforced in proportion to how
+  often it has slipped you — flagged as a **RETURNING TARGET** in the briefing, until you
+  finally destroy or capture it. Nemeses persist on the career record.
+- **Bridge-crew voice-lines**: your named officers call out the action — kills, the
+  target running, flank breaches and hull-critical, fresh waves, boarding, and the final
+  outcome — throttled so the message log stays readable, not chatty.
+- **Procedural command dispatches**: the after-action report is assembled fresh each
+  mission from the engagement, notable statistics, any nemesis, and your rank's register,
+  so no two read alike.
 - **Campaign & captain identity**: a New Campaign sets up your captain (name +
   difficulty) before the opening orders. Sustained command earns **rank
   progression** (Lieutenant → Rear Admiral), and the Admiralty awards permanent
@@ -160,9 +171,10 @@ src/
   career.js        economy, ownership, rank, commendations, save/load
   settings.js      difficulty + accessibility + audio settings (persisted)
   audio.js         music controller   sfx.js  procedural sound effects
-  data/            loadouts, theme, controls, sectors, ranks, commendations
-  game/            warMap (war-state model + simulation)
-  combat/          mission, simulation, weapons, systems, effects, renderer, shipStats
+  data/            loadouts, theme, controls, sectors, ranks, commendations, officers
+  game/            warMap (war state), nemesis (recurring foes), dispatch (reports)
+  combat/          mission, simulation, weapons, systems, effects, renderer, shipStats,
+                   voicelines, boarding, objectives
   screens/         warMap, starbase, briefing, evaluation, intel, service
   ui/              hud
   utils.js         math + formatting helpers
@@ -180,8 +192,9 @@ See [`PLAN.md`](PLAN.md) for the full execution plan.
 - **M5** — Multiple player hulls (frigate/cruiser/battleship) and enemy types. ✅
 - **M6** — Campaign polish: captain naming, rank progression, commendations,
   War News / Intelligence and Service Record screens, full Settings. ✅
-- **M7** — Procedural story layer: recurring named enemy ships, operation chains,
-  officer voice-lines, battle scars.
+- **M7** — Procedural story layer (first pass ✅): recurring named **nemesis**
+  command ships, **officer voice-lines** in combat, and **procedural command
+  dispatches**. Still to come: operation chains, battle scars, captain's log.
 
 ## Known issues / notes
 

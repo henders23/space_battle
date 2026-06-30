@@ -16,6 +16,7 @@ import * as sfx from "../sfx.js";
 import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
 import { updateObjective } from "./objectives.js";
 import { updateBoardingAvailability, boardingActive } from "./boarding.js";
+import * as voicelines from "./voicelines.js";
 import { finishMission } from "../screens/evaluation.js";
 import { difficultyMods } from "../settings.js";
 
@@ -30,7 +31,10 @@ export function update(dt) {
   updateAsteroids(dt);
   updateEffects(dt);
   const resolution = updateObjective(dt);
-  if (resolution) finishMission(resolution.result, resolution.reason);
+  if (resolution) {
+    voicelines.say(resolution.result === "success" ? "victory" : "defeat");
+    finishMission(resolution.result, resolution.reason);
+  }
   updateBoardingAvailability();
 }
 
@@ -211,7 +215,9 @@ function updateFlagship(ship, dt) {
   const toPlayer = angleTo(ship, player);
   const d = distance(ship, player);
   const hullFrac = hullTotal(ship) / hullMaxTotal(ship);
+  const wasEscaping = ship.escaping;
   ship.escaping = hullFrac < 0.28 || state.mission.timer < 28;
+  if (ship.escaping && !wasEscaping) voicelines.say("targetFleeing");
 
   let desiredAngle;
   let thrust = 0;
@@ -372,7 +378,10 @@ function updateProjectiles(dt) {
       const wasCritical = state.stats.hullCritical;
       if (hullTotal(state.player) < hullMaxTotal(state.player) * 0.25) {
         state.stats.hullCritical = true;
-        if (!wasCritical) sfx.alarm();
+        if (!wasCritical) {
+          sfx.alarm();
+          voicelines.say("hullCritical");
+        }
       }
       if (isDestroyed(state.player)) {
         state.player.alive = false;
@@ -380,7 +389,8 @@ function updateProjectiles(dt) {
         addExplosion(state.player.x, state.player.y, 1.7);
         sfx.explosion(1.7);
         addShake(30);
-        finishMission("failed", "CWS Resolute was destroyed in action.");
+        voicelines.say("defeat");
+        finishMission("failed", `${state.player.name} was destroyed in action.`);
       }
     } else {
       // Enemy fire can also strike the allied assets the player is protecting.
@@ -433,6 +443,7 @@ function maybeDamageSystem(ship, hullDamage, source) {
   if (ship.type === "player") {
     state.stats.systemsDamaged += 1;
     addMessage(`Engineering: ${SYSTEM_NAMES[system]} report ${SYSTEM_STATES[ship.systems[system]]}.`);
+    voicelines.say("systemDamage");
   } else if (source === "player" && ship.type === "flagship") {
     addMessage(`Sensors: enemy ${SYSTEM_NAMES[system].toLowerCase()} degraded.`);
   }
@@ -448,9 +459,11 @@ function destroyEnemy(enemy) {
   if (enemy.type === "flagship") {
     state.stats.targetDestroyed = true;
     addMessage(`${enemy.name} destroyed. Objective complete.`);
+    voicelines.say("flagshipDown");
   } else {
     state.stats.escortsDestroyed += 1;
     addMessage(`${enemy.name} destroyed.`);
+    voicelines.say("kill");
   }
 }
 

@@ -5,6 +5,7 @@ import { distance } from "../utils.js";
 import { hullRatio, hullMaxTotal } from "./shipStats.js";
 import { addMessage, addRing, addShake } from "./effects.js";
 import * as sfx from "../sfx.js";
+import * as voicelines from "./voicelines.js";
 
 // Boarding loop. A crippled hostile (hull at or below the threshold) can be
 // boarded once the player's hull is alongside it. Boarding opens the standalone
@@ -92,6 +93,7 @@ export function startBoarding() {
   if (dom.frame) dom.frame.src = BOARDING_SRC; // (re)load a fresh assault
   if (dom.overlay) dom.overlay.classList.remove("hidden");
   addMessage(`Boarding party away — marines breaching ${target.name}.`);
+  voicelines.say("boarding");
   sfx.alarm();
 }
 
