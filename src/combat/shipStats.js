@@ -10,10 +10,13 @@ export function hullTotal(ship) {
   return ship.hull.port + ship.hull.starboard;
 }
 
-// A ship is lost the moment either flank's hull is breached — so exposing a
-// wounded side is lethal, not just costly.
+// The player is lost the moment either flank's hull is breached — exposing a
+// wounded side is lethal, not just costly. Enemies and allies instead fight on
+// until their hull is gone on both sides, so a battered hostile can linger at low
+// hull (crippled) long enough to be boarded rather than dying outright.
 export function isDestroyed(ship) {
-  return ship.hull.port <= 0 || ship.hull.starboard <= 0;
+  if (ship.type === "player") return ship.hull.port <= 0 || ship.hull.starboard <= 0;
+  return ship.hull.port <= 0 && ship.hull.starboard <= 0;
 }
 
 export function hullMaxTotal(ship) {

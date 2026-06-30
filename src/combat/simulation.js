@@ -13,9 +13,9 @@ import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
 import { addMessage, addEffect, addImpact, addExplosion, addShake } from "./effects.js";
 import * as sfx from "../sfx.js";
-import { hullTotal, hullMaxTotal, impactSide, isDestroyed } from "./shipStats.js";
+import { hullTotal, hullMaxTotal, hullRatio, impactSide, isDestroyed } from "./shipStats.js";
 import { updateObjective } from "./objectives.js";
-import { updateBoardingAvailability, boardingActive } from "./boarding.js";
+import { updateBoardingAvailability, boardingActive, BOARDING_HULL_THRESHOLD } from "./boarding.js";
 import * as voicelines from "./voicelines.js";
 import { finishMission } from "../screens/evaluation.js";
 import { difficultyMods } from "../settings.js";
@@ -166,9 +166,26 @@ function updateCooldowns(cooldowns, dt) {
   });
 }
 
+// A hostile battered to the boarding threshold is crippled: engines and guns are
+// out, so it drifts dead in the water — an open invitation to come alongside and
+// board (combat/boarding.js), though it can still be finished with gunfire.
+function updateCrippled(ship, dt) {
+  ship.vx *= Math.pow(0.95, dt * 60);
+  ship.vy *= Math.pow(0.95, dt * 60);
+  ship.x += ship.vx * dt;
+  ship.y += ship.vy * dt;
+  ship.angle += 0.06 * dt; // a slow, powerless yaw
+}
+
 function updateEnemies(dt) {
   for (const enemy of state.enemies) {
     if (!enemy.spawned || !enemy.alive) continue;
+    if (hullRatio(enemy) <= BOARDING_HULL_THRESHOLD) {
+      enemy.crippled = true;
+      updateCrippled(enemy, dt);
+      updateCooldowns(enemy.cooldowns, dt);
+      continue;
+    }
     switch (enemy.behavior) {
       case "flagship":
         updateFlagship(enemy, dt);
