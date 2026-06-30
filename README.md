@@ -53,9 +53,11 @@ broadside to bear — the forward lance fires ahead, the port/starboard broadsid
 flank — and loose each battery from the **charge-bar rack along the bottom of the screen**
 (`Space` / `Q` / `E` / `F`). Ships are heavy: you set a **throttle** (stop / slow /
 moderate / full) rather than free-thrusting, turns are wide, and momentum bleeds off
-slowly. Every ship has independent port and starboard hull — **breach either flank and the
-ship is lost** — so protecting a wounded side while working the enemy's is the heart of the
-fight. Combat rewards positioning and timing over twitch reflexes.
+slowly. Every ship has independent port and starboard hull, so protecting a wounded side
+while working the enemy's is the heart of the fight: **expose your own breached flank and
+the ship is lost.** Hostiles are tougher to put down — they fight on until both flanks are
+gone — but once battered to low hull they go **crippled** (engines and guns dead), drifting
+as an open invitation to board. Combat rewards positioning and timing over twitch reflexes.
 
 ### Boarding actions
 
@@ -102,8 +104,9 @@ sheet.
   frigates (chargers), missile boats (kiters), cruisers (broadside duelists) and named
   flagships — mixed into each mission type so different sectors demand different tactics.
 - **Per-side defences**: independent port/starboard shields and hull on every ship —
-  protect a damaged side and force the enemy to expose theirs (breach either flank and
-  the ship is lost).
+  protect a damaged side and force the enemy to expose theirs. Expose your own breached
+  flank and you are lost; hostiles instead fight until both flanks fail, going **crippled**
+  (dead in the water) at low hull so you can finish them off or board them.
 - **Bridge crew & damage control**: each ship system is run by a named officer shown
   with a portrait, and a live ship schematic shows hull damage by flank and the state of
   each system. Engagements are deliberately weighty — large hull/shield pools mean

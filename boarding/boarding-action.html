@@ -46,7 +46,7 @@ html,body{margin:0;padding:0;background:#04080b}
       <div style="width:10px;height:10px;background:#ff5347;border-radius:50%;animation:vk-blink 1.1s steps(1) infinite;"></div>
       <div>
         <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px;letter-spacing:4px;color:#ff6b60;line-height:1;">BOARDING ENGAGED</div>
-        <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:2px;color:#5f8794;margin-top:4px;">OPERATION IRON TIDE ▸ {{ enemyShip }}</div>
+        <div style="font-family:'JetBrains Mono';font-size:11px;letter-spacing:2px;color:#5f8794;margin-top:4px;">PREPARE TO BREACH ▸ {{ enemyShip }}</div>
       </div>
     </div>
     <div style="flex:1;"></div>
@@ -220,11 +220,11 @@ html,body{margin:0;padding:0;background:#04080b}
   <sc-if value="{{ isBriefing }}" hint-placeholder-val="{{ true }}">
     <div style="position:absolute;inset:0;z-index:80;background:radial-gradient(ellipse 90% 90% at 30% 20%,#08131c,#050b10 60%,#02060a);overflow-y:auto;padding:48px 70px;">
       <div style="display:flex;align-items:center;gap:16px;">
-        <div style="font-family:'JetBrains Mono';font-size:12px;color:#ff5347;border:1px solid #ff5347;padding:3px 9px;letter-spacing:2px;">PRIORITY OPERATION</div>
-        <div style="font-family:'JetBrains Mono';font-size:13px;letter-spacing:4px;color:#5f8794;">BOARD &amp; SEIZE ▸ GREYWARD LINE</div>
+        <div style="font-family:'JetBrains Mono';font-size:12px;color:#ff5347;border:1px solid #ff5347;padding:3px 9px;letter-spacing:2px;">BOARDING ACTION</div>
+        <div style="font-family:'JetBrains Mono';font-size:13px;letter-spacing:4px;color:#5f8794;">BOARD &amp; SEIZE ▸ {{ enemyShip }}</div>
       </div>
-      <div style="font-family:'Saira Condensed';font-weight:800;font-size:74px;letter-spacing:1px;color:#eaf6f9;line-height:1;margin:10px 0 4px;">OPERATION IRON TIDE</div>
-      <div style="font-family:'Saira';font-size:18px;color:#87a7b1;max-width:960px;line-height:1.55;">The Veyr cruiser <b style="color:#ff7a70;">{{ enemyShip }}</b> floats crippled in the debris of the Greyward Line, drives dead. Your boarding tube is sealed to her flank and four squads are stacked at the airlock. This is no dice game — the assault runs in real time, and when a crisis breaks, the deck pauses for your order. Take the bridge before she scuttles, and she is a prize.</div>
+      <div style="font-family:'Saira Condensed';font-weight:800;font-size:74px;letter-spacing:1px;color:#eaf6f9;line-height:1;margin:10px 0 4px;">PREPARE TO BREACH</div>
+      <div style="font-family:'Saira';font-size:18px;color:#87a7b1;max-width:960px;line-height:1.55;">The Veyr cruiser <b style="color:#ff7a70;">{{ enemyShip }}</b> floats crippled alongside, drives dead. Your boarding tube is sealed to her flank and four squads are stacked at the airlock. This is no dice game — the assault runs in real time, and when a crisis breaks, the deck pauses for your order. Take the bridge before she scuttles, and she is a prize.</div>
       <div style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;color:#5f8794;margin:30px 0 14px;border-bottom:1px solid rgba(70,160,180,0.2);padding-bottom:9px;">YOUR SQUAD LEADERS</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:1160px;">
         <sc-for list="{{ leaders }}" as="ld" hint-placeholder-count="4">
@@ -268,7 +268,7 @@ html,body{margin:0;padding:0;background:#04080b}
           <div onclick="{{ onRestart }}" style="margin-top:16px;text-align:center;font-family:'Saira Condensed';font-weight:700;font-size:18px;letter-spacing:3px;color:#04080b;background:#45e0f0;padding:14px;cursor:pointer;">RUN IT AGAIN ▸</div>
         </div>
         <div style="flex:1;background:linear-gradient(180deg,rgba(10,22,28,0.85),rgba(6,14,18,0.85));border:1px solid rgba(70,160,180,0.25);padding:30px 36px;">
-          <div style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;color:#45e0f0;margin-bottom:4px;">FROM: HELION FLEET ADMIRALTY — TO: COMMANDER, OPERATION IRON TIDE</div>
+          <div style="font-family:'JetBrains Mono';font-size:12px;letter-spacing:3px;color:#45e0f0;margin-bottom:4px;">FROM: HELION FLEET ADMIRALTY — TO: COMMANDER, BOARDING PARTY</div>
           <div style="height:1px;background:rgba(70,160,180,0.25);margin:16px 0 22px;"></div>
           <sc-for list="{{ outcome.report }}" as="r" hint-placeholder-count="3">
             <div style="font-family:'Saira Condensed';font-weight:700;font-size:22px;letter-spacing:1px;color:{{ r.c }};margin-bottom:6px;">{{ r.h }}</div>
@@ -353,7 +353,7 @@ class Component extends DCLogic {
          result:'Every squad drives for the command deck. Fast \u2014 but the reactor is left to burn, and the timer keeps falling.',eff:{momentum:14,scuttleStopped:0}},
         {label:'EMP PULSE',sub:'Stun every system \u2014 theirs and yours.',tags:['Stuns scuttle','-Momentum'],kind:'amber',
          result:'The pulse freezes the scuttle sequence cold \u2014 and half of your own gear with it. Messy, but the prize survives.',eff:{scuttleStopped:1,momentum:-10,enemyMorale:-4}},
-        {label:'ABORT BOARDING',sub:'Pull the marines back to the tube.',tags:['End mission'],kind:'amber',
+        {label:'ABORT BOARDING',sub:'Pull the marines back to the tube.',tags:['End boarding'],kind:'amber',
          result:'You call it. The marines fall back through the breach and blow the tube. The prize is lost \u2014 but your people live.',eff:{abort:1}}
        ]},
       {id:'surrender',at:86,tag:'TRANSMISSION',speaker:'ENEMY CAPTAIN',enemy:1,
