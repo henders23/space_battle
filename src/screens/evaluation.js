@@ -11,13 +11,15 @@ import {
   recordMission,
   awardCommendations,
   reconcileRank,
-  currentRank
+  currentRank,
+  recordShipAction
 } from "../career.js";
 import { hullRatio } from "../combat/shipStats.js";
 import { gradeMission } from "../combat/objectives.js";
 import { applyMissionOutcome } from "../game/warMap.js";
 import { recordOutcome } from "../game/nemesis.js";
-import { commandDispatch } from "../game/dispatch.js";
+import * as operations from "../game/operations.js";
+import { commandDispatch, captainLogEntry } from "../game/dispatch.js";
 import { evaluateAwards, COMMENDATIONS, REPRIMANDS } from "../data/commendations.js";
 
 // After-action review: grade, captain's report, economy, statistics.
@@ -37,6 +39,8 @@ export function initEvaluation() {
   dom.promotion = document.getElementById("eval-promotion");
   dom.careerLine = document.getElementById("eval-career");
   dom.warUpdate = document.getElementById("eval-warupdate");
+  dom.operation = document.getElementById("eval-operation");
+  dom.scar = document.getElementById("eval-scar");
 }
 
 export function finishMission(result, reason) {
@@ -46,10 +50,16 @@ export function finishMission(result, reason) {
   state.career.systems = { ...state.player.systems };
 
   const grade = calculateMissionGrade(result);
-  const reward =
+
+  // Resolve an active operation chain (advance / complete / abandon). A completed
+  // operation pays a bonus that folds into this mission's reward.
+  const opCallout = operations.recordOutcome(result);
+
+  let reward =
     result === "success"
       ? state.mission.reward + state.stats.escortsDestroyed * 120
       : state.stats.escortsDestroyed * 90;
+  if (opCallout && opCallout.kind === "complete") reward += opCallout.reward;
   const repairCost = calculateRepairCost();
   const net = reward - repairCost;
 
@@ -98,6 +108,23 @@ export function finishMission(result, reason) {
     nemesisCallout = recordOutcome(state.mission, neutralized);
   }
 
+  // Mark the action against the ship in service (veteran identity / battle scars).
+  const shipMark = recordShipAction(state.stats, result, grade, state.mission.sectorName);
+
+  // Append a captain's-log entry drawing on everything that just resolved.
+  const logText = captainLogEntry(result, grade, { nemesisCallout, opCallout, shipMark });
+  if (!Array.isArray(state.career.log)) state.career.log = [];
+  state.career.log.unshift({
+    cycle: state.career.war ? state.career.war.cycle : 1,
+    rankShort: currentRank().short,
+    sector: state.mission.sectorName,
+    op: state.mission.operationName,
+    grade,
+    result,
+    text: logText
+  });
+  state.career.log = state.career.log.slice(0, 30);
+
   saveCareer();
 
   state.evaluation = {
@@ -110,7 +137,9 @@ export function finishMission(result, reason) {
     commendation,
     promotion,
     warUpdate,
-    report: commandDispatch(result, reason, grade, nemesisCallout)
+    operation: operationCalloutText(opCallout),
+    scar: shipMarkText(shipMark),
+    report: commandDispatch(result, reason, grade, nemesisCallout, opCallout)
   };
 
   updateEvaluation();
@@ -128,6 +157,22 @@ function headlineAward(fresh) {
     return { kind: "reprimand", text: `${def.name} — ${def.text}` };
   }
   return null;
+}
+
+// Short headline text for the operation chain's outcome, or null.
+function operationCalloutText(callout) {
+  if (!callout) return null;
+  if (callout.kind === "complete") return `OPERATION ${callout.name.toUpperCase()} COMPLETE — +${formatCredits(callout.reward)} cr bonus.`;
+  if (callout.kind === "phase") return `OPERATION ${callout.name.toUpperCase()} — phase ${callout.stage}/${callout.count} now: ${callout.nextLabel}.`;
+  if (callout.kind === "failed") return `OPERATION ${callout.name.toUpperCase()} ABANDONED.`;
+  return null;
+}
+
+// Short headline text for a fresh battle scar / honour, or null.
+function shipMarkText(mark) {
+  if (!mark) return null;
+  const ship = state.career.shipIdentity ? state.career.shipIdentity.name : "The ship";
+  return mark.kind === "honour" ? `${ship} — HONOUR: ${mark.label}.` : `${ship} — BATTLE SCAR: ${mark.label}.`;
 }
 
 function calculateMissionGrade(result) {
@@ -173,6 +218,22 @@ function updateEvaluation() {
       dom.warUpdate.classList.remove("hidden");
     } else {
       dom.warUpdate.classList.add("hidden");
+    }
+  }
+  if (dom.operation) {
+    if (evaluation.operation) {
+      dom.operation.textContent = evaluation.operation;
+      dom.operation.classList.remove("hidden");
+    } else {
+      dom.operation.classList.add("hidden");
+    }
+  }
+  if (dom.scar) {
+    if (evaluation.scar) {
+      dom.scar.textContent = evaluation.scar;
+      dom.scar.classList.remove("hidden");
+    } else {
+      dom.scar.classList.add("hidden");
     }
   }
   if (dom.careerLine) {

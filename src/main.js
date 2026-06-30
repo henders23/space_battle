@@ -18,6 +18,7 @@ import { uiBeep } from "./sfx.js";
 import { CONTROLS, CONTROL_GROUPS } from "./data/controls.js";
 import { SECTORS } from "./data/sectors.js";
 import { fullSector } from "./game/warMap.js";
+import { operationForDeployment } from "./game/operations.js";
 import { setupMissionWorld } from "./combat/mission.js";
 import { addMessage } from "./combat/effects.js";
 import { update, retreatToStarbase } from "./combat/simulation.js";
@@ -31,8 +32,9 @@ import { initWarMap, renderWarMap } from "./screens/warMap.js";
 import { initBriefing, renderBriefing } from "./screens/briefing.js";
 import { initIntel, renderIntel } from "./screens/intel.js";
 import { initService, renderService } from "./screens/service.js";
+import { initLog, renderLog } from "./screens/log.js";
 
-const SCREEN_NAMES = ["title", "setup", "intro", "warmap", "briefing", "starbase", "combat", "evaluation", "intel", "service", "controls", "settings", "credits"];
+const SCREEN_NAMES = ["title", "setup", "intro", "warmap", "briefing", "starbase", "combat", "evaluation", "intel", "service", "log", "controls", "settings", "credits"];
 
 let pauseBanner = null;
 let canvas = null;
@@ -68,7 +70,8 @@ const KEY_BATTERY = { Space: "forward", KeyQ: "port", KeyE: "starboard", KeyF: "
 function startMission(sectorId) {
   state.activeSectorId = sectorId || null;
   const sector = sectorId ? fullSector(sectorId) : null;
-  const mission = setupMissionWorld(sector);
+  const opContext = operationForDeployment(sector);
+  const mission = setupMissionWorld(sector, opContext);
   addMessage(`Operation ${mission.operationName}: ${mission.typeName} in ${mission.sectorName}.`);
   addMessage(mission.hazard);
   showScreen("briefing");
@@ -222,6 +225,9 @@ function bindMenu() {
   document.querySelectorAll("[data-service]").forEach((btn) =>
     btn.addEventListener("click", () => showScreen("service"))
   );
+  document.querySelectorAll("[data-log]").forEach((btn) =>
+    btn.addEventListener("click", () => showScreen("log"))
+  );
 
   const introBegin = document.getElementById("intro-begin");
   if (introBegin) introBegin.addEventListener("click", () => showScreen("warmap"));
@@ -371,6 +377,7 @@ function init() {
   initBriefing();
   initIntel();
   initService();
+  initLog();
 
   registerScreens(SCREEN_NAMES);
   buildControlsScreen();
@@ -402,6 +409,7 @@ function init() {
     if (name === "briefing") renderBriefing();
     if (name === "intel") renderIntel();
     if (name === "service") renderService();
+    if (name === "log") renderLog();
     if (name === "settings") reflectSettings();
     if (name === "setup") reflectSetupDifficulty();
     // Music bed per screen: drone over the briefing, red alert in combat, the

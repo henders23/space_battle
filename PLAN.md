@@ -168,8 +168,12 @@ Each milestone ends with the brief's testing checklist passing and a clean conso
   named, escalated and personal — `src/game/nemesis.js`), throttled **officer
   voice-lines** in combat (`src/combat/voicelines.js`), and **procedural command
   dispatches** in the after-action review (`src/game/dispatch.js`).
-- **Deferred to a later pass:** operation chains, battle scars / veteran-ship identity,
-  and the captain's log screen.
+- **Second pass (done):** **operation chains** (two-stage sector arcs that climax in a
+  flagship/nemesis strike — `src/game/operations.js`), **veteran-ship identity / battle
+  scars** (honours and scars on the ship in service, shown on the Service Record —
+  `src/career.js`, `src/screens/service.js`), and a persistent first-person **captain's
+  log** (`src/screens/log.js`, entries from `src/game/dispatch.js`).
+- **M7 complete.**
 
 ## 6. Controls (Controls screen + input.js)
 

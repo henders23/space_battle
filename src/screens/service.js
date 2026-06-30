@@ -1,7 +1,7 @@
 "use strict";
 
 import { state } from "../state.js";
-import { currentRank, currentReputation } from "../career.js";
+import { currentRank, currentReputation, ensureShipIdentity } from "../career.js";
 import { rankPoints, RANKS } from "../data/ranks.js";
 import { COMMENDATIONS, REPRIMANDS } from "../data/commendations.js";
 import { HULLS } from "../data/ships.js";
@@ -14,6 +14,7 @@ const dom = {};
 export function initService() {
   dom.header = document.getElementById("service-header");
   dom.progress = document.getElementById("service-progress");
+  dom.ship = document.getElementById("service-ship");
   dom.awards = document.getElementById("service-awards");
   dom.stats = document.getElementById("service-stats");
 }
@@ -44,6 +45,35 @@ function progressCard() {
     bar = `<span class="mono dim">Highest rank attained — ${points} service points.</span>`;
   }
   return `<span class="mono eyebrow">PROMOTION</span>${bar}`;
+}
+
+function shipCard() {
+  const id = ensureShipIdentity();
+  const className = HULLS[id.shipKey] ? HULLS[id.shipKey].className : "Warship";
+  let html =
+    `<span class="mono eyebrow">SHIP IN SERVICE</span>` +
+    `<h3 class="service-ship-name">${id.name}</h3>` +
+    `<p class="mono dim">${className.toUpperCase()} · ${id.battles} engagement${id.battles === 1 ? "" : "s"} · commissioned cycle ${id.commissioned}</p>`;
+
+  const honours = id.honours || [];
+  const scars = id.scars || [];
+  if (!honours.length && !scars.length) {
+    return html + `<p class="empty mono">A fresh hull — no honours or scars yet.</p>`;
+  }
+  for (const h of honours) {
+    html +=
+      `<div class="award-row" data-kind="commendation">` +
+      `<span class="award-icon">✦</span>` +
+      `<div class="award-info"><span class="award-name">${h}</span></div></div>`;
+  }
+  for (const s of scars) {
+    html +=
+      `<div class="award-row" data-kind="reprimand">` +
+      `<span class="award-icon">⚒</span>` +
+      `<div class="award-info"><span class="award-name">${s.label}</span>` +
+      `<span class="award-text mono">War cycle ${s.cycle}</span></div></div>`;
+  }
+  return html;
 }
 
 function awardsCard() {
@@ -92,6 +122,7 @@ function statsCard() {
 export function renderService() {
   if (dom.header) dom.header.innerHTML = headerCard();
   if (dom.progress) dom.progress.innerHTML = progressCard();
+  if (dom.ship) dom.ship.innerHTML = shipCard();
   if (dom.awards) dom.awards.innerHTML = awardsCard();
   if (dom.stats) dom.stats.innerHTML = statsCard();
 }

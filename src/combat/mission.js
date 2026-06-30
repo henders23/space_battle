@@ -3,13 +3,11 @@
 import { state, WORLD, createSystems } from "../state.js";
 import { clamp, pick, randomInt, randomRange } from "../utils.js";
 import { MISSION_TYPES, SECTOR_MISSION_POOL } from "../data/missionTypes.js";
-import { HULLS } from "../data/ships.js";
+import { HULLS, PLAYER_NAMES } from "../data/ships.js";
 import { ENEMY_TYPES, ENEMY_POOLS } from "../data/enemies.js";
 import { difficultyMods } from "../settings.js";
 import { flagshipForMission, escalation } from "../game/nemesis.js";
 import * as voicelines from "./voicelines.js";
-
-const PLAYER_NAMES = { frigate: "CWS Resolute", cruiser: "CWS Vanguard", battleship: "CWS Asterion" };
 
 // Mission generation, world setup, and ship/asteroid factories.
 
@@ -28,7 +26,7 @@ export function createStars(count) {
   return stars;
 }
 
-export function generateMission(sector) {
+export function generateMission(sector, opContext = null) {
   const sectorPrefixes = ["Kestrel", "Rime", "Acheron", "Helios", "Vesper", "Orison", "Cinder", "Icarus"];
   const sectorSuffixes = ["Reach", "Drift", "Basin", "Exclusion", "Corridor", "Wake", "Field", "Crown"];
   const flagshipTitles = ["Dreadnought", "Executor", "Praetor", "Iron Regent", "Black Lance", "Vigilant", "Red Monarch"];
@@ -44,7 +42,11 @@ export function generateMission(sector) {
   // The captain's very first command is a gentler engagement: a battle-damaged
   // flagship limping home — a winnable introduction.
   const firstCommand = state.career.record.missionsCompleted === 0;
-  const type = firstCommand ? "assassinate_flagship" : (sector && sector.missionType) || pick(SECTOR_MISSION_POOL);
+  const type = firstCommand
+    ? "assassinate_flagship"
+    : opContext
+      ? opContext.forcedType
+      : (sector && sector.missionType) || pick(SECTOR_MISSION_POOL);
 
   const diff = difficultyMods();
   const enemyFleet = sector ? sector.enemyFleet : 60;
@@ -66,7 +68,15 @@ export function generateMission(sector) {
   const mission = {
     type,
     typeName: MISSION_TYPES[type].name,
-    operationName: firstCommand ? "First Blood" : pick(operationNames),
+    operationName: firstCommand ? "First Blood" : opContext ? opContext.operation.name : pick(operationNames),
+    operation: opContext
+      ? {
+          name: opContext.operation.name,
+          stage: opContext.stageIndex + 1,
+          stageCount: opContext.operation.stages.length,
+          label: opContext.operation.stages[opContext.stageIndex].label
+        }
+      : null,
     sectorId: sector ? sector.id : null,
     sectorName,
     flagshipName,
@@ -274,8 +284,8 @@ function ring(cx, cy, radius, jitter = 0) {
   return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
 }
 
-export function setupMissionWorld(sector) {
-  const mission = generateMission(sector);
+export function setupMissionWorld(sector, opContext = null) {
+  const mission = generateMission(sector, opContext);
   state.mission = mission;
   state.player = createPlayerShip();
   state.enemies = [];
