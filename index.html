@@ -15,28 +15,32 @@
       <div class="vk-bg vk-bg--title"></div>
       <div class="scanlines"></div>
       <div class="title-layout">
-        <div class="title-block">
-          <h1 class="game-title">VALKYRIE</h1>
-          <div class="title-sub">
-            <span class="rule"></span>
-            <span>HELION WAR</span>
+        <div class="title-content">
+          <div class="title-block">
+            <h1 class="game-title">VALKYRIE</h1>
+            <div class="title-sub">
+              <span class="rule"></span>
+              <span>THE HELION WAR</span>
+            </div>
+            <p class="tagline">Ship to ship battle</p>
           </div>
-          <p class="tagline">You are not a pilot. You are the captain of a warship on the line — and the Helion War will judge every decision you make.</p>
+
+          <nav class="menu">
+            <button class="menu-item" id="menu-new"><span class="num">01</span><span class="label">New Campaign</span><span class="mono sub">BEGIN SERVICE</span></button>
+            <button class="menu-item" id="menu-continue"><span class="num">02</span><span class="label">Continue</span><span class="mono sub">RESUME COMMAND</span></button>
+            <button class="menu-item" id="menu-controls"><span class="num">03</span><span class="label">Controls</span><span class="mono sub">BRIDGE STATIONS</span></button>
+            <button class="menu-item" id="menu-settings"><span class="num">04</span><span class="label">Settings</span><span class="mono sub">TERMINAL CONFIG</span></button>
+            <button class="menu-item" id="menu-credits"><span class="num">05</span><span class="label">Credits</span><span class="mono sub">SERVICE RECORD</span></button>
+          </nav>
+
+          <div class="status-bar mono">
+            <button class="audio-toggle" data-mute-toggle>♪ Music: On</button>
+          </div>
         </div>
 
-        <nav class="menu">
-          <button class="menu-item" id="menu-new"><span class="num">01</span><span class="label">New Campaign</span><span class="mono sub">BEGIN SERVICE</span></button>
-          <button class="menu-item" id="menu-continue"><span class="num">02</span><span class="label">Continue</span><span class="mono sub">RESUME COMMAND</span></button>
-          <button class="menu-item" id="menu-controls"><span class="num">03</span><span class="label">Controls</span><span class="mono sub">BRIDGE STATIONS</span></button>
-          <button class="menu-item" id="menu-settings"><span class="num">04</span><span class="label">Settings</span><span class="mono sub">TERMINAL CONFIG</span></button>
-          <button class="menu-item" id="menu-credits"><span class="num">05</span><span class="label">Credits</span><span class="mono sub">SERVICE RECORD</span></button>
-        </nav>
-
-        <div class="status-bar mono">
-          <span>BUILD 1.0.0 // TERMINAL VK-CMD</span>
-          <span class="dim">HELION WAR — CYCLE 47 <span class="amber">●</span> WAR STATUS: CONTESTED</span>
-          <button class="audio-toggle" data-mute-toggle>♪ Music: On</button>
-        </div>
+        <figure class="title-art">
+          <img src="assets/title-art.png" alt="A Commonwealth warship and a Veyr command ship exchanging fire over a contested world" onerror="this.closest('.title-art').style.display='none'">
+        </figure>
       </div>
     </section>
 

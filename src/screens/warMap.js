@@ -7,6 +7,7 @@ import {
   ensureWar,
   sectorState,
   sectorHasMission,
+  sectorReachable,
   controlInfo
 } from "../game/warMap.js";
 
@@ -60,8 +61,8 @@ function buildNodes() {
 }
 
 function defaultSelection() {
-  const mission = SECTORS.find((s) => sectorHasMission(s.id));
-  return (mission || SECTORS[0]).id;
+  const reachable = SECTORS.find((s) => sectorHasMission(s.id) && sectorReachable(s.id));
+  return (reachable || SECTORS.find((s) => sectorHasMission(s.id)) || SECTORS[0]).id;
 }
 
 function bar(label, value, color) {
@@ -83,9 +84,11 @@ export function renderWarMap() {
     const id = node.dataset.id;
     const sec = sectorState(id);
     const info = controlInfo(sec.control);
+    const reachable = sectorReachable(id);
     node.style.setProperty("--node-color", info.color);
     node.classList.toggle("selected", id === selectedId);
-    node.classList.toggle("has-mission", sectorHasMission(id));
+    node.classList.toggle("has-mission", sectorHasMission(id) && reachable);
+    node.classList.toggle("locked", !reachable);
     node.querySelector(".node-dot").style.background = info.color;
   }
 
@@ -99,6 +102,7 @@ function renderPanel() {
   const def = SECTORS.find((s) => s.id === id);
   const info = controlInfo(sec.control);
   const mission = sectorHasMission(id);
+  const reachable = sectorReachable(id);
   const sbLabels = ["None", "Outpost", "Naval Station", "Fleet Base", "Fortress Base"];
 
   dom.panel.innerHTML =
@@ -116,7 +120,10 @@ function renderPanel() {
       ? `<div class="wm-order"><p class="mono eyebrow">AVAILABLE OPERATION</p>` +
         `<p class="wm-optype">${operationType(id)}</p>` +
         `<p class="wm-brief">${operationBrief(id)} Expect resistance scaled to a fleet strength of ${Math.round(sec.enemyFleet)}.</p>` +
-        `<button id="warmap-deploy" class="primary">Deploy to Sector</button></div>`
+        (reachable
+          ? `<button id="warmap-deploy" class="primary">Deploy to Sector</button>`
+          : `<p class="wm-locked mono">BEYOND THE FRONT LINE — secure an adjacent sector before this approach opens.</p>`) +
+        `</div>`
       : `<p class="wm-secured mono">SECTOR SECURED — no active operation.</p>`);
 
   const deploy = document.getElementById("warmap-deploy");
