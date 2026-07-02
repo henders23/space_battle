@@ -21,6 +21,8 @@ import { recordOutcome } from "../game/nemesis.js";
 import * as operations from "../game/operations.js";
 import { commandDispatch, captainLogEntry } from "../game/dispatch.js";
 import { evaluateAwards, COMMENDATIONS, REPRIMANDS } from "../data/commendations.js";
+import { recordMissionExperience } from "../game/crew.js";
+import { OFFICERS } from "../data/officers.js";
 
 // After-action review: grade, captain's report, economy, statistics.
 
@@ -41,6 +43,8 @@ export function initEvaluation() {
   dom.warUpdate = document.getElementById("eval-warupdate");
   dom.operation = document.getElementById("eval-operation");
   dom.scar = document.getElementById("eval-scar");
+  dom.salvage = document.getElementById("eval-salvage");
+  dom.crew = document.getElementById("eval-crew");
 }
 
 export function finishMission(result, reason) {
@@ -60,6 +64,23 @@ export function finishMission(result, reason) {
       ? state.mission.reward + state.stats.escortsDestroyed * 120
       : state.stats.escortsDestroyed * 90;
   if (opCallout && opCallout.kind === "complete") reward += opCallout.reward;
+
+  // Evacuation pays a bond for every ship brought out — even from a lost action.
+  if (state.mission.type === "evacuation") {
+    reward += ((state.objective && state.objective.saved) || 0) * (state.mission.rewardPerShip || 170);
+  }
+
+  // Salvage recovered in the field: credits fold into the payout, intact
+  // modules go straight into the armory inventory.
+  reward += state.stats.salvageCredits;
+  const recoveredModules = [];
+  for (const module of state.stats.salvageModules) {
+    if (!state.career.owned[module.category]) state.career.owned[module.category] = [];
+    if (!state.career.owned[module.category].includes(module.key)) {
+      state.career.owned[module.category].push(module.key);
+      recoveredModules.push(module.name);
+    }
+  }
   const repairCost = calculateRepairCost();
   const net = reward - repairCost;
 
@@ -92,6 +113,9 @@ export function finishMission(result, reason) {
 
   // A promotion can fall out of the records this mission updated.
   const promotion = reconcileRank();
+
+  // The bridge crew logs the action: experience, level-ups, recoveries.
+  const crewCallouts = recordMissionExperience(result, grade, state.stats);
 
   // Advance the war in the sector this mission was fought over.
   let warUpdate = null;
@@ -139,6 +163,8 @@ export function finishMission(result, reason) {
     warUpdate,
     operation: operationCalloutText(opCallout),
     scar: shipMarkText(shipMark),
+    salvage: salvageCalloutText(recoveredModules),
+    crew: crewCalloutText(crewCallouts),
     report: commandDispatch(result, reason, grade, nemesisCallout, opCallout)
   };
 
@@ -166,6 +192,32 @@ function operationCalloutText(callout) {
   if (callout.kind === "phase") return `OPERATION ${callout.name.toUpperCase()} — phase ${callout.stage}/${callout.count} now: ${callout.nextLabel}.`;
   if (callout.kind === "failed") return `OPERATION ${callout.name.toUpperCase()} ABANDONED.`;
   return null;
+}
+
+// Headline for field salvage: recovered credits and any intact modules.
+function salvageCalloutText(recoveredModules) {
+  const credits = state.stats.salvageCredits;
+  if (credits <= 0 && recoveredModules.length === 0) return null;
+  const parts = [];
+  if (credits > 0) parts.push(`${formatCredits(credits)} cr recovered from the wreckage`);
+  if (recoveredModules.length) parts.push(`captured hardware added to the armory: ${recoveredModules.join(", ")}`);
+  return `SALVAGE — ${parts.join(" · ")}.`;
+}
+
+// Headline for the crew: wounds taken, level-ups earned, officers back on duty.
+function crewCalloutText(callouts) {
+  const parts = [];
+  for (const up of callouts.levelUps) {
+    parts.push(`${up.officer.name} advances to level ${up.level}${up.perk ? ` — ${up.perk}` : ""}`);
+  }
+  for (const officer of callouts.recovered) {
+    parts.push(`${officer.name} is fit for duty again`);
+  }
+  for (const sys of state.stats.officersWounded) {
+    const officer = OFFICERS[sys];
+    if (officer) parts.push(`${officer.name} was wounded in the action`);
+  }
+  return parts.length ? `CREW — ${parts.join(" · ")}.` : null;
 }
 
 // Short headline text for a fresh battle scar / honour, or null.
@@ -236,6 +288,22 @@ function updateEvaluation() {
       dom.scar.classList.add("hidden");
     }
   }
+  if (dom.salvage) {
+    if (evaluation.salvage) {
+      dom.salvage.textContent = evaluation.salvage;
+      dom.salvage.classList.remove("hidden");
+    } else {
+      dom.salvage.classList.add("hidden");
+    }
+  }
+  if (dom.crew) {
+    if (evaluation.crew) {
+      dom.crew.textContent = evaluation.crew;
+      dom.crew.classList.remove("hidden");
+    } else {
+      dom.crew.classList.add("hidden");
+    }
+  }
   if (dom.careerLine) {
     const r = state.career.record;
     const rank = currentRank();
@@ -259,8 +327,14 @@ function updateEvaluation() {
     ["Shots fired", state.stats.shotsFired],
     ["Shots hit", state.stats.shotsHit],
     ["Accuracy", `${accuracy}%`],
-    ["Systems damaged", state.stats.systemsDamaged]
+    ["Systems damaged", state.stats.systemsDamaged],
+    ["Salvage recovered", `${formatCredits(state.stats.salvageCredits)} cr`],
+    ["Officers wounded", state.stats.officersWounded.length]
   ];
+  if (state.mission.type === "evacuation") {
+    const o = state.objective || {};
+    statRows.splice(3, 0, ["Ships evacuated", `${o.saved || 0} / ${o.total || 0}`]);
+  }
   for (const [label, value] of statRows) {
     const wrapper = document.createElement("div");
     const dt = document.createElement("dt");

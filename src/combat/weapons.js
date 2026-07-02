@@ -14,6 +14,7 @@ import {
 import { addFlash, addShake } from "./effects.js";
 import { projectileSpriteFor } from "./sprites.js";
 import * as sfx from "../sfx.js";
+import { crewCooldownMult, crewDamageMult } from "../game/crew.js";
 
 export function getSlotAngle(angle, slot) {
   if (slot === "port") return angle - Math.PI / 2;
@@ -24,11 +25,11 @@ export function getSlotAngle(angle, slot) {
 export function playerWeaponDefinitions() {
   const loadout = state.career.loadout;
   // Hull class scales firepower: the battleship hits harder but reloads slower.
-  const dmgMod = (state.player && state.player.weaponDamage) || 1;
-  const cdMod = (state.player && state.player.weaponCooldown) || 1;
+  const dmgMod = ((state.player && state.player.weaponDamage) || 1) * crewDamageMult();
+  const cdMod = ((state.player && state.player.weaponCooldown) || 1) * crewCooldownMult();
   const tune = (def, broadside) => ({
     ...def,
-    damage: Math.round(def.damage * (broadside ? dmgMod : 1)),
+    damage: Math.round(def.damage * (broadside ? dmgMod : crewDamageMult())),
     cooldown: def.cooldown * cdMod
   });
   const specialBoost = loadout.forward === "torpedoForward" ? 1.25 : 1;

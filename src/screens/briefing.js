@@ -66,6 +66,9 @@ export function renderBriefing() {
   dom.text.textContent = text;
 
   dom.time.textContent = formatTime(m.duration);
-  dom.reward.textContent = `${formatCredits(m.reward)} cr`;
+  dom.reward.textContent =
+    m.type === "evacuation"
+      ? `${formatCredits(m.reward)} cr + ${formatCredits(m.rewardPerShip || 170)}/ship`
+      : `${formatCredits(m.reward)} cr`;
   dom.threat.textContent = `${threatLabel(m.threat || 0)} (${Math.round(m.threat || 0)})`;
 }

@@ -116,12 +116,28 @@ sheet.
   deploy to contested sectors from the map; missions scale to the sector's fleet
   strength, and each outcome advances the war — shifting control, threat and stability,
   with war-update bulletins.
-- **Five mission types**, each mechanically distinct: **Assassinate Flagship** (kill the
+- **Six mission types**, each mechanically distinct: **Assassinate Flagship** (kill the
   named command ship), **Patrol Sweep** (clear all hostiles), **Convoy Escort** (shepherd
   transports to the jump point), **Starbase Defence** (hold a fixed station through enemy
-  waves), and **Rescue Operation** (defend a crippled ship until it withdraws). Allied
+  waves), **Rescue Operation** (defend a crippled ship until it withdraws), and
+  **Sector Evacuation** — the captain's first command — escaping a falling sector to an
+  extraction point, where any stranded friendly ship you bring your hull alongside
+  forms up behind you and pays an evacuation bond if it makes the jump. Allied
   ships can be damaged and lost, and the after-action grade and report comment on each
   type's objective.
+- **Heavy-ship helm physics**: cruisers and flagships turn with angular inertia and
+  need way on for steerage — they lag and overshoot a reversing orbit, wrecked engines
+  slow their helm and thrust, and a ship battered to a stop can no longer rotate its
+  wounded flank away. Out-manoeuvring the big hulls is now a real tactic.
+- **Salvage**: destroyed hostiles can shed drifting salvage caches — fly over one to
+  recover credits or (rarely) an intact armory module you don't own; boarding captures
+  strip a richer prize on the spot. Everything recovered pays out in the after-action
+  review.
+- **Crew progression**: the four named bridge officers gain experience from every
+  action, level up to sharpen the system they run (levels shown in the combat HUD),
+  unlock named perks at levels 3 and 5, and can be **wounded** when their station is
+  wrecked — suspending their bonuses until they recover in the medbay (part of ship
+  repair) or after two actions' rest. A crew roster card at the starbase tracks it all.
 - **Starbase loop**: repair economy, an **armory** to purchase weapons/modules with
   credits, owned-only loadout selection, career stats, and **mission history**.
 - Procedural after-action evaluation: grade, captain's report, commendations/reprimands,

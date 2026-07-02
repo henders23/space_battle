@@ -6,6 +6,7 @@ import { hullRatio, hullMaxTotal } from "./shipStats.js";
 import { addMessage, addRing, addShake } from "./effects.js";
 import * as sfx from "../sfx.js";
 import * as voicelines from "./voicelines.js";
+import { boardingSalvage } from "./salvage.js";
 
 // Boarding loop. A crippled hostile (hull at or below the threshold) can be
 // boarded once the player's hull is alongside it. Boarding opens the standalone
@@ -118,6 +119,7 @@ function endBoarding(result) {
       state.stats.escortsDestroyed += 1;
       addMessage(`${target.name} taken by the boarding party.`);
     }
+    boardingSalvage(target);
     addRing(target.x, target.y, "#5fd17a", 0.7, target.radius, 2.4);
     addShake(10);
   } else if (target) {

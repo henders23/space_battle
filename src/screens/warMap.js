@@ -130,9 +130,9 @@ function renderPanel() {
   if (deploy) deploy.addEventListener("click", () => deployHandler && deployHandler(id));
 }
 
-// The captain's first command is always the damaged-flagship assassination.
+// The captain's first command is always the sector-evacuation intro.
 function sectorMissionType(id) {
-  if (state.career.record.missionsCompleted === 0) return "assassinate_flagship";
+  if (state.career.record.missionsCompleted === 0) return "evacuation";
   return sectorState(id).missionType || SECTOR_MISSION_POOL[0];
 }
 

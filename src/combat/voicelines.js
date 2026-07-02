@@ -51,6 +51,21 @@ const LINES = {
     "More of them coming in, Captain. Stay sharp.",
     "Second wave on the board and closing."
   ] },
+  officerWounded: { system: "shields", pool: [
+    "We have wounded on the bridge — medics are on their way up.",
+    "Officer down! Sick bay team to the bridge, now.",
+    "They're hurt bad, Captain. The station's running short-handed."
+  ] },
+  evacJoined: { system: "sensors", pool: [
+    "She's forming up on our stern, Captain. Don't lose her.",
+    "Good tuck-in — they're with us now. Steady as she goes.",
+    "Another one under our wing. Get us to the extraction point."
+  ] },
+  evacSaved: { system: "sensors", pool: [
+    "She's away — clean jump. That's a shipload of people who owe you.",
+    "Transit confirmed. One more brought out of the fire.",
+    "They made the jump point, Captain. Well done."
+  ] },
   boarding: { system: "weapons", pool: [
     "Marines are away — they're going across.",
     "Boarding party clear of the airlocks, Captain.",

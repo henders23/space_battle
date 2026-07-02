@@ -11,11 +11,19 @@ import {
 } from "../utils.js";
 import { getSystemMultiplier } from "./systems.js";
 import { enemyTryFire } from "./weapons.js";
-import { addMessage, addEffect, addImpact, addExplosion, addShake } from "./effects.js";
+import { addMessage, addEffect, addImpact, addExplosion, addRing, addShake } from "./effects.js";
 import * as sfx from "../sfx.js";
 import { hullTotal, hullMaxTotal, hullRatio, impactSide, isDestroyed } from "./shipStats.js";
 import { updateObjective } from "./objectives.js";
 import { updateBoardingAvailability, boardingActive, BOARDING_HULL_THRESHOLD } from "./boarding.js";
+import { dropSalvageFrom, updateSalvage } from "./salvage.js";
+import {
+  crewEngineMult,
+  crewTurnMult,
+  crewShieldRegenMult,
+  crewShieldDelayCut,
+  woundOfficer
+} from "../game/crew.js";
 import * as voicelines from "./voicelines.js";
 import { finishMission } from "../screens/evaluation.js";
 import { difficultyMods } from "../settings.js";
@@ -28,6 +36,7 @@ export function update(dt) {
   updateEnemies(dt);
   updateAllies(dt);
   updateProjectiles(dt);
+  updateSalvage(dt);
   updateAsteroids(dt);
   updateEffects(dt);
   const resolution = updateObjective(dt);
@@ -58,6 +67,10 @@ function updateAllies(dt) {
   for (const ally of state.allies) {
     if (!ally.alive) continue;
     updateShipRecovery(ally, dt);
+    if (ally.evac) {
+      updateEvacuee(ally, o, dt);
+      continue;
+    }
     if (ally.type === "transport" && ally.exit) {
       const ang = angleTo(ally, ally.exit);
       ally.angle = turnToward(ally.angle, ang, 1.6 * dt);
@@ -78,10 +91,64 @@ function updateAllies(dt) {
   }
 }
 
+// A stranded evacuee sits under fire until the player's hull comes alongside;
+// from then on it holds station astern and jumps out when it reaches the
+// extraction point.
+function updateEvacuee(ally, o, dt) {
+  const player = state.player;
+
+  if (!ally.following) {
+    if (player && player.alive && distance(ally, player) <= player.radius + ally.radius + 44) {
+      ally.following = true;
+      addMessage(`${ally.name} forms up astern — she's with you now.`);
+      voicelines.say("evacJoined");
+      addRing(ally.x, ally.y, "#5fd17a", 0.6, ally.radius, 2.2);
+    } else {
+      // Adrift and waiting; momentum from hits bleeds off.
+      ally.vx *= Math.pow(0.97, dt * 60);
+      ally.vy *= Math.pow(0.97, dt * 60);
+      ally.x += ally.vx * dt;
+      ally.y += ally.vy * dt;
+      return;
+    }
+  }
+
+  if (o.exit && distance(ally, o.exit) < 200) {
+    ally.alive = false;
+    ally.saved = true;
+    o.saved = (o.saved || 0) + 1;
+    addRing(ally.x, ally.y, "#5fd17a", 0.7, ally.radius + 10, 2.6);
+    addMessage(`${ally.name} has jumped clear. ${o.saved}/${o.total} ships evacuated.`);
+    voicelines.say("evacSaved");
+    return;
+  }
+
+  // Hold a formation slot astern of the player, burning harder the further it
+  // falls behind so a full-throttle run stretches the convoy without losing it.
+  const idx = ally.formationIndex || 0;
+  const back = player.radius + 110 + idx * 70;
+  const side = (idx % 2 === 0 ? 1 : -1) * (34 + idx * 14);
+  const slot = {
+    x: player.x - Math.cos(player.angle) * back - Math.sin(player.angle) * side,
+    y: player.y - Math.sin(player.angle) * back + Math.cos(player.angle) * side
+  };
+  const d = distance(ally, slot);
+  const desired = d > 70 ? angleTo(ally, slot) : player.angle;
+  ally.angle = turnToward(ally.angle, desired, 2.1 * dt);
+  const catchUp = clamp(d / 300, 0.35, 1.3);
+  ally.vx += Math.cos(ally.angle) * 130 * catchUp * dt;
+  ally.vy += Math.sin(ally.angle) * 130 * catchUp * dt;
+  limitVelocity(ally, 190 * Math.min(1, catchUp));
+  ally.vx *= Math.pow(0.985, dt * 60);
+  ally.vy *= Math.pow(0.985, dt * 60);
+  ally.x += ally.vx * dt;
+  ally.y += ally.vy * dt;
+}
+
 function updatePlayer(dt) {
   const ship = state.player;
-  const engineMult = getSystemMultiplier(ship, "engines") + ship.engineBonus;
-  const turn = (ship.turnRate || 0.4) * engineMult;
+  const engineMult = (getSystemMultiplier(ship, "engines") + ship.engineBonus) * crewEngineMult();
+  const turn = (ship.turnRate || 0.4) * engineMult * crewTurnMult();
   const forwardX = Math.cos(ship.angle);
   const forwardY = Math.sin(ship.angle);
 
@@ -150,7 +217,8 @@ function handleAsteroidImpacts(ship, dt) {
 }
 
 function updateShipRecovery(ship, dt) {
-  const regen = ship.shieldRegen * getSystemMultiplier(ship, "shields");
+  let regen = ship.shieldRegen * getSystemMultiplier(ship, "shields");
+  if (ship.type === "player") regen *= crewShieldRegenMult();
   for (const side of ["port", "starboard"]) {
     if (ship.shieldDelay[side] > 0) {
       ship.shieldDelay[side] -= dt;
@@ -219,6 +287,29 @@ function moveShip(ship, desired, turnRate, thrust, maxSpeed, damp, dt) {
   ship.y += ship.vy * dt;
 }
 
+// Damaged engines degrade an enemy's helm as well as its thrust, so wrecking a
+// ship's drives is a real route to out-turning it.
+function enemyEngineMult(ship) {
+  return getSystemMultiplier(ship, "engines");
+}
+
+// Heavy hulls (cruisers, flagships) turn with angular inertia instead of
+// snapping to full rate every frame: the rudder winds up, lags a reversing
+// target, and overshoots when the player cuts back across their bow. Their
+// effective turn rate also scales with forward way — a ship with no speed on
+// has almost no steerage, so forcing one to stop makes it flankable.
+function heavyTurn(ship, desired, baseRate, dt) {
+  const speed = Math.hypot(ship.vx, ship.vy);
+  const steerage = 0.35 + 0.65 * Math.min(1, speed / (ship.maxSpeed || 120));
+  const maxRate = baseRate * enemyEngineMult(ship) * steerage;
+  const err = angleWrap(desired - ship.angle);
+  const targetVel = clamp(err * 1.6, -maxRate, maxRate);
+  const accel = baseRate * 0.9; // rad/s² — winding the helm over takes seconds
+  const angVel = ship.angVel || 0;
+  ship.angVel = angVel + clamp(targetVel - angVel, -accel * dt, accel * dt);
+  ship.angle += ship.angVel * dt;
+}
+
 function limitVelocity(ship, maxSpeed) {
   const speed = Math.hypot(ship.vx, ship.vy);
   if (speed > maxSpeed) {
@@ -249,10 +340,11 @@ function updateFlagship(ship, dt) {
     if (d < 390) thrust = -36;
   }
 
-  ship.angle = turnToward(ship.angle, desiredAngle, 0.44 * dt);
+  heavyTurn(ship, desiredAngle, 0.44, dt);
+  thrust *= enemyEngineMult(ship);
   ship.vx += Math.cos(ship.angle) * thrust * dt;
   ship.vy += Math.sin(ship.angle) * thrust * dt;
-  limitVelocity(ship, 125);
+  limitVelocity(ship, 125 * Math.max(0.4, enemyEngineMult(ship)));
   ship.vx *= Math.pow(0.994, dt * 60);
   ship.vy *= Math.pow(0.994, dt * 60);
   ship.x += ship.vx * dt;
@@ -305,7 +397,8 @@ function updateCharger(ship, dt) {
   } else {
     thrust = td > 310 ? 138 : td < 185 ? -70 : 34;
   }
-  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.989, dt);
+  const em = enemyEngineMult(ship);
+  moveShip(ship, desired, ship.turnRate * em, thrust * em, ship.maxSpeed * Math.max(0.4, em), 0.989, dt);
   enemyTryFire(ship, "forward", target, ship.weapon);
 }
 
@@ -316,7 +409,8 @@ function updateAggressive(ship, dt) {
   const td = distance(ship, target);
   const desired = angleTo(ship, target);
   const thrust = td < 140 ? -60 : 150;
-  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.985, dt);
+  const em = enemyEngineMult(ship);
+  moveShip(ship, desired, ship.turnRate * em, thrust * em, ship.maxSpeed * Math.max(0.4, em), 0.985, dt);
   enemyTryFire(ship, "forward", target, ship.weapon);
 }
 
@@ -327,11 +421,14 @@ function updateKite(ship, dt) {
   const td = distance(ship, target);
   const desired = angleTo(ship, target);
   const thrust = td > 880 ? 110 : td < 620 ? -95 : 0;
-  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.99, dt);
+  const em = enemyEngineMult(ship);
+  moveShip(ship, desired, ship.turnRate * em, thrust * em, ship.maxSpeed * Math.max(0.4, em), 0.99, dt);
   enemyTryFire(ship, "forward", target, ship.weapon);
 }
 
-// Cruisers: broadside duelists — present a beam and rake the target.
+// Cruisers: broadside duelists — present a beam and rake the target. They keep
+// way on to hold steerage; a cruiser battered to a stop can no longer swing its
+// good side around fast enough to hide the wounded one.
 function updateBroadsideShip(ship, dt) {
   const target = nearestEnemyTarget(ship);
   if (!target) return;
@@ -339,8 +436,15 @@ function updateBroadsideShip(ship, dt) {
   const d = distance(ship, target);
   const side = Math.sin(angleWrap(toT - ship.angle)) > 0 ? Math.PI / 2 : -Math.PI / 2;
   const desired = toT - side;
-  const thrust = d > 620 ? 50 : d < 360 ? -30 : 0;
-  moveShip(ship, desired, ship.turnRate, thrust, ship.maxSpeed, 0.992, dt);
+  const thrust = (d > 620 ? 50 : d < 360 ? -30 : 14) * enemyEngineMult(ship);
+  heavyTurn(ship, desired, ship.turnRate, dt);
+  ship.vx += Math.cos(ship.angle) * thrust * dt;
+  ship.vy += Math.sin(ship.angle) * thrust * dt;
+  limitVelocity(ship, ship.maxSpeed * Math.max(0.4, enemyEngineMult(ship)));
+  ship.vx *= Math.pow(0.992, dt * 60);
+  ship.vy *= Math.pow(0.992, dt * 60);
+  ship.x += ship.vx * dt;
+  ship.y += ship.vy * dt;
   enemyTryFire(ship, "port", target, ship.broadside);
   enemyTryFire(ship, "starboard", target, ship.broadside);
   enemyTryFire(ship, "forward", target, ship.bow);
@@ -398,6 +502,11 @@ function updateProjectiles(dt) {
         if (!wasCritical) {
           sfx.alarm();
           voicelines.say("hullCritical");
+          // A breach that bad puts crew in the sick bay as often as not.
+          if (Math.random() < 0.3) {
+            const officer = woundOfficer(pick(["engines", "weapons", "sensors", "shields"]));
+            if (officer) addMessage(`Sick bay: ${officer.name} is wounded — carried below decks.`);
+          }
         }
       }
       if (isDestroyed(state.player)) {
@@ -447,7 +556,7 @@ function applyDamage(ship, amount, source, side) {
     hullDamage = remaining;
     maybeDamageSystem(ship, remaining, source);
   }
-  ship.shieldDelay[side] = 3.2;
+  ship.shieldDelay[side] = ship.type === "player" ? 3.2 - crewShieldDelayCut() : 3.2;
   return hullDamage;
 }
 
@@ -461,6 +570,14 @@ function maybeDamageSystem(ship, hullDamage, source) {
     state.stats.systemsDamaged += 1;
     addMessage(`Engineering: ${SYSTEM_NAMES[system]} report ${SYSTEM_STATES[ship.systems[system]]}.`);
     voicelines.say("systemDamage");
+    // A station torn apart can take its officer down with it.
+    if (ship.systems[system] >= 3 && Math.random() < 0.35) {
+      const officer = woundOfficer(system);
+      if (officer) {
+        addMessage(`Sick bay: ${officer.name} is wounded — carried below decks.`);
+        voicelines.say("officerWounded");
+      }
+    }
   } else if (source === "player" && ship.type === "flagship") {
     addMessage(`Sensors: enemy ${SYSTEM_NAMES[system].toLowerCase()} degraded.`);
   }
@@ -482,6 +599,7 @@ function destroyEnemy(enemy) {
     addMessage(`${enemy.name} destroyed.`);
     voicelines.say("kill");
   }
+  dropSalvageFrom(enemy);
 }
 
 function updateAsteroids(dt) {

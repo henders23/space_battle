@@ -3,6 +3,7 @@
 import { state, defaultCareer, defaultRecord, defaultOwned, createSystems } from "./state.js";
 import { rankFor } from "./data/ranks.js";
 import { PLAYER_NAMES } from "./data/ships.js";
+import { woundedOfficers, healAllOfficers, MEDBAY_COST } from "./game/crew.js";
 
 const GRADE_ORDER = ["—", "F", "D", "C", "B", "A", "S"];
 
@@ -66,7 +67,8 @@ export function calculateRepairCost() {
     (total, level) => total + level * 135,
     0
   );
-  return Math.max(0, hullCost + systemCost);
+  const medbayCost = woundedOfficers().length * MEDBAY_COST;
+  return Math.max(0, hullCost + systemCost + medbayCost);
 }
 
 export function isOwned(category, key) {
@@ -171,6 +173,7 @@ export function repairShip() {
   state.career.credits -= cost;
   state.career.hull = 1;
   state.career.systems = createSystems();
+  healAllOfficers(); // the yard visit includes the medbay
   saveCareer();
   return true;
 }
@@ -212,6 +215,7 @@ export function loadCareer() {
     state.career.nemeses = Array.isArray(parsed.nemeses) ? parsed.nemeses : [];
     state.career.operation = parsed.operation || null;
     state.career.shipIdentity = parsed.shipIdentity || null;
+    state.career.crew = parsed.crew || null; // game/crew.js heals shape on access
     state.career.log = Array.isArray(parsed.log) ? parsed.log : [];
     state.hasSave = true;
     return true;

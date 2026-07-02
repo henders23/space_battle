@@ -34,6 +34,12 @@ export const MISSION_TYPES = {
     short: "RESCUE",
     objective: "Defend the disabled ship until it withdraws",
     brief: "A Commonwealth ship lies crippled in {sector}. Hold the enemy off until she can jump clear."
+  },
+  evacuation: {
+    name: "Sector Evacuation",
+    short: "EVACUATION",
+    objective: "Reach the extraction point — every ship you touch will follow you out",
+    brief: "{sector} is falling and the order to abandon it has been given. Fight your way to the extraction point. Commonwealth ships are scattered across the sector under fire — bring your hull alongside any of them and they will form up on you. Every ship you lead through the jump point earns an evacuation bond."
   }
 };
 

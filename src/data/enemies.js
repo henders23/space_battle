@@ -29,8 +29,8 @@ export const ENEMY_TYPES = {
   },
   frigate: {
     name: "Frigate",
-    hullSide: 190,
-    shieldSide: 120,
+    hullSide: 245,
+    shieldSide: 135,
     radius: 30,
     regen: 6,
     maxSpeed: 205,
@@ -51,8 +51,8 @@ export const ENEMY_TYPES = {
   },
   cruiser: {
     name: "Cruiser",
-    hullSide: 300,
-    shieldSide: 170,
+    hullSide: 390,
+    shieldSide: 205,
     radius: 48,
     regen: 6,
     maxSpeed: 150,
@@ -69,5 +69,6 @@ export const ENEMY_POOLS = {
   patrol: ["raider", "escort", "frigate"],
   convoy_escort: ["raider", "raider", "escort"],
   starbase_defence: ["escort", "frigate", "cruiser"],
-  rescue_disabled: ["escort", "missile_boat", "frigate"]
+  rescue_disabled: ["escort", "missile_boat", "frigate"],
+  evacuation: ["raider", "raider", "escort"]
 };

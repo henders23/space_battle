@@ -16,6 +16,8 @@ import {
   buyShip,
   equipShip
 } from "../career.js";
+import { OFFICERS, SYSTEM_ORDER } from "../data/officers.js";
+import { crewState, levelFor, levelProgress, isWounded, PERKS, MAX_LEVEL } from "../game/crew.js";
 
 // Starbase refit hub: repair economy, owned-loadout selection, the armory
 // (purchasable weapons/modules), career stats, and mission history.
@@ -62,6 +64,7 @@ export function initStarbase() {
   dom.armoryList = document.getElementById("armory-list");
   dom.historyList = document.getElementById("history-list");
   dom.shipyardList = document.getElementById("shipyard-list");
+  dom.crewList = document.getElementById("crew-list");
 
   dom.forwardSelect.addEventListener("change", (e) => setLoadout("forward", e.target.value));
   dom.portSelect.addEventListener("change", (e) => setLoadout("port", e.target.value));
@@ -162,6 +165,34 @@ function buildShipyard() {
   }
 }
 
+// One tile per bridge officer: portrait, level, progress toward the next
+// level, unlocked perks and any wound status.
+function buildCrew() {
+  if (!dom.crewList) return;
+  dom.crewList.innerHTML = "";
+  const crew = crewState();
+  for (const sys of SYSTEM_ORDER) {
+    const officer = OFFICERS[sys];
+    const record = crew[sys];
+    const level = levelFor(record.xp);
+    const wounded = isWounded(sys);
+    const perks = Object.entries(PERKS[sys] || {})
+      .filter(([lvl]) => level >= Number(lvl))
+      .map(([, label]) => label);
+    const tile = document.createElement("div");
+    tile.className = "crew-tile" + (wounded ? " wounded" : "");
+    tile.innerHTML =
+      `<img class="officer-portrait" src="${officer.portrait}" alt="${officer.name}" loading="lazy">` +
+      `<div class="crew-tile-info">` +
+      `<span class="crew-tile-name">${officer.name}</span>` +
+      `<span class="crew-tile-role mono">${officer.role} · ${wounded ? `WOUNDED — out ${record.injuredFor} action${record.injuredFor === 1 ? "" : "s"}` : `LEVEL ${level}${level >= MAX_LEVEL ? " (MAX)" : ""}`}</span>` +
+      `<div class="officer-bar crew-xp"><i style="width:${Math.round(levelProgress(record.xp) * 100)}%"></i></div>` +
+      (perks.length ? `<span class="crew-tile-perks">${perks.map((p) => `✦ ${p}`).join("<br>")}</span>` : `<span class="crew-tile-perks muted">Perks unlock at levels 3 and 5.</span>`) +
+      `</div>`;
+    dom.crewList.appendChild(tile);
+  }
+}
+
 function buildHistory() {
   const history = state.career.record.history;
   dom.historyList.innerHTML = "";
@@ -203,8 +234,8 @@ export function updateStarbase() {
   const loadout = state.career.loadout;
   const firstCommand = record.missionsCompleted === 0;
   const briefing = firstCommand
-    ? "First command: hunt down a battle-damaged enemy flagship — shields failing, escorts scattered."
-    : "Assassinate a hostile flagship in a contested sector.";
+    ? "First command: the sector is falling — run for the extraction point and bring out every ship you can reach."
+    : "Deploy to a contested sector from the war map.";
   dom.missionPreview.textContent = [
     briefing,
     `Forward: ${forwardLoadouts[loadout.forward].name}.`,
@@ -214,6 +245,7 @@ export function updateStarbase() {
   ].join(" ");
 
   buildArmory();
+  buildCrew();
   buildShipyard();
   buildHistory();
 }

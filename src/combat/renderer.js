@@ -184,6 +184,8 @@ export function draw() {
 
   drawSpace();
   drawAsteroids();
+  drawExtractionPoint();
+  drawSalvage();
   drawWeaponArcs(player, aimSlot);
   for (const ally of state.allies) {
     if (ally.alive) drawShipBody(ally);
@@ -667,6 +669,61 @@ function drawEffects() {
     }
   }
   ctx.globalAlpha = 1;
+}
+
+// Drifting salvage caches: an amber crate for credits, cyan for an intact
+// module, both with a slow pulse and a blink as they near expiry.
+function drawSalvage() {
+  const t = performance.now() / 1000;
+  for (const cache of state.salvage) {
+    if (cache.life < 8 && Math.floor(t * 4) % 2 === 0) continue; // expiry blink
+    const color = cache.module ? "#45e0f0" : "#f0a93d";
+    const pulse = 1 + Math.sin(t * 3 + cache.x) * 0.15;
+    ctx.save();
+    ctx.translate(cache.x, cache.y);
+    ctx.rotate(Math.PI / 4 + t * 0.4);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = color;
+    const s = 7 * pulse;
+    ctx.fillRect(-s / 2, -s / 2, s, s);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    ctx.strokeStyle = cache.module ? "rgba(69,224,240,0.4)" : "rgba(240,169,61,0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cache.x, cache.y, 16 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// The extraction / jump point used by evacuation and convoy objectives: a
+// pulsing beacon ring pair with a label, drawn in world space.
+function drawExtractionPoint() {
+  const exit = state.objective && state.objective.exit;
+  if (!exit) return;
+  const t = performance.now() / 1000;
+  const pulse = ((t * 0.55) % 1);
+  ctx.save();
+  ctx.strokeStyle = "rgba(95, 209, 122, 0.6)";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(exit.x, exit.y, 150, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = `rgba(95, 209, 122, ${0.5 * (1 - pulse)})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(exit.x, exit.y, 150 + pulse * 120, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(95, 209, 122, 0.08)";
+  ctx.beginPath();
+  ctx.arc(exit.x, exit.y, 150, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#5fd17a";
+  ctx.font = "12px 'JetBrains Mono', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("◆ EXTRACTION POINT ◆", exit.x, exit.y - 164);
+  ctx.restore();
 }
 
 function drawRangeRings() {

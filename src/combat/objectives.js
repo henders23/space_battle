@@ -1,7 +1,7 @@
 "use strict";
 
 import { state } from "../state.js";
-import { clamp } from "../utils.js";
+import { clamp, distance } from "../utils.js";
 import { addMessage, addEffect, addShake } from "./effects.js";
 import { hullRatio, shieldRatio } from "./shipStats.js";
 import * as voicelines from "./voicelines.js";
@@ -78,6 +78,23 @@ export function updateObjective(dt) {
     return null;
   }
 
+  if (m.type === "evacuation") {
+    const player = state.player;
+    if (o.exit && player && player.alive && distance(player, o.exit) < 190) {
+      // Anyone still in formation close behind makes the jump with you.
+      for (const ally of state.allies) {
+        if (ally.alive && ally.evac && ally.following && distance(ally, o.exit) < 650) {
+          ally.alive = false;
+          ally.saved = true;
+          o.saved = (o.saved || 0) + 1;
+        }
+      }
+      return win(`Extraction complete — ${o.saved}/${o.total} ships brought out of the sector.`);
+    }
+    if (m.timer <= 0) return lose("The sector fell before you reached the extraction point.");
+    return null;
+  }
+
   if (m.type === "rescue_disabled") {
     const dis = o.disabled;
     if (dis && !dis.alive) return lose("The disabled ship was lost.");
@@ -130,6 +147,12 @@ export function objectiveHudText() {
     const hull = dis ? Math.round(hullRatio(dis) * 100) : 0;
     return `Defend the Meridian — withdraw in ${Math.ceil(o.rescueLeft || 0)}s · hull ${hull}%`;
   }
+  if (m.type === "evacuation") {
+    const following = state.allies.filter((a) => a.alive && a.evac && a.following).length;
+    const stranded = state.allies.filter((a) => a.alive && a.evac && !a.following).length;
+    const dist = o.exit && state.player ? Math.round(distance(state.player, o.exit)) : 0;
+    return `Escape — extraction ${dist}m · ${following} following · ${stranded} stranded · ${o.saved || 0}/${o.total || 0} away`;
+  }
   return m.typeName;
 }
 
@@ -143,6 +166,21 @@ export function focusPoint() {
   if (m.type === "starbase_defence") return o.station && o.station.alive ? o.station : nearestAliveEnemy();
   if (m.type === "rescue_disabled") return o.disabled && o.disabled.alive ? o.disabled : nearestAliveEnemy();
   if (m.type === "convoy_escort") return state.allies.find((a) => a.alive) || (o.exit ? { x: o.exit.x, y: o.exit.y } : null);
+  if (m.type === "evacuation") {
+    // Point at the nearest ship still stranded; once all are aboard or lost,
+    // point the way out.
+    let best = null;
+    let bd = Infinity;
+    for (const a of state.allies) {
+      if (!a.alive || !a.evac || a.following) continue;
+      const d = distance(state.player, a);
+      if (d < bd) {
+        bd = d;
+        best = a;
+      }
+    }
+    return best || (o.exit ? { x: o.exit.x, y: o.exit.y } : null);
+  }
   return nearestAliveEnemy();
 }
 
@@ -197,6 +235,11 @@ export function gradeMission(result) {
     score += (o.station ? hullRatio(o.station) : 0) * 16;
   } else if (m.type === "rescue_disabled") {
     score += (o.disabled ? hullRatio(o.disabled) : 0) * 12 + 4;
+  } else if (m.type === "evacuation") {
+    const saved = o.saved || 0;
+    score += (saved / Math.max(1, o.total)) * 20;
+    if (saved === o.total) score += 6;
+    if (saved === 0) score -= 10; // you got out, but alone
   }
   return scoreToGrade(score);
 }
@@ -226,6 +269,11 @@ export function engagementSummary(result, reason) {
   }
   if (m.type === "rescue_disabled") {
     return `The crippled Meridian was held and jumped clear at ${Math.round((o.disabled ? hullRatio(o.disabled) : 0) * 100)}% hull.`;
+  }
+  if (m.type === "evacuation") {
+    const saved = o.saved || 0;
+    if (saved === 0) return `The ship fought clear of the falling sector in ${time}, but no other hull could be reached in time.`;
+    return `${saved} of ${o.total} stranded ships were gathered under our guns and brought through the extraction point in ${time}${saved === o.total ? " — a complete evacuation" : ""}.`;
   }
   return reason;
 }

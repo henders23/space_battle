@@ -1,6 +1,7 @@
 "use strict";
 
 import { state } from "../state.js";
+import { crewSensorBonus } from "../game/crew.js";
 
 // System-damage multipliers and sensor range. Higher damage level → worse
 // performance for that subsystem (weapons cooldown grows, others shrink).
@@ -16,5 +17,5 @@ export function getSystemMultiplier(ship, system) {
 
 export function getSensorRange() {
   const utilityBonus = state.career.loadout.utility === "improvedSensors" ? 420 : 0;
-  return (980 + utilityBonus) * getSystemMultiplier(state.player, "sensors");
+  return (980 + utilityBonus + crewSensorBonus()) * getSystemMultiplier(state.player, "sensors");
 }

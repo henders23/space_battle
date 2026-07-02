@@ -8,6 +8,7 @@ import { sideRatioShield, sideRatioHull } from "../combat/shipStats.js";
 import { OFFICERS, SYSTEM_ORDER } from "../data/officers.js";
 import { objectiveHudText } from "../combat/objectives.js";
 import { updateBoardingHud } from "../combat/boarding.js";
+import { officerLevel, isWounded } from "../game/crew.js";
 
 const dom = {};
 const RACK_SLOTS = ["forward", "port", "starboard", "torpedo"];
@@ -72,7 +73,7 @@ function buildOfficerRows() {
       `<img class="officer-portrait" src="${officer.portrait}" alt="${officer.name}" loading="lazy">` +
       `<div class="officer-info">` +
       `<span class="officer-top"><span class="officer-name">${officer.name}</span>` +
-      `<span class="officer-role mono">${officer.role}</span></span>` +
+      `<span class="officer-role mono">${officer.role} <b class="officer-level"></b></span></span>` +
       `<span class="officer-system"><span class="sys-icon">${officer.icon}</span> ${SYSTEM_NAMES[sys]} — <b class="sys-status">operational</b></span>` +
       `<div class="officer-bar"><i></i></div>` +
       `</div>`;
@@ -80,6 +81,7 @@ function buildOfficerRows() {
     officerRows[sys] = {
       row,
       status: row.querySelector(".sys-status"),
+      level: row.querySelector(".officer-level"),
       bar: row.querySelector(".officer-bar i")
     };
   }
@@ -142,7 +144,10 @@ export function updateHud() {
     const refs = officerRows[sys];
     if (!refs) continue;
     const level = player.systems[sys] || 0;
+    const wounded = isWounded(sys);
     refs.row.dataset.level = level;
+    refs.row.classList.toggle("wounded", wounded);
+    if (refs.level) refs.level.textContent = wounded ? "WOUNDED" : `LV${officerLevel(sys)}`;
     refs.status.textContent = SYSTEM_STATES[level];
     refs.status.style.color = systemColor(level);
     refs.bar.style.width = `${((3 - level) / 3) * 100}%`;

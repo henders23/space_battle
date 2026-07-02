@@ -7,6 +7,7 @@ import { HULLS, PLAYER_NAMES } from "../data/ships.js";
 import { ENEMY_TYPES, ENEMY_POOLS } from "../data/enemies.js";
 import { difficultyMods } from "../settings.js";
 import { flagshipForMission, escalation } from "../game/nemesis.js";
+import { crewShieldMaxMult } from "../game/crew.js";
 import * as voicelines from "./voicelines.js";
 
 // Mission generation, world setup, and ship/asteroid factories.
@@ -39,11 +40,11 @@ export function generateMission(sector, opContext = null) {
     "A debris field from an old convoy action is drifting across the lane."
   ];
 
-  // The captain's very first command is a gentler engagement: a battle-damaged
-  // flagship limping home — a winnable introduction.
+  // The captain's very first command is the fall of a sector: an evacuation
+  // under fire, where every friendly ship reached and led out is a small win.
   const firstCommand = state.career.record.missionsCompleted === 0;
   const type = firstCommand
-    ? "assassinate_flagship"
+    ? "evacuation"
     : opContext
       ? opContext.forcedType
       : (sector && sector.missionType) || pick(SECTOR_MISSION_POOL);
@@ -59,7 +60,7 @@ export function generateMission(sector, opContext = null) {
   const flagshipName = target ? target.shipName : `VRS ${pick(flagshipTitles)} ${randomInt(17, 94)}`;
   const nemesisHullMult = target ? escalation(target.escapes).hullMult : 1;
   const reward = Math.round(
-    (firstCommand ? 750 * randomRange(0.9, 1.1) : (780 + threat * 6) * randomRange(0.9, 1.1)) * diff.reward
+    (firstCommand ? 620 * randomRange(0.9, 1.1) : (780 + threat * 6) * randomRange(0.9, 1.1)) * diff.reward
   );
 
   const force = clamp(Math.round(enemyFleet / 26), 1, 5); // generic hostile count
@@ -68,7 +69,7 @@ export function generateMission(sector, opContext = null) {
   const mission = {
     type,
     typeName: MISSION_TYPES[type].name,
-    operationName: firstCommand ? "First Blood" : opContext ? opContext.operation.name : pick(operationNames),
+    operationName: firstCommand ? "Firebreak" : opContext ? opContext.operation.name : pick(operationNames),
     operation: opContext
       ? {
           name: opContext.operation.name,
@@ -85,19 +86,21 @@ export function generateMission(sector, opContext = null) {
     reward,
     threat,
     enemyFleet,
-    damaged: firstCommand,
+    damaged: false,
     nemesisId: target ? target.nemesisId : null,
     nemesisReturning: target ? target.returning : false,
     nemesisEscapes: target ? target.escapes : 0,
     nemesisCommander: target ? target.commander : null,
     nemesisCommanderRank: target ? target.commanderRank : null,
     hazard: firstCommand
-      ? "Intelligence confirms the target is a battle-damaged flagship limping home — shields failing, escorts scattered. A clean opportunity for a first command."
+      ? "The evacuation order is already hours old. Dominion raiders are loose among the transports, and every ship still burning toward the jump point is out of time. Reach them if you can — but reach the extraction point above all."
       : pick(hazards),
     // type-specific sizing
     escortCount: firstCommand ? 0 : clamp(Math.round(enemyFleet / 32), 0, 3),
+    evacueeCount: firstCommand ? 4 : clamp(Math.round(enemyFleet / 30), 3, 5),
+    rewardPerShip: Math.round(170 * diff.reward),
     flagshipHull: Math.round(
-      (firstCommand ? 520 * randomRange(0.9, 1.1) : (820 + enemyFleet * 4) * randomRange(0.9, 1.1)) * diff.enemyHull * nemesisHullMult
+      (950 + enemyFleet * 4.5) * randomRange(0.9, 1.1) * diff.enemyHull * nemesisHullMult
     ),
     enemyCount: force,
     transportCount: randomInt(2, 4),
@@ -114,7 +117,7 @@ export function createPlayerShip() {
   const utility = state.career.loadout.utility;
   const shieldBonus = utility === "reinforcedShields" ? 85 : 0;
   const engineBonus = utility === "engineBoost" ? 0.16 : 0;
-  const sideShield = hull.shieldSide + shieldBonus / 2;
+  const sideShield = (hull.shieldSide + shieldBonus / 2) * crewShieldMaxMult();
   const sideHull = hull.hullSide * state.career.hull;
   return {
     id: "player",
@@ -174,6 +177,7 @@ export function createEnemyShip(type, x, y, mission, index) {
       systems,
       cooldowns: { port: randomRange(0.2, 1.2), starboard: randomRange(0.5, 1.4), forward: randomRange(0.8, 1.8) },
       escaping: false,
+      maxSpeed: 125,
       behavior: "flagship",
       spawned: true,
       alive: true
@@ -274,7 +278,10 @@ export function createStats() {
     shotsHit: 0,
     systemsDamaged: 0,
     tonnage: 0,
-    hullCritical: false
+    hullCritical: false,
+    salvageCredits: 0,
+    salvageModules: [],
+    officersWounded: []
   };
 }
 
@@ -293,6 +300,7 @@ export function setupMissionWorld(sector, opContext = null) {
   state.objective = {};
   state.boarding = { active: false, available: false, calloutVisible: false, targetId: null };
   state.projectiles = [];
+  state.salvage = [];
   state.asteroids = createAsteroids();
   state.effects = [];
   state.messages = [];
@@ -361,6 +369,41 @@ export function setupMissionWorld(sector, opContext = null) {
       }
     }
     state.objective = { station, waveCount: mission.waveCount, currentWave: 0 };
+  } else if (mission.type === "evacuation") {
+    // A corridor run: the player starts at one end of the falling sector, the
+    // extraction point waits at the other, and stranded Commonwealth ships lie
+    // scattered along the way — each with raiders already on it.
+    const a = randomRange(0, Math.PI * 2);
+    const dir = { x: Math.cos(a), y: Math.sin(a) };
+    const exit = { x: CENTER.x + dir.x * 1500, y: CENTER.y + dir.y * 1500 };
+    state.player.x = CENTER.x - dir.x * 1800;
+    state.player.y = CENTER.y - dir.y * 1800;
+    state.player.angle = a;
+
+    const evacNames = ["CT Larkspur", "CT Meridian Dawn", "Medship Aria", "CT Yellowhammer", "Tender Boreas"];
+    const perp = { x: -dir.y, y: dir.x };
+    for (let i = 0; i < mission.evacueeCount; i += 1) {
+      // Spread along the corridor with alternating lateral offsets.
+      const along = -1150 + (2000 / Math.max(1, mission.evacueeCount - 1)) * i + randomRange(-140, 140);
+      const lateral = (i % 2 === 0 ? 1 : -1) * randomRange(260, 620);
+      const ex = CENTER.x + dir.x * along + perp.x * lateral;
+      const ey = CENTER.y + dir.y * along + perp.y * lateral;
+      const evacuee = makeAlly("transport", evacNames[i % evacNames.length], ex, ey, 175, 95, 34, 5);
+      evacuee.evac = true;
+      evacuee.following = false;
+      evacuee.formationIndex = i;
+      state.allies.push(evacuee);
+      // Raiders already working the ship over.
+      const p = ring(ex, ey, randomRange(340, 520));
+      spawnHostile(pick(ENEMY_POOLS.evacuation), p.x, p.y);
+    }
+    // A couple of rovers hunting along the corridor itself.
+    for (let i = 0; i < 2; i += 1) {
+      const along = randomRange(-500, 1100);
+      const p = { x: CENTER.x + dir.x * along + perp.x * randomRange(-320, 320), y: CENTER.y + dir.y * along + perp.y * randomRange(-320, 320) };
+      spawnHostile(pick(ENEMY_POOLS.evacuation), p.x, p.y);
+    }
+    state.objective = { exit, total: mission.evacueeCount, saved: 0 };
   } else if (mission.type === "rescue_disabled") {
     const dx = CENTER.x + randomRange(-200, 200);
     const dy = CENTER.y + randomRange(-200, 200);

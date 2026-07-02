@@ -330,6 +330,20 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 .history-result.bad { color: var(--danger-soft); }
 .empty { color: var(--muted-2); font-size: 0.78rem; padding: 8px 2px; }
 
+/* starbase bridge-crew roster */
+.crew-block { margin-top: 18px; }
+.crew-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.crew-tile { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: start; padding: 10px 12px; border: 1px solid rgba(70, 160, 180, 0.18); background: rgba(8, 18, 24, 0.5); }
+.crew-tile .officer-portrait { width: 52px; height: 68px; }
+.crew-tile-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.crew-tile-name { font-family: var(--display); font-weight: 600; font-size: 0.98rem; letter-spacing: 0.5px; }
+.crew-tile-role { font-size: 0.6rem; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; }
+.crew-tile.wounded .crew-tile-role { color: var(--danger); }
+.crew-tile.wounded .officer-portrait { filter: grayscale(0.85) brightness(0.55); }
+.crew-xp i { background: var(--accent); }
+.crew-tile-perks { font-size: 0.72rem; line-height: 1.5; color: var(--text-2); }
+.crew-tile-perks.muted { color: var(--muted-2); }
+
 .shipyard-block { margin-top: 18px; }
 .shipyard-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .shipyard-row { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); background: rgba(8, 18, 24, 0.5); }
@@ -417,6 +431,10 @@ dd { margin: 0; font-weight: 700; text-align: right; font-family: var(--mono); }
 .officer-bar i { display: block; height: 100%; width: 100%; background: var(--success); transition: width 0.2s; }
 .officer-row[data-level="3"] .officer-portrait { filter: grayscale(0.6) brightness(0.66); }
 .officer-row[data-level="3"] .officer-name { color: var(--danger-soft); }
+.officer-level { font-family: var(--mono); font-size: 0.6rem; font-weight: 600; letter-spacing: 1px; color: var(--accent); }
+.officer-row.wounded .officer-level { color: var(--danger); }
+.officer-row.wounded .officer-portrait { filter: grayscale(0.85) brightness(0.55); }
+.officer-row.wounded .officer-name { color: var(--danger); }
 
 #target-info { color: var(--muted); line-height: 1.4; font-size: 0.86rem; }
 .log-card { overflow: hidden; }
@@ -615,6 +633,8 @@ kbd {
 .promotion { margin: 0 0 12px; padding: 12px 16px; font-family: var(--display); font-weight: 700; letter-spacing: 1px; font-size: 0.95rem; color: var(--amber); border-left: 2px solid var(--amber); background: rgba(240, 169, 61, 0.08); }
 .operation-line { margin: 0 0 12px; padding: 12px 16px; font-family: var(--display); font-weight: 700; letter-spacing: 1px; font-size: 0.92rem; color: var(--violet); border-left: 2px solid var(--violet); background: rgba(184, 107, 255, 0.08); }
 .scar-line { margin: 0 0 12px; padding: 10px 16px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 1px; color: var(--text-2); border-left: 2px solid var(--amber); background: rgba(240, 169, 61, 0.05); }
+.salvage-line { margin: 0 0 12px; padding: 10px 16px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 1px; color: var(--text-2); border-left: 2px solid var(--amber); background: rgba(240, 169, 61, 0.08); }
+.crew-line { margin: 0 0 12px; padding: 10px 16px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 1px; color: var(--text-2); border-left: 2px solid var(--success); background: rgba(95, 209, 122, 0.06); }
 .evaluation-actions, .screen-actions { display: flex; gap: 12px; }
 .evaluation-actions .primary, .screen-actions .primary { flex: 2; }
 .evaluation-actions .ghost, .screen-actions .ghost { flex: 1; }

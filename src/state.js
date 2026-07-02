@@ -67,6 +67,7 @@ export function defaultCareer() {
     nemeses: [], // recurring enemy command ships (see game/nemesis.js)
     operation: null, // active multi-mission operation chain (see game/operations.js)
     shipIdentity: null, // veteran identity of the ship in service (see career.js)
+    crew: null, // bridge-officer xp / wounds, lazily initialised (see game/crew.js)
     log: [] // captain's log entries, newest-first (see game/dispatch.js)
   };
 }
@@ -88,6 +89,7 @@ export const state = {
   objective: null,
   boarding: { active: false, available: false, calloutVisible: false, targetId: null },
   projectiles: [],
+  salvage: [],
   asteroids: [],
   effects: [],
   stars: [],
