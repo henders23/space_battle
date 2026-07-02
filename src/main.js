@@ -189,7 +189,9 @@ function reflectSettings() {
 
 function bindMenu() {
   const actions = {
-    "menu-new": () => showScreen("setup"),
+    // A new campaign opens on the surprise attack that kills the Resolute's
+    // captain; the field-commission (name + difficulty) follows it.
+    "menu-new": () => showScreen("intro"),
     "menu-continue": () => {
       loadCareer();
       showScreen("warmap");
@@ -230,7 +232,7 @@ function bindMenu() {
   );
 
   const introBegin = document.getElementById("intro-begin");
-  if (introBegin) introBegin.addEventListener("click", () => showScreen("warmap"));
+  if (introBegin) introBegin.addEventListener("click", () => showScreen("setup"));
 
   const briefLaunch = document.getElementById("brief-launch");
   if (briefLaunch) briefLaunch.addEventListener("click", launchFromBriefing);
@@ -267,7 +269,7 @@ function buildSetupScreen() {
   begin.addEventListener("click", () => {
     const name = (nameInput && nameInput.value.trim()) || "Halden";
     newCampaign(name);
-    showScreen("intro");
+    showScreen("warmap");
   });
 }
 

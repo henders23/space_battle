@@ -240,6 +240,12 @@ select {
 /* ============ CAMPAIGN INTRO ============ */
 .intro-panel { width: min(820px, 100%); max-height: calc(100vh - 56px); overflow-y: auto; }
 .intro-sub { margin: 8px 0 0; font-size: 0.72rem; letter-spacing: 3px; color: var(--muted-2); }
+.danger-eyebrow { color: var(--danger); animation: eyebrow-blink 1.6s step-end infinite; }
+@keyframes eyebrow-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.intro-log { margin: 20px 0 0; border: 1px solid rgba(255, 83, 71, 0.28); background: rgba(30, 8, 8, 0.35); padding: 14px 16px; display: grid; gap: 8px; }
+.intro-log-line { display: grid; grid-template-columns: 52px 1fr; gap: 12px; font-size: 0.78rem; line-height: 1.5; color: var(--text-2); }
+.intro-log-line .log-time { color: var(--danger-soft); letter-spacing: 1px; }
+.intro-log-line.grave span:last-child { color: var(--danger); font-weight: 700; letter-spacing: 0.5px; }
 .intro-body { margin: 22px 0 26px; }
 .intro-body p { margin: 0 0 16px; color: var(--text-2); font-size: 1.08rem; line-height: 1.66; }
 .intro-body b { color: var(--accent); font-weight: 600; }

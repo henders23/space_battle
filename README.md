@@ -163,8 +163,9 @@ sheet.
 - **Captain's log**: a persistent, auto-written first-person chronicle of the campaign —
   every action, operation, nemesis and scar — on its own screen, reachable from the war
   map and the after-action review.
-- **Campaign & captain identity**: a New Campaign sets up your captain (name +
-  difficulty) before the opening orders. Sustained command earns **rank
+- **Campaign & captain identity**: a New Campaign opens on the Veyr surprise
+  attack that kills the Resolute's captain — a flash-traffic battle log and the
+  field commission that puts you (name + difficulty) in her chair. Sustained command earns **rank
   progression** (Lieutenant → Rear Admiral), and the Admiralty awards permanent
   **commendations** (or records **reprimands**) for notable — or failed — actions;
   promotions and medals surface in the after-action review and on a dedicated
